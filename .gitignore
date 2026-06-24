@@ -25,3 +25,6 @@ mono_crash.*.json
 .vscode/
 .idea/
 *.swp
+
+# Superpowers SDD scratch
+.superpowers/
