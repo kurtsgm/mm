@@ -1,0 +1,16 @@
+[gd_scene load_steps=3 format=3 uid="uid://b6w8e6q1prev1"]
+
+[ext_resource type="Script" uid="uid://d0rbt6j7cv3uc" path="res://presentation/world/world_builder_preview.gd" id="1_preview"]
+[ext_resource type="Script" uid="uid://de0fb3r8rqncv" path="res://presentation/world/world_builder.gd" id="2_wbuild"]
+
+[node name="Preview" type="Node3D"]
+script = ExtResource("1_preview")
+
+[node name="WorldBuilder" type="Node3D" parent="."]
+script = ExtResource("2_wbuild")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.707107, 0.707107, 0, -0.707107, 0.707107, 0, 8, 0)
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.819152, 0.573576, 0, -0.573576, 0.819152, 6, 12, 18)
