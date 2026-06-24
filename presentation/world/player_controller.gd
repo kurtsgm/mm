@@ -1,6 +1,9 @@
 class_name PlayerController
 extends Node3D
 
+signal entered_cell(pos: Vector2i)
+signal facing_changed(facing: int)
+
 const MOVE_TIME := 0.18
 
 var _grid: GridData
@@ -13,6 +16,7 @@ func setup(grid: GridData, start_pos: Vector2i, start_facing: int) -> void:
 	_pos = start_pos
 	_facing = start_facing
 	_apply_transform_immediate()
+	facing_changed.emit(_facing)
 
 func _apply_transform_immediate() -> void:
 	position = GridGeometry.cell_to_world(_pos)
@@ -39,6 +43,7 @@ func _attempt_move(move: int) -> void:
 	if new_pos == _pos:
 		return  # 撞牆，不動
 	_pos = new_pos
+	entered_cell.emit(_pos)
 	_is_busy = true
 	var tween := create_tween()
 	tween.tween_property(self, "position", GridGeometry.cell_to_world(_pos), MOVE_TIME)
@@ -46,6 +51,7 @@ func _attempt_move(move: int) -> void:
 
 func _attempt_turn(new_facing: int) -> void:
 	_facing = new_facing
+	facing_changed.emit(_facing)
 	_is_busy = true
 	var tween := create_tween()
 	# 用 shortest-path 角度補間避免轉一大圈

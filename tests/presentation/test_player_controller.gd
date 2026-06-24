@@ -24,3 +24,36 @@ func test_input_actions_registered():
 	for action in ["move_forward", "move_back", "strafe_left", "strafe_right", "turn_left", "turn_right"]:
 		assert_true(InputMap.has_action(action), "missing input action: %s" % action)
 		assert_gt(InputMap.action_get_events(action).size(), 0, "no key bound to %s" % action)
+
+func _make_pc(grid: GridData, pos: Vector2i, facing: int) -> PlayerController:
+	var pc := PlayerController.new()
+	add_child_autofree(pc)
+	pc.setup(grid, pos, facing)
+	return pc
+
+func test_setup_emits_facing_changed():
+	var pc := PlayerController.new()
+	add_child_autofree(pc)
+	watch_signals(pc)
+	pc.setup(GridData.new(3, 3), Vector2i(1, 1), GridDirection.Dir.EAST)
+	assert_signal_emitted_with_parameters(pc, "facing_changed", [GridDirection.Dir.EAST])
+
+func test_move_emits_entered_cell_with_new_pos():
+	var pc := _make_pc(GridData.new(3, 3), Vector2i(1, 1), GridDirection.Dir.NORTH)
+	watch_signals(pc)
+	pc._attempt_move(GridMovement.Move.FORWARD)  # 北 → (1,0)
+	assert_signal_emitted_with_parameters(pc, "entered_cell", [Vector2i(1, 0)])
+
+func test_blocked_move_does_not_emit_entered_cell():
+	var grid := GridData.new(3, 3)
+	grid.set_solid(Vector2i(1, 0), true)  # 北邊是牆
+	var pc := _make_pc(grid, Vector2i(1, 1), GridDirection.Dir.NORTH)
+	watch_signals(pc)
+	pc._attempt_move(GridMovement.Move.FORWARD)  # 撞牆，不動
+	assert_signal_not_emitted(pc, "entered_cell")
+
+func test_turn_emits_facing_changed():
+	var pc := _make_pc(GridData.new(3, 3), Vector2i(1, 1), GridDirection.Dir.NORTH)
+	watch_signals(pc)
+	pc._attempt_turn(GridDirection.turn_right(GridDirection.Dir.NORTH))  # → EAST
+	assert_signal_emitted_with_parameters(pc, "facing_changed", [GridDirection.Dir.EAST])
