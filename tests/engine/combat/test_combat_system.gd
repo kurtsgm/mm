@@ -101,3 +101,50 @@ func test_unconscious_member_excluded_from_turn_order():
 	# ko speed 99 最快，但已昏迷 → 不在順序 → 首位是 hero
 	assert_true(cs.is_party_turn())
 	assert_eq(cs.current_combatant().name, "Hero")
+
+func test_defend_marks_actor_and_clears_next_round():
+	var hero := _char("Hero", 100, 5, 80, 50)   # 比怪物快 → 先動
+	var mon := _monster("Mon", 100, 5, 50, 1)
+	var cs := CombatSystem.new(_party([hero]), _monsters([mon]), _rng(2))
+	assert_true(cs.is_party_turn())
+	cs.party_defend()
+	assert_true(cs.is_defending(hero))   # 本輪防禦中
+	cs.monster_act()                      # 怪物行動，輪結束 → 進新一輪
+	assert_false(cs.is_defending(hero))   # 新一輪清除
+
+func test_flee_chance_monotonic_and_clamped():
+	var fast := _char("Fast", 100, 1, 1, 50)
+	var slow := _char("Slow", 100, 1, 1, 1)
+	var quick_mon := _monster("Q", 100, 1, 1, 50)
+	var slow_mon := _monster("S", 100, 1, 1, 1)
+	var cs_easy := CombatSystem.new(_party([fast]), _monsters([slow_mon]), _rng(1))
+	var cs_hard := CombatSystem.new(_party([slow]), _monsters([quick_mon]), _rng(1))
+	assert_gt(cs_easy.flee_chance(), cs_hard.flee_chance())
+	assert_true(cs_easy.flee_chance() <= 95)
+	assert_true(cs_hard.flee_chance() >= 10)
+
+func test_run_success_eventually_when_much_faster():
+	var hero := _char("Hero", 100, 1, 1, 50)
+	var mon := _monster("Mon", 100, 1, 1, 1)
+	var cs := CombatSystem.new(_party([hero]), _monsters([mon]), _rng(3))
+	var tries := 0
+	while not cs.is_over() and tries < 50:
+		if cs.is_party_turn():
+			cs.party_run()
+		else:
+			cs.monster_act()
+		tries += 1
+	assert_eq(cs.result(), CombatSystem.Result.FLED)
+	assert_true(cs.is_over())
+
+func test_run_outcome_is_consistent():
+	var hero := _char("Hero", 100, 1, 1, 50)
+	var mon := _monster("Mon", 100, 1, 1, 1)
+	var cs := CombatSystem.new(_party([hero]), _monsters([mon]), _rng(8))
+	assert_true(cs.is_party_turn())
+	cs.party_run()
+	if cs.result() == CombatSystem.Result.FLED:
+		assert_true(cs.is_over())
+	else:
+		assert_eq(cs.result(), CombatSystem.Result.ONGOING)
+		assert_false(cs.is_party_turn())  # 逃跑失敗也消耗回合
