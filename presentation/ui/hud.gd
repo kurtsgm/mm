@@ -19,20 +19,29 @@ func setup(game_state: Node, player: PlayerController) -> void:
 	_refresh_party(game_state.party)
 
 func _build_ui(party: Party) -> void:
+	# 指北針：左上角（origin 起算，任何解析度都貼齊左上，含全螢幕）。
 	_compass_label = Label.new()
 	_compass_label.position = Vector2(20, 12)
 	_compass_label.add_theme_font_size_override("font_size", 22)
 	add_child(_compass_label)
 
+	# 訊息列 + 隊伍面板：錨定畫面左下、自動向上＋向右長 → 解析度無關。
+	var bottom := VBoxContainer.new()
+	bottom.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	bottom.offset_left = 20
+	bottom.offset_bottom = -20
+	bottom.grow_horizontal = Control.GROW_DIRECTION_END
+	bottom.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	bottom.add_theme_constant_override("separation", 8)
+	add_child(bottom)
+
 	_message_label = Label.new()
-	_message_label.position = Vector2(20, 470)
 	_message_label.add_theme_font_size_override("font_size", 18)
-	add_child(_message_label)
+	bottom.add_child(_message_label)
 
 	var row := HBoxContainer.new()
-	row.position = Vector2(20, 500)
 	row.add_theme_constant_override("separation", 10)
-	add_child(row)
+	bottom.add_child(row)
 	for i in party.members.size():
 		var cell := Label.new()
 		cell.custom_minimum_size = Vector2(150, 110)
