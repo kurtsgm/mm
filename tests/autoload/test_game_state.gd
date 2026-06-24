@@ -9,3 +9,4 @@ func test_ready_builds_default_party_and_log():
 	assert_eq(gs.party.members.size(), 6)
 	assert_not_null(gs.message_log)
 	assert_eq(gs.message_log.size(), 0)
+	assert_eq(gs.gold, 0)

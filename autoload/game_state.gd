@@ -4,6 +4,7 @@ extends Node
 
 var party: Party
 var message_log: MessageLog
+var gold: int = 0
 
 func _ready() -> void:
 	if party == null:

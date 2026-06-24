@@ -48,6 +48,9 @@ func _build_ui(party: Party) -> void:
 		row.add_child(cell)
 		_member_labels.append(cell)
 
+func refresh() -> void:
+	_refresh_party(GameState.party)
+
 func _refresh_party(party: Party) -> void:
 	for i in _member_labels.size():
 		_member_labels[i].text = _format_member(party.members[i])
