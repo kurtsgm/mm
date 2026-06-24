@@ -10,6 +10,10 @@ run/main_scene="res://presentation/world/main.tscn"
 
 enabled=PackedStringArray("res://addons/gut/plugin.cfg")
 
+[autoload]
+
+MapManager="*res://autoload/map_manager.gd"
+
 [input]
 
 move_forward={
