@@ -10,6 +10,10 @@ var _grid: GridData
 var _pos: Vector2i
 var _facing: int
 var _is_busy := false
+var _enabled := true
+
+func set_enabled(enabled: bool) -> void:
+	_enabled = enabled
 
 func setup(grid: GridData, start_pos: Vector2i, start_facing: int) -> void:
 	_grid = grid
@@ -23,7 +27,7 @@ func _apply_transform_immediate() -> void:
 	rotation.y = GridGeometry.facing_to_yaw(_facing)
 
 func _unhandled_input(event: InputEvent) -> void:
-	if _is_busy or _grid == null:
+	if not _enabled or _is_busy or _grid == null:
 		return
 	if event.is_action_pressed("move_forward"):
 		_attempt_move(GridMovement.Move.FORWARD)

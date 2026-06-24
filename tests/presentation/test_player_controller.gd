@@ -57,3 +57,20 @@ func test_turn_emits_facing_changed():
 	watch_signals(pc)
 	pc._attempt_turn(GridDirection.turn_right(GridDirection.Dir.NORTH))  # → EAST
 	assert_signal_emitted_with_parameters(pc, "facing_changed", [GridDirection.Dir.EAST])
+
+func test_disabled_ignores_input():
+	var pc := _make_pc(GridData.new(3, 3), Vector2i(1, 1), GridDirection.Dir.NORTH)
+	pc.set_enabled(false)
+	var ev := InputEventAction.new()
+	ev.action = "move_forward"
+	ev.pressed = true
+	pc._unhandled_input(ev)
+	assert_eq(pc._pos, Vector2i(1, 1))  # 沒移動
+
+func test_enabled_processes_input():
+	var pc := _make_pc(GridData.new(3, 3), Vector2i(1, 1), GridDirection.Dir.NORTH)
+	var ev := InputEventAction.new()
+	ev.action = "move_forward"
+	ev.pressed = true
+	pc._unhandled_input(ev)
+	assert_eq(pc._pos, Vector2i(1, 0))  # 北移動一格
