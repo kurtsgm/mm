@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="MonsterDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/monster_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+display_name = "哥布林"
+level = 2
+hp_max = 12
+might = 6
+armor = 1
+speed = 9
+accuracy = 8
+luck = 3
+xp_reward = 20
+gold_reward = 6
