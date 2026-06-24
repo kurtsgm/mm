@@ -13,6 +13,7 @@ enabled=PackedStringArray("res://addons/gut/plugin.cfg")
 [autoload]
 
 MapManager="*res://autoload/map_manager.gd"
+GameState="*res://autoload/game_state.gd"
 
 [input]
 
