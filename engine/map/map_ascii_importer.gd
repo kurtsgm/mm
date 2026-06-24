@@ -12,6 +12,7 @@ static func parse(text: String) -> MapData:
 		return null
 	var tiles := PackedInt32Array()
 	tiles.resize(width * height)
+	var encounters := {}
 	var start_pos := Vector2i(-1, -1)
 	for y in height:
 		var line: String = lines[y]
@@ -21,7 +22,11 @@ static func parse(text: String) -> MapData:
 			var ch := line[x]
 			var t := _char_to_tile(ch)
 			if t == -1:
-				return null  # 未知字元
+				if _is_encounter_marker(ch):
+					t = MapData.TileType.FLOOR
+					encounters[Vector2i(x, y)] = ch
+				else:
+					return null  # 未知字元
 			if ch == "@":
 				if start_pos != Vector2i(-1, -1):
 					return null  # 多個起點
@@ -33,6 +38,7 @@ static func parse(text: String) -> MapData:
 	map.width = width
 	map.height = height
 	map.tiles = tiles
+	map.encounters = encounters
 	map.start_pos = start_pos
 	map.start_facing = GridDirection.Dir.NORTH
 	return map
@@ -57,3 +63,6 @@ static func _char_to_tile(ch: String) -> int:
 		"<": return MapData.TileType.STAIRS_UP
 		">": return MapData.TileType.STAIRS_DOWN
 		_: return -1
+
+static func _is_encounter_marker(ch: String) -> bool:
+	return ch.length() == 1 and ch >= "a" and ch <= "z"

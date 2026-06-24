@@ -40,3 +40,19 @@ func test_missing_start_returns_null():
 
 func test_multiple_start_returns_null():
 	assert_null(MapAsciiImporter.parse("@@"))
+
+func test_parses_monster_marker_as_floor_with_encounter():
+	var map := MapAsciiImporter.parse("###\n#@g\n###")
+	assert_not_null(map)
+	assert_eq(map.get_tile(Vector2i(2, 1)), MapData.TileType.FLOOR)
+	assert_true(map.has_encounter(Vector2i(2, 1)))
+	assert_eq(map.get_encounter(Vector2i(2, 1)), "g")
+	assert_false(map.has_encounter(Vector2i(1, 1)))  # @ 不是遭遇
+
+func test_multiple_markers_recorded():
+	var map := MapAsciiImporter.parse("#####\n#@g.o\n#####")
+	assert_not_null(map)
+	assert_eq(map.get_encounter(Vector2i(2, 1)), "g")
+	assert_eq(map.get_encounter(Vector2i(4, 1)), "o")
+	assert_eq(map.get_tile(Vector2i(2, 1)), MapData.TileType.FLOOR)
+	assert_eq(map.get_tile(Vector2i(4, 1)), MapData.TileType.FLOOR)
