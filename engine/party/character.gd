@@ -18,6 +18,7 @@ var speed: int
 var accuracy: int
 var luck: int
 var condition: int = Condition.OK
+var experience: int = 0
 
 func is_alive() -> bool:
 	return condition != Condition.DEAD
