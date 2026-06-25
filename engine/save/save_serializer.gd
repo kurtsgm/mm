@@ -1,7 +1,7 @@
 class_name SaveSerializer
 extends Object
 
-const VERSION := 2
+const VERSION := 3
 
 static func to_dict(data: SaveData) -> Dictionary:
 	return {
@@ -22,7 +22,7 @@ static func to_dict(data: SaveData) -> Dictionary:
 # 不傳（純單元測試）時裝備欄留空；背包不需 resolver（只存 id+count）。
 static func from_dict(raw: Dictionary, resolver := Callable()) -> SaveData:
 	var v := int(raw.get("version", -1))
-	if v != VERSION and v != 1:        # 接受目前版本與已知舊版 1（向後相容）
+	if v != VERSION and v != 1 and v != 2:   # 接受目前版本與已知舊版（向後相容）
 		return null
 	if not raw.has("state"):
 		return null
@@ -41,6 +41,13 @@ static func from_dict(raw: Dictionary, resolver := Callable()) -> SaveData:
 	return data
 
 # --- internal ---
+
+static func _to_str_array(arr) -> Array[String]:
+	var out: Array[String] = []
+	if arr is Array:
+		for x in arr:
+			out.append(String(x))
+	return out
 
 static func _meta(data: SaveData) -> Dictionary:
 	var brief: Array = []
@@ -84,6 +91,7 @@ static func _char_to_dict(c: Character) -> Dictionary:
 		"endurance": c.endurance, "speed": c.speed, "accuracy": c.accuracy,
 		"luck": c.luck, "condition": c.condition, "experience": c.experience,
 		"equipment": c.equipment.equipped_ids(),
+		"known_spells": c.known_spells.duplicate(),
 	}
 
 static func _char_from_dict(d: Dictionary, resolver: Callable) -> Character:
@@ -104,6 +112,7 @@ static func _char_from_dict(d: Dictionary, resolver: Callable) -> Character:
 	c.luck = int(d.get("luck", 0))
 	c.condition = int(d.get("condition", 0))
 	c.experience = int(d.get("experience", 0))
+	c.known_spells = _to_str_array(d.get("known_spells", []))
 	_apply_equipment(c, d.get("equipment", {}), resolver)
 	return c
 
