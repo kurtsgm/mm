@@ -117,7 +117,10 @@ func _target_input(key: int) -> void:
 	if key == KEY_ESCAPE:
 		_mode = "spell"; _refresh_spell_prompt(); return
 	if key >= KEY_1 and key <= KEY_9:
-		_cast_pending(key - KEY_1)
+		var idx := key - KEY_1
+		var count := combat.party.members.size() if _pending_spell.target == SpellDef.Target.SINGLE_ALLY else combat.living_monsters().size()
+		if idx < count:
+			_cast_pending(idx)
 
 func _cast_pending(target_index: int) -> void:
 	var events := combat.party_cast(_pending_spell, target_index)
