@@ -17,6 +17,8 @@ const SKY_PANORAMA := "res://content/sky/citrus_orchard_road_puresky_2k.exr"
 @onready var _player: PlayerController = $PlayerController
 @onready var _camera: Camera3D = $PlayerController/Camera3D
 
+var _object_layer: ObjectLayer
+
 var _hud: Hud
 var _combat_layer: CombatLayer
 var _combat: CombatSystem
@@ -29,7 +31,10 @@ var _transitioning := false
 
 func _ready() -> void:
 	var map := MapManager.enter_map(START_MAP_ID, GameState.cleared_for(START_MAP_ID))
+	_object_layer = ObjectLayer.new()
+	add_child(_object_layer)
 	_world_builder.build(map)
+	_object_layer.build(map)
 	_setup_environment()
 	_setup_fade()
 
@@ -128,6 +133,7 @@ func _enter_via_link(map_id: String, entry_name: String) -> void:
 	var pos: Vector2i = e.get("pos", dest.start_pos)
 	var facing: int = e.get("facing", GridDirection.Dir.NORTH)
 	_world_builder.build(MapManager.current_map)
+	_object_layer.build(MapManager.current_map)
 	_player.setup(MapManager.current_grid, pos, facing)
 	GameState.current_map_id = map_id
 	GameState.player_pos = pos
@@ -152,6 +158,7 @@ func _on_edge_exit_attempted(move_dir: int) -> void:
 		MapManager.enter_map(GameState.current_map_id, GameState.cleared_for(GameState.current_map_id))
 		return
 	_world_builder.build(MapManager.current_map)
+	_object_layer.build(MapManager.current_map)
 	_player.setup(MapManager.current_grid, cell, GameState.player_facing)
 	GameState.current_map_id = neighbor_id
 	GameState.player_pos = cell
@@ -274,6 +281,7 @@ func _cast_recall(spell: SpellDef) -> void:
 
 func _on_loaded() -> void:
 	_world_builder.build(MapManager.current_map)
+	_object_layer.build(MapManager.current_map)
 	_player.setup(MapManager.current_grid, GameState.player_pos, GameState.player_facing)
 	_hud.refresh()
 	GameState.message_log.push("讀檔完成。")
