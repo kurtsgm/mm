@@ -5,6 +5,7 @@ extends Object
 # "default" 為程式碼生成主題（保留現有外觀、零外部素材）；kit 主題屬內容期。
 const _THEMES := {
 	"bricks": "res://content/themes/bricks.tres",
+	"town": "res://content/themes/town.tres",
 }
 
 static func has_theme(id: String) -> bool:

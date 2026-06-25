@@ -26,3 +26,26 @@ func test_unknown_id_falls_back_to_default():
 func test_has_theme_and_all_ids_include_default():
 	assert_true(ThemeCatalog.has_theme("default"))
 	assert_true(ThemeCatalog.all_ids().has("default"))
+
+func test_town_theme_loads_with_core_items():
+	var t := ThemeCatalog.get_theme("town")
+	assert_not_null(t)
+	assert_eq(t.theme_id, "town")
+	assert_eq(t.floor_item, "floor")
+	assert_false(t.has_ceiling)
+	assert_not_null(t.mesh_library)
+	for name in ["floor", "wall", "door", "stairs_up", "stairs_down"]:
+		assert_ne(t.mesh_library.find_item_by_name(name), -1, "town lib 應有 item: %s" % name)
+
+func test_town_wall_uses_castle_wall_material():
+	var t := ThemeCatalog.get_theme("town")
+	var wall_id := t.mesh_library.find_item_by_name("wall")
+	var mesh := t.mesh_library.get_item_mesh(wall_id)
+	assert_not_null(mesh)
+	var mat := mesh.surface_get_material(0)
+	assert_true(mat is StandardMaterial3D, "城鎮牆應為貼圖材質")
+	assert_not_null((mat as StandardMaterial3D).albedo_texture, "城鎮牆應有 albedo 貼圖")
+
+func test_town_registered_in_catalog():
+	assert_true(ThemeCatalog.has_theme("town"))
+	assert_true(ThemeCatalog.all_ids().has("town"))

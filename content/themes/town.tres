@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="DungeonTheme" format=3]
+
+[ext_resource type="MeshLibrary" path="res://content/themes/town_lib.tres" id="1_townlib"]
+[ext_resource type="Script" path="res://resources/dungeon_theme.gd" id="2_townth"]
+
+[resource]
+script = ExtResource("2_townth")
+theme_id = "town"
+mesh_library = ExtResource("1_townlib")
+floor_item = "floor"
+item_for_tile = {
+1: "wall",
+2: "door",
+3: "stairs_up",
+4: "stairs_down"
+}
+has_ceiling = false
+ceiling_item = ""

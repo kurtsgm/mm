@@ -35,3 +35,6 @@ func test_town_link_roundtrip():
 	var town := _load("town_oak")
 	assert_eq(town.get_entry("gate"), {"pos": Vector2i(2, 1), "facing": GridDirection.Dir.SOUTH})
 	assert_eq(town.get_link(Vector2i(2, 3)), {"map": "wild_nw", "entry": "from_town"})
+
+func test_town_oak_uses_town_theme():
+	assert_eq(_load("town_oak").theme_id, "town")

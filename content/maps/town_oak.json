@@ -1,6 +1,6 @@
 {
   "name": "橡鎮",
-  "theme": "default",
+  "theme": "town",
   "grid": ["#####", "#...#", "#.@.#", "#...#", "#####"],
   "entities": [
     { "type": "portal", "pos": [2, 3], "to": "wild_nw", "entry": "from_town" }
