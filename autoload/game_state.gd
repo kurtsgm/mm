@@ -11,6 +11,7 @@ var current_map_id: String = ""
 var player_pos: Vector2i = Vector2i.ZERO
 var player_facing: int = GridDirection.Dir.NORTH
 var cleared_encounters: Dictionary = {}  # String map_id -> Array[Vector2i]
+var explored: Dictionary = {}  # String map_id -> Dictionary[Vector2i -> true]（內層當 set）
 
 func _ready() -> void:
 	if party == null:
@@ -30,6 +31,22 @@ func mark_encounter_cleared(map_id: String, pos: Vector2i) -> void:
 
 func cleared_for(map_id: String) -> Array:
 	return cleared_encounters.get(map_id, [])
+
+func mark_explored(map_id: String, pos: Vector2i, w: int, h: int) -> void:
+	var seen: Dictionary = explored.get(map_id, {})
+	for dy in range(-1, 2):
+		for dx in range(-1, 2):
+			var c := Vector2i(pos.x + dx, pos.y + dy)
+			if c.x < 0 or c.x >= w or c.y < 0 or c.y >= h:
+				continue
+			seen[c] = true
+	explored[map_id] = seen
+
+func is_explored(map_id: String, pos: Vector2i) -> bool:
+	return explored.get(map_id, {}).has(pos)
+
+func explored_for(map_id: String) -> Dictionary:
+	return explored.get(map_id, {})
 
 func _seed_starting_items() -> void:
 	# 骨架起始道具：讓背包/裝備系統開局即可操演。正式起始裝備屬內容期。
