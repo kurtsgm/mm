@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/item_def.gd" id="1_item"]
+
+[resource]
+script = ExtResource("1_item")
+id = "revive"
+display_name = "復活草"
+category = 3
+heal_hp = 10
+revive = true
+value = 25
+stackable = true

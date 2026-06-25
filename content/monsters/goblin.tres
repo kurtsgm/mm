@@ -14,3 +14,5 @@ accuracy = 8
 luck = 3
 xp_reward = 20
 gold_reward = 6
+drop_item_id = "potion"
+drop_chance = 0.5
