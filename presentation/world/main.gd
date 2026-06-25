@@ -2,6 +2,12 @@ extends Node3D
 
 const MAP_PATH := "res://content/maps/level01.txt"
 
+# 環境光：補一層 ambient，讓背光/陰影區不會全黑、看得清材質。
+# 太暗就調高 AMBIENT_ENERGY；想換色調改 AMBIENT_COLOR；BG_VOID_COLOR 是牆外虛空底色。
+const AMBIENT_COLOR := Color(0.72, 0.74, 0.82)
+const AMBIENT_ENERGY := 0.5
+const BG_VOID_COLOR := Color(0.04, 0.04, 0.06)
+
 @onready var _world_builder: WorldBuilder = $WorldBuilder
 @onready var _player: PlayerController = $PlayerController
 @onready var _camera: Camera3D = $PlayerController/Camera3D
@@ -18,6 +24,7 @@ var _menus: Array = []
 func _ready() -> void:
 	var map := MapManager.load_text_file(MAP_PATH)
 	_world_builder.build(map)
+	_setup_environment()
 
 	_hud = Hud.new()
 	add_child(_hud)
@@ -51,6 +58,17 @@ func _ready() -> void:
 	GameState.current_map_id = map.map_id
 	GameState.player_pos = map.start_pos
 	GameState.player_facing = map.start_facing
+
+func _setup_environment() -> void:
+	var env := Environment.new()
+	env.background_mode = Environment.BG_COLOR
+	env.background_color = BG_VOID_COLOR
+	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+	env.ambient_light_color = AMBIENT_COLOR
+	env.ambient_light_energy = AMBIENT_ENERGY
+	var we := WorldEnvironment.new()
+	we.environment = env
+	add_child(we)
 
 func _on_entered_cell(pos: Vector2i) -> void:
 	GameState.player_pos = pos
