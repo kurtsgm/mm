@@ -1,0 +1,72 @@
+[gd_resource type="MeshLibrary" format=3]
+
+[ext_resource type="Material" path="res://content/materials/bricks/bricks.tres" id="1_aafjf"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4bbuy"]
+albedo_color = Color(0.25, 0.25, 0.28, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_a56jf"]
+material = SubResource("StandardMaterial3D_4bbuy")
+size = Vector3(2, 0.2, 2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_fyoqo"]
+material = ExtResource("1_aafjf")
+size = Vector3(2, 3, 2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ru7kc"]
+albedo_color = Color(0.55, 0.32, 0.15, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_u30et"]
+material = SubResource("StandardMaterial3D_ru7kc")
+size = Vector3(1.2, 2.2, 1.2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_oc2yn"]
+albedo_color = Color(0.2, 0.5, 0.65, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_gdpgn"]
+material = SubResource("StandardMaterial3D_oc2yn")
+size = Vector3(1.6, 0.4, 1.6)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_dddq7"]
+albedo_color = Color(0.2, 0.5, 0.65, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_rso24"]
+material = SubResource("StandardMaterial3D_dddq7")
+size = Vector3(1.6, 0.4, 1.6)
+
+[resource]
+item/0/name = "floor"
+item/0/mesh = SubResource("BoxMesh_a56jf")
+item/0/mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
+item/0/mesh_cast_shadow = 1
+item/0/shapes = []
+item/0/navigation_mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+item/0/navigation_layers = 1
+item/1/name = "wall"
+item/1/mesh = SubResource("BoxMesh_fyoqo")
+item/1/mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+item/1/mesh_cast_shadow = 1
+item/1/shapes = []
+item/1/navigation_mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+item/1/navigation_layers = 1
+item/2/name = "door"
+item/2/mesh = SubResource("BoxMesh_u30et")
+item/2/mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)
+item/2/mesh_cast_shadow = 1
+item/2/shapes = []
+item/2/navigation_mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+item/2/navigation_layers = 1
+item/3/name = "stairs_up"
+item/3/mesh = SubResource("BoxMesh_gdpgn")
+item/3/mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 0)
+item/3/mesh_cast_shadow = 1
+item/3/shapes = []
+item/3/navigation_mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+item/3/navigation_layers = 1
+item/4/name = "stairs_down"
+item/4/mesh = SubResource("BoxMesh_rso24")
+item/4/mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 0)
+item/4/mesh_cast_shadow = 1
+item/4/shapes = []
+item/4/navigation_mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+item/4/navigation_layers = 1

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="DungeonTheme" format=3]
+
+[ext_resource type="MeshLibrary" path="res://content/themes/bricks_lib.tres" id="1_wtm51"]
+[ext_resource type="Script" path="res://resources/dungeon_theme.gd" id="2_p8yqi"]
+
+[resource]
+script = ExtResource("2_p8yqi")
+theme_id = "bricks"
+mesh_library = ExtResource("1_wtm51")
+item_for_tile = {
+1: "wall",
+2: "door",
+3: "stairs_up",
+4: "stairs_down"
+}

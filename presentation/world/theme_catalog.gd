@@ -3,7 +3,9 @@ extends Object
 
 # 主題 id → .tres 路徑（鏡射 Bestiary/ItemCatalog/SpellBook）。
 # "default" 為程式碼生成主題（保留現有外觀、零外部素材）；kit 主題屬內容期。
-const _THEMES := {}
+const _THEMES := {
+	"bricks": "res://content/themes/bricks.tres",
+}
 
 static func has_theme(id: String) -> bool:
 	return id == "default" or _THEMES.has(id)
