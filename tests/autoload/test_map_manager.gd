@@ -22,3 +22,18 @@ func test_load_by_id_loads_level01_and_sets_map_id():
 	assert_eq(mm.current_map, map)
 	assert_gt(mm.current_grid.width, 0)
 	assert_true(mm.current_map.has_encounter(Vector2i(2, 2)), "level01 (2,2) 應有遭遇")
+
+func test_enter_map_clears_given_encounters():
+	var mm = MapManagerScript.new()
+	add_child_autofree(mm)
+	var map := mm.enter_map("level01", [Vector2i(2, 2)])
+	assert_not_null(map)
+	assert_eq(map.map_id, "level01")
+	assert_false(map.has_encounter(Vector2i(2, 2)), "已清座標不應再有遭遇")
+	assert_eq(mm.current_map, map)
+
+func test_enter_map_without_cleared_keeps_encounters():
+	var mm = MapManagerScript.new()
+	add_child_autofree(mm)
+	var map := mm.enter_map("level01")
+	assert_true(map.has_encounter(Vector2i(2, 2)))

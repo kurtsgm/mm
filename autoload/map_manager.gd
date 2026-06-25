@@ -26,3 +26,10 @@ func load_by_id(id: String) -> MapData:
 func _set_current(map: MapData) -> void:
 	current_map = map
 	current_grid = MapBuilder.to_grid_data(map)
+
+# 載入地圖並重套「已清遭遇」座標（切換/讀檔重入地圖共用，避免已清的怪復活）。
+func enter_map(map_id: String, cleared_positions: Array = []) -> MapData:
+	var map := load_by_id(map_id)
+	for pos in cleared_positions:
+		map.clear_encounter(pos)
+	return map

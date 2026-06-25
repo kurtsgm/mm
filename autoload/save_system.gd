@@ -74,9 +74,7 @@ func apply_to(data: SaveData, gs, mm) -> void:
 	gs.player_pos = data.player_pos
 	gs.player_facing = data.player_facing
 	gs.cleared_encounters = data.cleared_encounters
-	mm.load_by_id(data.map_id)
-	for pos in gs.cleared_for(data.map_id):
-		mm.current_map.clear_encounter(pos)
+	mm.enter_map(data.map_id, gs.cleared_for(data.map_id))
 
 func capture() -> SaveData:
 	return capture_from(GameState)
