@@ -7,6 +7,9 @@ signal loaded
 const SAVE_DIR := "user://saves"
 const SLOT_COUNT := 5
 
+# 由呈現層注入的道具解析器（id -> ItemDef），讀檔還原裝備用。預設空 → 裝備留空。
+var item_resolver: Callable = Callable()
+
 func _slot_path(slot: int) -> String:
 	return "%s/slot_%d.json" % [SAVE_DIR, slot]
 
@@ -35,7 +38,7 @@ func read_slot(slot: int) -> SaveData:
 	var raw = JSON.parse_string(text)
 	if typeof(raw) != TYPE_DICTIONARY:
 		return null
-	return SaveSerializer.from_dict(raw)
+	return SaveSerializer.from_dict(raw, item_resolver)
 
 func list_slots() -> Array:
 	var out: Array = []
@@ -59,11 +62,13 @@ func capture_from(gs) -> SaveData:
 	data.player_pos = gs.player_pos
 	data.player_facing = gs.player_facing
 	data.party = gs.party
+	data.inventory = gs.inventory
 	data.cleared_encounters = gs.cleared_encounters
 	return data
 
 func apply_to(data: SaveData, gs, mm) -> void:
 	gs.party = data.party
+	gs.inventory = data.inventory
 	gs.gold = data.gold
 	gs.current_map_id = data.map_id
 	gs.player_pos = data.player_pos
