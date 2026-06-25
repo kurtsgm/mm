@@ -25,6 +25,7 @@ var _save_menu: SaveMenu
 var _inventory_menu: InventoryMenu
 var _spell_menu: SpellMenu
 var _menus: Array = []
+var _transitioning := false
 
 func _ready() -> void:
 	var map := MapManager.enter_map(START_MAP_ID, GameState.cleared_for(START_MAP_ID))
@@ -119,6 +120,7 @@ func _fade(target_alpha: float) -> void:
 
 # 入口連結切換：淡出 → 載入目的地 + 命名入口 → 重建定位 → 訊息 → 淡入。
 func _enter_via_link(map_id: String, entry_name: String) -> void:
+	_transitioning = true
 	_player.set_enabled(false)
 	await _fade(1.0)
 	var dest := MapManager.enter_map(map_id, GameState.cleared_for(map_id))
@@ -134,6 +136,7 @@ func _enter_via_link(map_id: String, entry_name: String) -> void:
 	GameState.message_log.push("你來到%s。" % nm)
 	_hud.refresh()
 	await _fade(0.0)
+	_transitioning = false
 	_player.set_enabled(true)
 
 # 邊緣接壤：即時、無黑幕、保持面向（野外無縫）。
@@ -247,7 +250,8 @@ func _toggle_menu(menu) -> void:
 	menu.open()
 
 func _on_menu_closed() -> void:
-	_player.set_enabled(true)
+	if not _transitioning:
+		_player.set_enabled(true)
 	_hud.refresh()
 
 func _on_world_spell_cast(spell: SpellDef) -> void:
