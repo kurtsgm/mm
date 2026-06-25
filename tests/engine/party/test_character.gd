@@ -77,3 +77,36 @@ func test_each_character_has_independent_equipment():
 	a.equipment.equip(_weapon(6))
 	assert_eq(a.equipment.total_attack(), 6)
 	assert_eq(b.equipment.total_attack(), 0)   # 每實例獨立，不共用
+
+func test_known_spells_default_empty():
+	var c := Character.new()
+	assert_eq(c.known_spells.size(), 0)
+
+func test_statuses_default_empty():
+	var c := Character.new()
+	assert_eq(c.statuses.size(), 0)
+
+func test_attack_buff_raises_attack_power():
+	var c := Character.new(); c.might = 10
+	assert_eq(c.attack_power(), 10)
+	c.statuses.append(StatusEffect.new(StatusEffect.Stat.ATTACK, 5, 2))
+	assert_eq(c.attack_power(), 15)
+
+func test_armor_buff_raises_armor_value():
+	var c := Character.new()
+	assert_eq(c.armor_value(), 0)
+	c.statuses.append(StatusEffect.new(StatusEffect.Stat.ARMOR, 4, 2))
+	assert_eq(c.armor_value(), 4)
+
+func test_effective_accuracy_includes_status():
+	var c := Character.new(); c.accuracy = 10
+	assert_eq(c.effective_accuracy(), 10)
+	c.statuses.append(StatusEffect.new(StatusEffect.Stat.ACCURACY, 3, 2))
+	assert_eq(c.effective_accuracy(), 13)
+
+func test_status_and_equipment_stack_on_attack():
+	var c := Character.new(); c.might = 10
+	var w := ItemDef.new(); w.category = ItemDef.Category.WEAPON; w.attack = 6
+	c.equipment.equip(w)
+	c.statuses.append(StatusEffect.new(StatusEffect.Stat.ATTACK, 2, 2))
+	assert_eq(c.attack_power(), 18)   # 10 + 6 + 2
