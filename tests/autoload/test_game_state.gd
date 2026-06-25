@@ -33,3 +33,10 @@ func test_mark_and_query_cleared_encounters():
 	assert_true(list.has(Vector2i(4, 2)))
 	assert_true(list.has(Vector2i(7, 9)))
 	assert_eq(gs.cleared_for("nope").size(), 0)
+
+func test_ready_seeds_starting_inventory():
+	var gs = _fresh_gs()
+	assert_not_null(gs.inventory)
+	assert_eq(gs.inventory.count_of("short_sword"), 1)
+	assert_eq(gs.inventory.count_of("leather"), 1)
+	assert_eq(gs.inventory.count_of("potion"), 2)

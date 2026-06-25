@@ -5,6 +5,7 @@ extends Node
 var party: Party
 var message_log: MessageLog
 var gold: int = 0
+var inventory: Inventory
 
 var current_map_id: String = ""
 var player_pos: Vector2i = Vector2i.ZERO
@@ -16,6 +17,9 @@ func _ready() -> void:
 		party = Party.create_default()
 	if message_log == null:
 		message_log = MessageLog.new()
+	if inventory == null:
+		inventory = Inventory.new()
+		_seed_starting_items()
 
 func mark_encounter_cleared(map_id: String, pos: Vector2i) -> void:
 	var list: Array = cleared_encounters.get(map_id, [])
@@ -25,3 +29,9 @@ func mark_encounter_cleared(map_id: String, pos: Vector2i) -> void:
 
 func cleared_for(map_id: String) -> Array:
 	return cleared_encounters.get(map_id, [])
+
+func _seed_starting_items() -> void:
+	# 骨架起始道具：讓背包/裝備系統開局即可操演。正式起始裝備屬內容期。
+	inventory.add("short_sword", 1)
+	inventory.add("leather", 1)
+	inventory.add("potion", 2)
