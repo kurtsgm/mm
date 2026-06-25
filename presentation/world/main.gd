@@ -26,6 +26,7 @@ var _combat_pos: Vector2i
 var _save_menu: SaveMenu
 var _inventory_menu: InventoryMenu
 var _spell_menu: SpellMenu
+var _mini_map: MiniMap
 var _menus: Array = []
 var _transitioning := false
 
@@ -44,6 +45,10 @@ func _ready() -> void:
 	_player.entered_cell.connect(_on_entered_cell)
 	_player.facing_changed.connect(_on_facing_changed)
 	_player.edge_exit_attempted.connect(_on_edge_exit_attempted)
+
+	_mini_map = MiniMap.new()
+	add_child(_mini_map)
+	_mini_map.setup(_player)
 
 	_combat_layer = CombatLayer.new()
 	add_child(_combat_layer)
@@ -71,6 +76,8 @@ func _ready() -> void:
 	GameState.current_map_id = START_MAP_ID
 	GameState.player_pos = map.start_pos
 	GameState.player_facing = map.start_facing
+	GameState.mark_explored(START_MAP_ID, map.start_pos, map.width, map.height)
+	_mini_map.refresh()
 
 func _setup_environment() -> void:
 	# 背景天空：真實 HDRI 全景（Poly Haven, CC0）。換別張改 SKY_PANORAMA。
@@ -92,6 +99,7 @@ func _setup_environment() -> void:
 
 func _on_entered_cell(pos: Vector2i) -> void:
 	GameState.player_pos = pos
+	GameState.mark_explored(GameState.current_map_id, pos, MapManager.current_map.width, MapManager.current_map.height)
 	var link := MapTransitions.resolve_link(MapManager.current_map, pos)
 	if not link.is_empty():
 		_enter_via_link(link["map"], link["entry"])
@@ -138,6 +146,8 @@ func _enter_via_link(map_id: String, entry_name: String) -> void:
 	GameState.current_map_id = map_id
 	GameState.player_pos = pos
 	GameState.player_facing = facing
+	GameState.mark_explored(map_id, pos, MapManager.current_map.width, MapManager.current_map.height)
+	_mini_map.refresh()
 	var nm: String = dest.display_name if dest.display_name != "" else map_id
 	GameState.message_log.push("你來到%s。" % nm)
 	_hud.refresh()
@@ -162,6 +172,8 @@ func _on_edge_exit_attempted(move_dir: int) -> void:
 	_player.setup(MapManager.current_grid, cell, GameState.player_facing)
 	GameState.current_map_id = neighbor_id
 	GameState.player_pos = cell
+	GameState.mark_explored(neighbor_id, cell, MapManager.current_map.width, MapManager.current_map.height)
+	_mini_map.refresh()
 	_hud.refresh()
 
 func _start_combat(pos: Vector2i) -> void:
@@ -283,5 +295,7 @@ func _on_loaded() -> void:
 	_world_builder.build(MapManager.current_map)
 	_object_layer.build(MapManager.current_map)
 	_player.setup(MapManager.current_grid, GameState.player_pos, GameState.player_facing)
+	GameState.mark_explored(GameState.current_map_id, GameState.player_pos, MapManager.current_map.width, MapManager.current_map.height)
+	_mini_map.refresh()
 	_hud.refresh()
 	GameState.message_log.push("讀檔完成。")
