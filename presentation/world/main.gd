@@ -2,10 +2,13 @@ extends Node3D
 
 const MAP_PATH := "res://content/maps/level01.txt"
 
-# 環境光 + 天空。太暗就調高 AMBIENT_ENERGY；想換色調改 AMBIENT_COLOR。
-# 天空用真實 HDRI 全景（Poly Haven, CC0）；換別張改 SKY_PANORAMA（等距全景 .hdr/.exr，2:1）。
-const AMBIENT_COLOR := Color(0.72, 0.74, 0.82)
+# 環境光由天空驅動（地牢吃到 HDRI 的色溫與亮度）。
+# 太亮調低 AMBIENT_ENERGY（過曝可降到 ~0.3）；太暗調高。
+# AMBIENT_SKY_CONTRIBUTION：1=純天空照明；<1 會混入 AMBIENT_COLOR 回退色。
 const AMBIENT_ENERGY := 0.5
+const AMBIENT_SKY_CONTRIBUTION := 1.0
+const AMBIENT_COLOR := Color(0.72, 0.74, 0.82)
+# 天空用真實 HDRI 全景（Poly Haven, CC0）；換別張改 SKY_PANORAMA（等距全景 .hdr/.exr，2:1）。
 const SKY_PANORAMA := "res://content/sky/citrus_orchard_road_puresky_2k.exr"
 
 @onready var _world_builder: WorldBuilder = $WorldBuilder
@@ -69,7 +72,8 @@ func _setup_environment() -> void:
 	var env := Environment.new()
 	env.background_mode = Environment.BG_SKY
 	env.sky = sky
-	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+	env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
+	env.ambient_light_sky_contribution = AMBIENT_SKY_CONTRIBUTION
 	env.ambient_light_color = AMBIENT_COLOR
 	env.ambient_light_energy = AMBIENT_ENERGY
 	var we := WorldEnvironment.new()
