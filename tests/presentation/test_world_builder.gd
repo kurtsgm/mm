@@ -56,6 +56,19 @@ func test_ceiling_placed_when_theme_has_ceiling():
 	assert_eq(feat.get_cell_item(Vector3i(1, 1, 1)), ceil_id)
 	assert_eq(feat.get_cell_item(Vector3i(0, 1, 0)), GridMap.INVALID_CELL_ITEM)
 
+func test_gridmap_world_position_aligns_with_cell_to_world():
+	# 回歸測試：GridMap 擺放的世界座標必須與玩家用的 GridGeometry.cell_to_world 對齊，
+	# 否則玩家會偏移半格、穿進牆裡（GridMap 預設 cell_center_x/z=true 會 +半格）。
+	var wb := _wb()
+	wb.build(_map("###\n#@#\n###"))
+	for grid_name in ["FloorGrid", "FeatureGrid"]:
+		var grid: GridMap = wb.get_node(grid_name)
+		for c in [Vector2i(0, 0), Vector2i(1, 1), Vector2i(2, 0)]:
+			var ml: Vector3 = grid.map_to_local(Vector3i(c.x, 0, c.y))
+			var cw: Vector3 = GridGeometry.cell_to_world(c)
+			assert_almost_eq(ml.x, cw.x, 0.001, "%s x 未對齊 cell_to_world @ %s" % [grid_name, c])
+			assert_almost_eq(ml.z, cw.z, 0.001, "%s z 未對齊 cell_to_world @ %s" % [grid_name, c])
+
 func _theme_with_ceiling() -> DungeonTheme:
 	var t := DungeonTheme.new()
 	t.theme_id = "test_ceiling"

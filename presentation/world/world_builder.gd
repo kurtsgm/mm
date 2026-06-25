@@ -16,7 +16,11 @@ func build(map: MapData, theme: DungeonTheme = null) -> void:
 	for grid in [_floor_grid, _feature_grid]:
 		grid.mesh_library = theme.mesh_library
 		grid.cell_size = Vector3(GridGeometry.CELL_SIZE, WALL_HEIGHT, GridGeometry.CELL_SIZE)
-		grid.cell_center_y = false  # cell y-index j 的原點落在世界 y = j * cell_size.y
+		# 原點對齊 GridGeometry.cell_to_world（cell x/z → x*CELL，無半格偏移）。
+		# 預設 cell_center_x/z=true 會 +半格 → 玩家偏移、穿牆。y 也用 corner-based。
+		grid.cell_center_x = false
+		grid.cell_center_y = false
+		grid.cell_center_z = false
 	var lib := theme.mesh_library
 	var floor_id := lib.find_item_by_name(theme.floor_item)
 	var ceiling_id := -1
