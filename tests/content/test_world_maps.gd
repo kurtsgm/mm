@@ -43,6 +43,8 @@ func test_wilderness_maps_use_grassland_theme():
 	for id in ["wild_nw", "wild_ne", "wild_sw", "wild_se"]:
 		assert_eq(_load(id).theme_id, "grassland", "%s 應為 grassland 主題" % id)
 
-func test_wilderness_uses_grassland_theme():
-	for id in ["wild_nw", "wild_ne", "wild_sw", "wild_se"]:
-		assert_eq(_load(id).theme_id, "grassland", "%s 應為 grassland 主題" % id)
+func test_wild_nw_has_town_decoration():
+	var nw := _load("wild_nw")
+	assert_eq(nw.decorations.size(), 1)
+	assert_eq(nw.decorations[0]["pos"], Vector2i(3, 3))
+	assert_eq(nw.decorations[0]["model"], "town_oak_ext")

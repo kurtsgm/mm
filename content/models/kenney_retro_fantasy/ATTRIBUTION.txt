@@ -1,0 +1,6 @@
+Kenney "Retro Fantasy Kit" — https://kenney.nl/assets
+License: CC0 1.0 (public domain, no attribution required; noted as courtesy).
+Used pieces: wall-fortified-gate, tower, tower-top, roof (GLB).
+Textures (from kit's OBJ .mtl mapping): planks, cobblestone, cobblestoneAlternative, roof.
+GLBs ship without embedded textures; materials are re-textured by name at load
+(see content/models/town_oak_ext/town_oak_ext.gd).
