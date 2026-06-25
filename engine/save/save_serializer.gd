@@ -1,7 +1,7 @@
 class_name SaveSerializer
 extends Object
 
-const VERSION := 3
+const VERSION := 4
 
 static func to_dict(data: SaveData) -> Dictionary:
 	return {
@@ -15,6 +15,7 @@ static func to_dict(data: SaveData) -> Dictionary:
 			"party": _party_to_array(data.party),
 			"inventory": _inventory_to_array(data.inventory),
 			"cleared_encounters": _cleared_to_dict(data.cleared_encounters),
+			"explored": _explored_to_dict(data.explored),
 		},
 	}
 
@@ -22,7 +23,7 @@ static func to_dict(data: SaveData) -> Dictionary:
 # 不傳（純單元測試）時裝備欄留空；背包不需 resolver（只存 id+count）。
 static func from_dict(raw: Dictionary, resolver := Callable()) -> SaveData:
 	var v := int(raw.get("version", -1))
-	if v != VERSION and v != 1 and v != 2:   # 接受目前版本與已知舊版（向後相容）
+	if v != VERSION and v != 1 and v != 2 and v != 3:   # 接受目前版本與已知舊版（向後相容）
 		return null
 	if not raw.has("state"):
 		return null
@@ -38,6 +39,7 @@ static func from_dict(raw: Dictionary, resolver := Callable()) -> SaveData:
 	data.party = _party_from_array(s.get("party", []), resolver)
 	data.inventory = _inventory_from_array(s.get("inventory", []))
 	data.cleared_encounters = _cleared_from_dict(s.get("cleared_encounters", {}))
+	data.explored = _explored_from_dict(s.get("explored", {}))
 	return data
 
 # --- internal ---
@@ -153,4 +155,25 @@ static func _cleared_from_dict(raw) -> Dictionary:
 			if _is_vec_shape(a):
 				positions.append(_to_vec(a))
 		out[String(map_id)] = positions
+	return out
+
+static func _explored_to_dict(explored: Dictionary) -> Dictionary:
+	var out: Dictionary = {}
+	for map_id in explored:
+		var arr: Array = []
+		for pos in explored[map_id]:   # 內層 set 的 key（Vector2i）
+			arr.append(_vec(pos))
+		out[map_id] = arr
+	return out
+
+static func _explored_from_dict(raw) -> Dictionary:
+	var out: Dictionary = {}
+	if typeof(raw) != TYPE_DICTIONARY:
+		return out
+	for map_id in raw:
+		var seen: Dictionary = {}
+		for a in raw[map_id]:
+			if _is_vec_shape(a):
+				seen[_to_vec(a)] = true
+		out[String(map_id)] = seen
 	return out

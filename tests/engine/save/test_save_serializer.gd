@@ -74,3 +74,39 @@ func test_from_dict_rejects_version_mismatch():
 
 func test_from_dict_rejects_missing_state():
 	assert_null(SaveSerializer.from_dict({"version": SaveSerializer.VERSION}))
+
+func test_to_dict_version_is_4():
+	assert_eq(SaveSerializer.to_dict(_sample())["version"], 4)
+
+func test_roundtrip_explored_multi_map():
+	var d := _sample()
+	d.explored = {
+		"level01": {Vector2i(1, 1): true, Vector2i(2, 1): true},
+		"town_oak": {Vector2i(0, 0): true},
+	}
+	var back := SaveSerializer.from_dict(SaveSerializer.to_dict(d))
+	assert_eq(back.explored.size(), 2)
+	assert_true(back.explored["level01"].has(Vector2i(1, 1)))
+	assert_true(back.explored["level01"].has(Vector2i(2, 1)))
+	assert_true(back.explored["town_oak"].has(Vector2i(0, 0)))
+
+func test_old_v3_save_gets_empty_explored():
+	var raw := {
+		"version": 3,
+		"state": {
+			"gold": 0, "map_id": "level01",
+			"player_pos": [1, 1], "player_facing": 0,
+			"party": [], "inventory": [], "cleared_encounters": {},
+		},
+	}
+	var back := SaveSerializer.from_dict(raw)
+	assert_not_null(back, "v3 舊檔仍可讀")
+	assert_eq(back.explored.size(), 0)
+
+func test_explored_malformed_coords_skipped():
+	var raw := SaveSerializer.to_dict(_sample())
+	raw["state"]["explored"] = {"level01": [[1, 1], [9]]}  # 第二個 size<2 → 畸形
+	var back := SaveSerializer.from_dict(raw)
+	assert_not_null(back)
+	assert_true(back.explored["level01"].has(Vector2i(1, 1)))
+	assert_eq(back.explored["level01"].size(), 1, "畸形座標被略過")
