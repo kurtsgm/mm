@@ -36,3 +36,18 @@ func read_slot(slot: int) -> SaveData:
 	if typeof(raw) != TYPE_DICTIONARY:
 		return null
 	return SaveSerializer.from_dict(raw)
+
+func list_slots() -> Array:
+	var out: Array = []
+	for slot in SLOT_COUNT:
+		out.append(_slot_meta(slot))
+	return out
+
+func _slot_meta(slot: int) -> Dictionary:
+	if not has_slot(slot):
+		return {}
+	var text := FileAccess.get_file_as_string(_slot_path(slot))
+	var raw = JSON.parse_string(text)
+	if typeof(raw) != TYPE_DICTIONARY or not raw.has("meta"):
+		return {}
+	return raw["meta"]
