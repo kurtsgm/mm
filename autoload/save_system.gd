@@ -72,3 +72,20 @@ func apply_to(data: SaveData, gs, mm) -> void:
 	mm.load_by_id(data.map_id)
 	for pos in gs.cleared_for(data.map_id):
 		mm.current_map.clear_encounter(pos)
+
+func capture() -> SaveData:
+	return capture_from(GameState)
+
+func apply(data: SaveData) -> void:
+	apply_to(data, GameState, MapManager)
+	loaded.emit()
+
+func save_to_slot(slot: int) -> bool:
+	return write_slot(slot, capture())
+
+func load_from_slot(slot: int) -> bool:
+	var data := read_slot(slot)
+	if data == null:
+		return false
+	apply(data)
+	return true
