@@ -52,7 +52,7 @@ func party_attack(monster_index: int) -> Array:
 		return events
 	var target: Monster = living[monster_index]
 	if CombatFormulas.roll_hit(actor.accuracy, target.speed, _rng):
-		var dmg := CombatFormulas.roll_damage(actor.might, target.armor, false, _rng)
+		var dmg := CombatFormulas.roll_damage(actor.attack_power(), target.armor, false, _rng)
 		target.hp -= dmg
 		events.append("%s 攻擊 %s，造成 %d 傷害。" % [actor.name, target.name, dmg])
 		if not target.is_alive():
@@ -78,7 +78,7 @@ func monster_act() -> Array:
 	var target: Character = targets[_rng.randi_range(0, targets.size() - 1)]
 	var defending := _defending.has(target)
 	if CombatFormulas.roll_hit(actor.accuracy, target.speed, _rng):
-		var dmg := CombatFormulas.roll_damage(actor.might, 0, defending, _rng)
+		var dmg := CombatFormulas.roll_damage(actor.might, target.armor_value(), defending, _rng)
 		target.hp -= dmg
 		events.append("%s 攻擊 %s，造成 %d 傷害。" % [actor.name, target.name, dmg])
 		if target.hp <= 0:

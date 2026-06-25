@@ -148,3 +148,46 @@ func test_run_outcome_is_consistent():
 	else:
 		assert_eq(cs.result(), CombatSystem.Result.ONGOING)
 		assert_false(cs.is_party_turn())  # 逃跑失敗也消耗回合
+
+func _weapon(attack: int) -> ItemDef:
+	var d := ItemDef.new()
+	d.category = ItemDef.Category.WEAPON; d.attack = attack
+	return d
+
+func _armor_item(armor: int) -> ItemDef:
+	var d := ItemDef.new()
+	d.category = ItemDef.Category.ARMOR; d.armor = armor
+	return d
+
+func _step_n(cs: CombatSystem, n: int) -> void:
+	var i := 0
+	while not cs.is_over() and i < n:
+		if cs.is_party_turn():
+			cs.party_attack(0)
+		else:
+			cs.monster_act()
+		i += 1
+
+func test_equipped_weapon_increases_outgoing_damage():
+	var seed := 77
+	var h1 := _char("H", 500, 1, 1000, 50)   # 快、高命中、無武器；might=1
+	var cs1 := CombatSystem.new(_party([h1]), _monsters([_monster("M", 500, 1, 1, 1)]), _rng(seed))
+	_step_n(cs1, 6)
+	var hp1 := cs1.living_monsters()[0].hp
+	var h2 := _char("H", 500, 1, 1000, 50)
+	h2.equipment.equip(_weapon(20))
+	var cs2 := CombatSystem.new(_party([h2]), _monsters([_monster("M", 500, 1, 1, 1)]), _rng(seed))
+	_step_n(cs2, 6)
+	var hp2 := cs2.living_monsters()[0].hp
+	assert_lt(hp2, hp1, "裝備武器應提高輸出，怪物剩血更少")
+
+func test_equipped_armor_reduces_incoming_damage():
+	var seed := 99
+	var h1 := _char("H", 200, 1, 1, 1)       # 慢 → 怪物先動；無防具
+	var cs1 := CombatSystem.new(_party([h1]), _monsters([_monster("M", 500, 8, 1000, 50)]), _rng(seed))
+	_step_n(cs1, 8)
+	var h2 := _char("H", 200, 1, 1, 1)
+	h2.equipment.equip(_armor_item(100))     # armor_value 100 → 入傷夾到最低
+	var cs2 := CombatSystem.new(_party([h2]), _monsters([_monster("M", 500, 8, 1000, 50)]), _rng(seed))
+	_step_n(cs2, 8)
+	assert_gt(h2.hp, h1.hp, "裝甲應減少受到的傷害")
