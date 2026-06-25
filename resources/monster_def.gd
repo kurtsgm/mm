@@ -12,3 +12,5 @@ extends Resource
 @export var luck: int = 0
 @export var xp_reward: int = 0
 @export var gold_reward: int = 0
+@export var drop_item_id: String = ""
+@export var drop_chance: float = 0.0

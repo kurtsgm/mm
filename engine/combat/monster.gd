@@ -12,6 +12,8 @@ var accuracy: int
 var luck: int
 var xp_reward: int
 var gold_reward: int
+var drop_item_id: String = ""
+var drop_chance: float = 0.0
 
 func is_alive() -> bool:
 	return hp > 0
@@ -29,4 +31,6 @@ static func from_def(def: MonsterDef) -> Monster:
 	m.luck = def.luck
 	m.xp_reward = def.xp_reward
 	m.gold_reward = def.gold_reward
+	m.drop_item_id = def.drop_item_id
+	m.drop_chance = def.drop_chance
 	return m

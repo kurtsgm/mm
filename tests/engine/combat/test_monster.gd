@@ -35,3 +35,11 @@ func test_is_alive():
 	assert_false(m.is_alive())
 	m.hp = -3
 	assert_false(m.is_alive())
+
+func test_from_def_copies_drop_fields():
+	var def := MonsterDef.new()
+	def.display_name = "G"; def.hp_max = 10
+	def.drop_item_id = "potion"; def.drop_chance = 0.25
+	var m := Monster.from_def(def)
+	assert_eq(m.drop_item_id, "potion")
+	assert_almost_eq(m.drop_chance, 0.25, 0.0001)

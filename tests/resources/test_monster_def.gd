@@ -24,3 +24,11 @@ func test_holds_fields():
 	assert_eq(d.armor, 1)
 	assert_eq(d.xp_reward, 20)
 	assert_eq(d.gold_reward, 8)
+
+func test_drop_defaults_and_fields():
+	var d := MonsterDef.new()
+	assert_eq(d.drop_item_id, "")
+	assert_almost_eq(d.drop_chance, 0.0, 0.0001)
+	d.drop_item_id = "potion"; d.drop_chance = 0.5
+	assert_eq(d.drop_item_id, "potion")
+	assert_almost_eq(d.drop_chance, 0.5, 0.0001)
