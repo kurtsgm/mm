@@ -43,3 +43,37 @@ func test_holds_full_stat_block():
 	assert_eq(c.sp_max, 8)
 	assert_eq(c.might, 18)
 	assert_eq(c.luck, 10)
+
+func _weapon(attack: int) -> ItemDef:
+	var d := ItemDef.new()
+	d.category = ItemDef.Category.WEAPON; d.attack = attack
+	return d
+
+func _armor(armor: int) -> ItemDef:
+	var d := ItemDef.new()
+	d.category = ItemDef.Category.ARMOR; d.armor = armor
+	return d
+
+func test_attack_power_without_equipment_equals_might():
+	var c := Character.new()
+	c.might = 15
+	assert_eq(c.attack_power(), 15)
+	assert_eq(c.armor_value(), 0)
+
+func test_attack_power_adds_weapon_attack():
+	var c := Character.new()
+	c.might = 15
+	c.equipment.equip(_weapon(6))
+	assert_eq(c.attack_power(), 21)
+
+func test_armor_value_sums_equipped_armor():
+	var c := Character.new()
+	c.equipment.equip(_armor(3))
+	assert_eq(c.armor_value(), 3)
+
+func test_each_character_has_independent_equipment():
+	var a := Character.new()
+	var b := Character.new()
+	a.equipment.equip(_weapon(6))
+	assert_eq(a.equipment.total_attack(), 6)
+	assert_eq(b.equipment.total_attack(), 0)   # 每實例獨立，不共用

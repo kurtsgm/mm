@@ -19,9 +19,16 @@ var accuracy: int
 var luck: int
 var condition: int = Condition.OK
 var experience: int = 0
+var equipment: Equipment = Equipment.new()
 
 func is_alive() -> bool:
 	return condition != Condition.DEAD
 
 func is_conscious() -> bool:
 	return condition == Condition.OK
+
+func attack_power() -> int:
+	return might + equipment.total_attack()
+
+func armor_value() -> int:
+	return equipment.total_armor()
