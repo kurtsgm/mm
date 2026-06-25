@@ -36,3 +36,12 @@ func test_blocked_by_bounds_stays_put():
 	# 站在最北排 (1,0) 面向 NORTH 前進 -> 界外 -> 留原地
 	var out := GridMovement.resolve(grid, Vector2i(1, 0), GridDirection.Dir.NORTH, GridMovement.Move.FORWARD)
 	assert_eq(out, Vector2i(1, 0))
+
+func test_direction_of_all_moves_facing_north():
+	assert_eq(GridMovement.direction_of(GridDirection.Dir.NORTH, GridMovement.Move.FORWARD), GridDirection.Dir.NORTH)
+	assert_eq(GridMovement.direction_of(GridDirection.Dir.NORTH, GridMovement.Move.BACKWARD), GridDirection.Dir.SOUTH)
+	assert_eq(GridMovement.direction_of(GridDirection.Dir.NORTH, GridMovement.Move.STRAFE_LEFT), GridDirection.Dir.WEST)
+	assert_eq(GridMovement.direction_of(GridDirection.Dir.NORTH, GridMovement.Move.STRAFE_RIGHT), GridDirection.Dir.EAST)
+
+func test_direction_of_facing_east_forward():
+	assert_eq(GridMovement.direction_of(GridDirection.Dir.EAST, GridMovement.Move.FORWARD), GridDirection.Dir.EAST)
