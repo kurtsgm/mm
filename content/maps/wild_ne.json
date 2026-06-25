@@ -1,6 +1,6 @@
 {
   "name": "東北野",
-  "theme": "default",
+  "theme": "grassland",
   "grid": ["..@..", ".....", ".....", ".....", "....."],
   "neighbors": { "west": "wild_nw", "south": "wild_se" }
 }

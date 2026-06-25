@@ -1,6 +1,6 @@
 {
   "name": "西北野",
-  "theme": "default",
+  "theme": "grassland",
   "grid": [".....", ".....", "..@..", ".....", "....."],
   "entities": [
     { "type": "portal", "pos": [3, 3], "to": "town_oak", "entry": "gate" }

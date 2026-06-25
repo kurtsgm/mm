@@ -6,6 +6,7 @@ extends Object
 const _THEMES := {
 	"bricks": "res://content/themes/bricks.tres",
 	"town": "res://content/themes/town.tres",
+	"grassland": "res://content/themes/grassland.tres",
 }
 
 static func has_theme(id: String) -> bool:
