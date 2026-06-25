@@ -1,7 +1,7 @@
 extends GutTest
 
-func _map(text: String) -> MapData:
-	return MapAsciiImporter.parse(text)
+func _map(ascii: String) -> MapData:
+	return MapImporter.parse(JSON.stringify({"grid": Array(ascii.split("\n"))}))
 
 func test_walls_solid_others_walkable():
 	var grid := MapBuilder.to_grid_data(_map("###\n#@#\n###"))
