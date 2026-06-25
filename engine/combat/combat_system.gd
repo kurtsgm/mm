@@ -16,6 +16,7 @@ func _init(p: Party, mons: Array[Monster], rng: RandomNumberGenerator) -> void:
 	party = p
 	monsters = mons
 	_rng = rng
+	_clear_party_statuses()
 	_start_round()
 
 func result() -> int:
@@ -51,8 +52,8 @@ func party_attack(monster_index: int) -> Array:
 	if monster_index < 0 or monster_index >= living.size():
 		return events
 	var target: Monster = living[monster_index]
-	if CombatFormulas.roll_hit(actor.accuracy, target.speed, _rng):
-		var dmg := CombatFormulas.roll_damage(actor.attack_power(), target.armor, false, _rng)
+	if CombatFormulas.roll_hit(actor.effective_accuracy(), target.speed, _rng):
+		var dmg := CombatFormulas.roll_damage(actor.attack_power(), target.effective_armor(), false, _rng)
 		target.hp -= dmg
 		events.append("%s 攻擊 %s，造成 %d 傷害。" % [actor.name, target.name, dmg])
 		if not target.is_alive():
@@ -77,8 +78,8 @@ func monster_act() -> Array:
 		return events
 	var target: Character = targets[_rng.randi_range(0, targets.size() - 1)]
 	var defending := _defending.has(target)
-	if CombatFormulas.roll_hit(actor.accuracy, target.speed, _rng):
-		var dmg := CombatFormulas.roll_damage(actor.might, target.armor_value(), defending, _rng)
+	if CombatFormulas.roll_hit(actor.effective_accuracy(), target.speed, _rng):
+		var dmg := CombatFormulas.roll_damage(actor.effective_attack(), target.armor_value(), defending, _rng)
 		target.hp -= dmg
 		events.append("%s 攻擊 %s，造成 %d 傷害。" % [actor.name, target.name, dmg])
 		if target.hp <= 0:
@@ -121,8 +122,27 @@ func flee_chance() -> int:
 
 # --- internal ---
 
+func _clear_party_statuses() -> void:
+	for m in party.members:
+		m.statuses.clear()
+
+func _tick_statuses() -> void:
+	for c in party.members:
+		_decay(c.statuses)
+	for mon in monsters:
+		_decay(mon.statuses)
+
+func _decay(statuses: Array) -> void:
+	var i := statuses.size() - 1
+	while i >= 0:
+		statuses[i].remaining -= 1
+		if statuses[i].remaining <= 0:
+			statuses.remove_at(i)
+		i -= 1
+
 func _start_round() -> void:
 	_defending.clear()
+	_tick_statuses()
 	var combatants: Array = []
 	for m in party.members:
 		if m.is_conscious():
