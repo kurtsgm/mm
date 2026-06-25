@@ -114,6 +114,58 @@ func party_run() -> Array:
 		_advance()
 	return events
 
+# 隊員施放已解析的 SpellDef。target_index：單體時為敵/友索引；AoE 時忽略。
+func party_cast(spell: SpellDef, target_index: int) -> Array:
+	var events: Array = []
+	var actor = current_combatant()
+	if not (actor is Character):
+		return events
+	if spell == null or not spell.is_combat_usable():
+		return events
+	if not actor.known_spells.has(spell.id):
+		events.append("%s 還不會 %s。" % [actor.name, spell.display_name])
+		return events
+	if actor.sp < spell.sp_cost:
+		events.append("%s 的 SP 不足。" % actor.name)
+		return events
+	actor.sp -= spell.sp_cost
+	match spell.effect:
+		SpellDef.Effect.DAMAGE:
+			events.append_array(_cast_damage(spell, actor, target_index))
+		SpellDef.Effect.HEAL, SpellDef.Effect.REVIVE:
+			events.append_array(_cast_support(spell, actor, target_index))
+		SpellDef.Effect.BUFF:
+			events.append_array(_cast_buff(spell, target_index))
+	_advance()
+	return events
+
+func _cast_damage(spell: SpellDef, caster: Character, target_index: int) -> Array:
+	var events: Array = []
+	for t in _enemy_targets(spell, target_index):
+		var base := SpellPower.magnitude(spell, caster)
+		var rolled := CombatFormulas.roll_spell_damage(base, _rng)
+		var dmg := Resistance.apply(rolled, t.resist_for(spell.element))
+		t.hp -= dmg
+		events.append("%s 對 %s 施放 %s，造成 %d 傷害。" % [caster.name, t.name, spell.display_name, dmg])
+		if not t.is_alive():
+			events.append("%s 被擊倒了！" % t.name)
+	return events
+
+func _cast_support(spell: SpellDef, caster: Character, target_index: int) -> Array:
+	var events: Array = []
+	for t in _ally_targets(spell, target_index):
+		events.append_array(SpellEffects.apply(spell, caster, t))
+	return events
+
+func _cast_buff(spell: SpellDef, target_index: int) -> Array:
+	var events: Array = []
+	var to_allies := spell.target == SpellDef.Target.SINGLE_ALLY or spell.target == SpellDef.Target.ALL_ALLIES
+	var targets: Array = _ally_targets(spell, target_index) if to_allies else _enemy_targets(spell, target_index)
+	for t in targets:
+		t.statuses.append(StatusEffect.new(spell.status_stat, spell.status_amount, spell.status_duration))
+		events.append("%s 受到了 %s 的效果。" % [t.name, spell.display_name])
+	return events
+
 func is_defending(c) -> bool:
 	return _defending.has(c)
 
@@ -198,3 +250,18 @@ func _avg_monster_speed() -> float:
 	for m in living:
 		total += m.speed
 	return float(total) / living.size()
+
+func _enemy_targets(spell: SpellDef, target_index: int) -> Array:
+	var living := living_monsters()
+	if spell.target == SpellDef.Target.ALL_ENEMIES:
+		return living
+	if target_index < 0 or target_index >= living.size():
+		return []
+	return [living[target_index]]
+
+func _ally_targets(spell: SpellDef, target_index: int) -> Array:
+	if spell.target == SpellDef.Target.ALL_ALLIES:
+		return party.members
+	if target_index < 0 or target_index >= party.members.size():
+		return []
+	return [party.members[target_index]]
