@@ -23,3 +23,10 @@ func test_holds_fields():
 	assert_eq(d.player_facing, 1)
 	assert_not_null(d.party)
 	assert_eq(d.cleared_encounters["level01"].size(), 1)
+
+func test_inventory_field_defaults_null_and_holds():
+	var d := SaveData.new()
+	assert_null(d.inventory)
+	d.inventory = Inventory.new()
+	d.inventory.add("potion", 1)
+	assert_eq(d.inventory.count_of("potion"), 1)
