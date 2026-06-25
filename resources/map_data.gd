@@ -15,6 +15,7 @@ enum TileType { FLOOR = 0, WALL = 1, DOOR = 2, STAIRS_UP = 3, STAIRS_DOWN = 4 }
 @export var neighbors: Dictionary = {}            # int(GridDirection.Dir) -> String(map_id)
 @export var entries: Dictionary = {}              # String(name) -> { "pos": Vector2i, "facing": int }
 @export var links: Dictionary = {}                # Vector2i(cell) -> { "map": String, "entry": String }
+@export var decorations: Array = []         # [{ pos:Vector2i, model:String, facing:int, scale:float }]
 
 func get_tile(pos: Vector2i) -> int:
 	if pos.x < 0 or pos.x >= width or pos.y < 0 or pos.y >= height:

@@ -39,6 +39,7 @@ static func parse(json_text: String) -> MapData:
 
 	map.encounters = entities["encounters"]
 	map.links = entities["links"]
+	map.decorations = entities["decorations"]
 	return map
 
 # --- internal ---
@@ -75,12 +76,13 @@ static func _parse_grid(rows) -> Dictionary:
 		return {}
 	return {"width": width, "height": height, "tiles": tiles, "start_pos": start_pos}
 
-# arr -> { encounters, links }；違規 → null。空陣列為合法（回空 dicts）。
+# arr -> { encounters, links, decorations }；違規 → null。空陣列為合法（回空集合）。
 static func _parse_entities(arr, width: int, height: int):
 	if typeof(arr) != TYPE_ARRAY:
 		return null
 	var encounters := {}
 	var links := {}
+	var decorations := []
 	for e in arr:
 		if typeof(e) != TYPE_DICTIONARY:
 			return null
@@ -100,9 +102,21 @@ static func _parse_entities(arr, width: int, height: int):
 				if not e.has("to"):
 					return null
 				links[pos] = {"map": String(e["to"]), "entry": String(e.get("entry", "start"))}
+			"decoration":
+				if not e.has("model"):
+					return null
+				var facing := GridDirection.Dir.NORTH
+				if e.has("facing"):
+					facing = _facing_word_to_dir(String(e["facing"]))
+				var scale := 1.0
+				if e.has("scale"):
+					if not _is_num(e["scale"]):
+						return null
+					scale = float(e["scale"])
+				decorations.append({"pos": pos, "model": String(e["model"]), "facing": facing, "scale": scale})
 			_:
 				return null
-	return {"encounters": encounters, "links": links}
+	return {"encounters": encounters, "links": links, "decorations": decorations}
 
 # [x, y] -> Vector2i；違規 → null。JSON 數字可能是 float，需 int() 轉。
 static func _parse_pos(v):

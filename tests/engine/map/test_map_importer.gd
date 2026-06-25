@@ -124,3 +124,31 @@ func test_minimal_map_has_empty_world_fields():
 	assert_eq(m.links, {})
 	assert_eq(m.encounters, {})
 	assert_eq(m.display_name, "")
+
+func test_decoration_entity_parsed():
+	var m := _p({"grid": ["@."], "entities": [
+		{"type": "decoration", "pos": [1, 0], "model": "town", "facing": "S", "scale": 2.0}]})
+	assert_eq(m.decorations.size(), 1)
+	var d = m.decorations[0]
+	assert_eq(d["pos"], Vector2i(1, 0))
+	assert_eq(d["model"], "town")
+	assert_eq(d["facing"], GridDirection.Dir.SOUTH)
+	assert_eq(d["scale"], 2.0)
+
+func test_decoration_defaults_facing_north_scale_one():
+	var m := _p({"grid": ["@."], "entities": [
+		{"type": "decoration", "pos": [1, 0], "model": "town"}]})
+	var d = m.decorations[0]
+	assert_eq(d["facing"], GridDirection.Dir.NORTH)
+	assert_eq(d["scale"], 1.0)
+
+func test_decoration_missing_model_returns_null():
+	assert_null(_p({"grid": ["@."], "entities": [{"type": "decoration", "pos": [1, 0]}]}))
+
+func test_decoration_out_of_bounds_returns_null():
+	assert_null(_p({"grid": ["@."], "entities": [
+		{"type": "decoration", "pos": [9, 9], "model": "town"}]}))
+
+func test_no_decoration_defaults_empty():
+	var m := _p({"grid": ["@."]})
+	assert_eq(m.decorations.size(), 0)
