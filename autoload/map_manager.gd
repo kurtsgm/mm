@@ -8,7 +8,7 @@ var current_map: MapData
 var current_grid: GridData
 
 func load_text(text: String) -> MapData:
-	var map := MapAsciiImporter.parse(text)
+	var map := MapImporter.parse(text)
 	assert(map != null, "MapManager.load_text: invalid map text")
 	_set_current(map)
 	return map
@@ -17,11 +17,11 @@ func load_text_file(path: String) -> MapData:
 	var text := FileAccess.get_file_as_string(path)
 	assert(text != "", "MapManager.load_text_file: cannot read %s" % path)
 	var map := load_text(text)
-	map.map_id = path.get_file().get_basename()  # "level01.txt" → "level01"
+	map.map_id = path.get_file().get_basename()  # "level01.json" → "level01"
 	return map
 
 func load_by_id(id: String) -> MapData:
-	return load_text_file("%s/%s.txt" % [MAPS_DIR, id])
+	return load_text_file("%s/%s.json" % [MAPS_DIR, id])
 
 func _set_current(map: MapData) -> void:
 	current_map = map

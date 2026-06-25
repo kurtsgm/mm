@@ -1,0 +1,9 @@
+{
+  "name": "橡鎮",
+  "theme": "default",
+  "grid": ["#####", "#...#", "#.@.#", "#...#", "#####"],
+  "entities": [
+    { "type": "portal", "pos": [2, 3], "to": "wild_nw", "entry": "from_town" }
+  ],
+  "entries": { "gate": { "pos": [2, 1], "facing": "S" } }
+}

@@ -1,0 +1,16 @@
+{
+  "theme": "bricks",
+  "grid": [
+    "#######",
+    "#@.D.<#",
+    "#..#..#",
+    "#..#..#",
+    "#....##",
+    "#.#..>#",
+    "#######"
+  ],
+  "entities": [
+    { "type": "monster", "pos": [2, 2], "encounter": "g" },
+    { "type": "monster", "pos": [4, 4], "encounter": "o" }
+  ]
+}

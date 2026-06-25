@@ -1,0 +1,6 @@
+{
+  "name": "西南野",
+  "theme": "default",
+  "grid": [".....", ".....", "..@..", ".....", "....."],
+  "neighbors": { "north": "wild_nw", "east": "wild_se" }
+}
