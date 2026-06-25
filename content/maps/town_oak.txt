@@ -1,0 +1,9 @@
+theme: default
+name: 橡鎮
+entry gate: 2,1 S
+link W: wild_nw.from_town
+#####
+#...#
+#.@.#
+#.W.#
+#####
