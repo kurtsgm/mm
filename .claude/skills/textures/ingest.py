@@ -27,7 +27,7 @@ import subprocess
 
 # slot -> ordered patterns (first/earlier pattern = higher preference)
 SLOT_PATTERNS = {
-    "color":     [r"base[_-]?color", r"albedo", r"diffuse", r"color"],
+    "color":     [r"base[_-]?color", r"albedo", r"diffuse", r"color", r"diff"],
     "normal":    [r"normal[_-]?gl", r"nor[_-]?gl", r"normal", r"\bnor\b"],
     "roughness": [r"rough"],
     "ao":        [r"ambient[_-]?occlusion", r"occlusion", r"\bao\b"],
