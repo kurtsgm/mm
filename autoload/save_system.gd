@@ -51,3 +51,24 @@ func _slot_meta(slot: int) -> Dictionary:
 	if typeof(raw) != TYPE_DICTIONARY or not raw.has("meta"):
 		return {}
 	return raw["meta"]
+
+func capture_from(gs) -> SaveData:
+	var data := SaveData.new()
+	data.gold = gs.gold
+	data.map_id = gs.current_map_id
+	data.player_pos = gs.player_pos
+	data.player_facing = gs.player_facing
+	data.party = gs.party
+	data.cleared_encounters = gs.cleared_encounters
+	return data
+
+func apply_to(data: SaveData, gs, mm) -> void:
+	gs.party = data.party
+	gs.gold = data.gold
+	gs.current_map_id = data.map_id
+	gs.player_pos = data.player_pos
+	gs.player_facing = data.player_facing
+	gs.cleared_encounters = data.cleared_encounters
+	mm.load_by_id(data.map_id)
+	for pos in gs.cleared_for(data.map_id):
+		mm.current_map.clear_encounter(pos)
