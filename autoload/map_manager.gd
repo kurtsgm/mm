@@ -23,6 +23,20 @@ func load_text_file(path: String) -> MapData:
 func load_by_id(id: String) -> MapData:
 	return load_text_file("%s/%s.json" % [MAPS_DIR, id])
 
+# 無副作用載入（拼裝鄰圖用）：不動 current_map/current_grid；失敗回 null（不 assert）。
+func peek_map(id: String) -> MapData:
+	var path := "%s/%s.json" % [MAPS_DIR, id]
+	if not FileAccess.file_exists(path):
+		return null
+	var text := FileAccess.get_file_as_string(path)
+	if text == "":
+		return null
+	var map := MapImporter.parse(text)
+	if map == null:
+		return null
+	map.map_id = id
+	return map
+
 func _set_current(map: MapData) -> void:
 	current_map = map
 	current_grid = MapBuilder.to_grid_data(map)
