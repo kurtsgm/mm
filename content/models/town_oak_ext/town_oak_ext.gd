@@ -38,6 +38,8 @@ func _spawn(piece: String, pos: Vector3, yaw_deg: float) -> void:
 	inst.rotation.y = deg_to_rad(yaw_deg)
 	for c in inst.find_children("*", "MeshInstance3D", true, false):
 		var mi: MeshInstance3D = c
+		if mi.mesh == null:
+			continue
 		for s in mi.mesh.get_surface_count():
 			var src := mi.get_active_material(s)
 			var mat_name := src.resource_name if src else ""

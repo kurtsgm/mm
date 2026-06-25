@@ -2,7 +2,7 @@ class_name DecorationCatalog
 extends Object
 
 # model id → GLB（或 .tscn）路徑（鏡射 ThemeCatalog/Bestiary/ItemCatalog）。
-# 內容期把真模型加進來：例如 "town_oak_ext": "res://content/models/town_oak_ext/town.glb"。
+# 內容期把真模型加進來（GLB 或 .tscn），例如 "town_oak_ext": "res://content/models/town_oak_ext/town_oak_ext.tscn"。
 const _MODELS := {
 	"town_oak_ext": "res://content/models/town_oak_ext/town_oak_ext.tscn",
 }
