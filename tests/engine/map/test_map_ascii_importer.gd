@@ -56,3 +56,34 @@ func test_multiple_markers_recorded():
 	assert_eq(map.get_encounter(Vector2i(4, 1)), "o")
 	assert_eq(map.get_tile(Vector2i(2, 1)), MapData.TileType.FLOOR)
 	assert_eq(map.get_tile(Vector2i(4, 1)), MapData.TileType.FLOOR)
+
+func test_theme_header_sets_theme_id():
+	var map := MapAsciiImporter.parse("theme: castle\n###\n#@#\n###")
+	assert_not_null(map)
+	assert_eq(map.theme_id, "castle")
+	assert_eq(map.start_pos, Vector2i(1, 1))
+	assert_eq(map.get_tile(Vector2i(0, 0)), MapData.TileType.WALL)
+
+func test_no_header_defaults_theme_id():
+	var map := MapAsciiImporter.parse("###\n#@#\n###")
+	assert_not_null(map)
+	assert_eq(map.theme_id, "default")
+
+func test_unknown_directive_ignored():
+	var map := MapAsciiImporter.parse("name: dungeon\ntheme: cave\n###\n#@#\n###")
+	assert_not_null(map)
+	assert_eq(map.theme_id, "cave")
+	assert_eq(map.width, 3)
+	assert_eq(map.height, 3)
+
+func test_empty_theme_value_keeps_default():
+	var map := MapAsciiImporter.parse("theme:\n###\n#@#\n###")
+	assert_not_null(map)
+	assert_eq(map.theme_id, "default")
+
+func test_header_then_encounter_still_parses():
+	var map := MapAsciiImporter.parse("theme: cave\n###\n#@g\n###")
+	assert_not_null(map)
+	assert_eq(map.theme_id, "cave")
+	assert_true(map.has_encounter(Vector2i(2, 1)))
+	assert_eq(map.start_pos, Vector2i(1, 1))
