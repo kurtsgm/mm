@@ -10,6 +10,7 @@ var _hud: Hud
 var _combat_layer: CombatLayer
 var _combat: CombatSystem
 var _combat_pos: Vector2i
+var _save_menu: SaveMenu
 
 func _ready() -> void:
 	var map := MapManager.load_text_file(MAP_PATH)
@@ -24,6 +25,11 @@ func _ready() -> void:
 	_combat_layer = CombatLayer.new()
 	add_child(_combat_layer)
 	_combat_layer.combat_finished.connect(_on_combat_finished)
+
+	_save_menu = SaveMenu.new()
+	add_child(_save_menu)
+	_save_menu.closed.connect(_on_menu_closed)
+	SaveSystem.loaded.connect(_on_loaded)
 
 	_player.setup(MapManager.current_grid, map.start_pos, map.start_facing)
 
@@ -102,3 +108,25 @@ func _show_game_over() -> void:
 	label.add_theme_font_size_override("font_size", 64)
 	layer.add_child(label)
 	add_child(layer)
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not (event is InputEventKey and event.pressed and not event.echo):
+		return
+	if event.keycode != KEY_TAB:
+		return
+	if _combat != null:
+		return  # 戰鬥中禁用選單
+	if _save_menu.is_open():
+		_save_menu.close()
+	else:
+		_player.set_enabled(false)
+		_save_menu.open()
+
+func _on_menu_closed() -> void:
+	_player.set_enabled(true)
+
+func _on_loaded() -> void:
+	_world_builder.build(MapManager.current_map)
+	_player.setup(MapManager.current_grid, GameState.player_pos, GameState.player_facing)
+	_hud.refresh()
+	GameState.message_log.push("讀檔完成。")
