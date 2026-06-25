@@ -87,3 +87,50 @@ func test_header_then_encounter_still_parses():
 	assert_eq(map.theme_id, "cave")
 	assert_true(map.has_encounter(Vector2i(2, 1)))
 	assert_eq(map.start_pos, Vector2i(1, 1))
+
+func test_name_header_sets_display_name():
+	var map := MapAsciiImporter.parse("name: 橡鎮\n###\n#@#\n###")
+	assert_not_null(map)
+	assert_eq(map.display_name, "橡鎮")
+
+func test_neighbor_headers_parsed():
+	var map := MapAsciiImporter.parse("north: a\neast: b\nsouth: c\nwest: d\n###\n#@#\n###")
+	assert_not_null(map)
+	assert_eq(map.get_neighbor(GridDirection.Dir.NORTH), "a")
+	assert_eq(map.get_neighbor(GridDirection.Dir.EAST), "b")
+	assert_eq(map.get_neighbor(GridDirection.Dir.SOUTH), "c")
+	assert_eq(map.get_neighbor(GridDirection.Dir.WEST), "d")
+
+func test_entry_header_with_facing():
+	var map := MapAsciiImporter.parse("entry gate: 1,1 S\n###\n#@#\n###")
+	assert_not_null(map)
+	assert_eq(map.get_entry("gate"), {"pos": Vector2i(1, 1), "facing": GridDirection.Dir.SOUTH})
+
+func test_entry_header_defaults_facing_north():
+	var map := MapAsciiImporter.parse("entry spot: 2,0\n###\n#@#\n###")
+	assert_eq(map.get_entry("spot"), {"pos": Vector2i(2, 0), "facing": GridDirection.Dir.NORTH})
+
+func test_at_creates_start_entry():
+	var map := MapAsciiImporter.parse("###\n#@#\n###")
+	assert_eq(map.get_entry("start"), {"pos": Vector2i(1, 1), "facing": GridDirection.Dir.NORTH})
+
+func test_link_marker_is_floor_and_recorded():
+	var map := MapAsciiImporter.parse("link T: town_oak.gate\n###\n#@T\n###")
+	assert_not_null(map)
+	assert_eq(map.get_tile(Vector2i(2, 1)), MapData.TileType.FLOOR)
+	assert_true(map.has_link(Vector2i(2, 1)))
+	assert_eq(map.get_link(Vector2i(2, 1)), {"map": "town_oak", "entry": "gate"})
+
+func test_link_value_without_entry_defaults_start():
+	var map := MapAsciiImporter.parse("link T: town_oak\n###\n#@T\n###")
+	assert_eq(map.get_link(Vector2i(2, 1)), {"map": "town_oak", "entry": "start"})
+
+func test_uppercase_without_link_declaration_returns_null():
+	# 'Z' 無對應 link 宣告 → 未知字元 → null（嚴格抓打字錯）
+	assert_null(MapAsciiImporter.parse("##\n@Z"))
+
+func test_old_map_has_empty_world_fields():
+	var map := MapAsciiImporter.parse("###\n#@#\n###")
+	assert_eq(map.neighbors, {})
+	assert_eq(map.links, {})
+	assert_eq(map.display_name, "")
