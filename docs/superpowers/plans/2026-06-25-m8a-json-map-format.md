@@ -16,8 +16,9 @@
 - **嚴格驗證**：任何違規 → `parse` 回 `null`（不做 log 副作用），延續既有 importer 契約。
 - **合法格子字元僅 `# . @ D < >`**：字母（`a-z`/`A-Z`）在 `grid` 中一律視為未知字元 → `null`。怪物/portal 改走 `entities`。
 - **本期 `entities` 僅 `monster` / `portal` 兩型**；未知 `type` → `null`（`chest` 留待步驟二）。
-- **測試指令**（全套件）：`godot --headless --path . -s res://addons/gut/gut_cmdln.gd`（`.gutconfig.json` 已設 `should_exit: true`）。
-- **測試指令**（單檔）：在上面後面加 `-gtest=res://<path> -gexit`。
+- **測試指令**（全套件）：`godot --headless --path . -s res://addons/gut/gut_cmdln.gd -gdir=res://tests -ginclude_subdirs -gexit`。
+- **測試指令**（單檔聚焦）：`godot --headless --path . -s res://addons/gut/gut_cmdln.gd -gdir=res://tests -ginclude_subdirs -gselect=<test_file.gd> -gexit`。**注意：用 `-gselect=<檔名>`（非 `-gtest=`，後者在本專案 GUT 會跑全套件而非聚焦）。**
+- **新增 `class_name` 後須重匯入**：建立 `MapImporter`（新全域類別）後，GUT 可能無法解析該 class；先跑一次 `godot --headless --path . --import`，再跑測試。
 - **繁體中文**：對使用者的說明用繁中；程式碼/commit 訊息維持既有慣例。
 
 ---
@@ -186,7 +187,7 @@ func test_minimal_map_has_empty_world_fields():
 
 - [ ] **Step 2: 跑測試確認失敗**
 
-Run: `godot --headless --path . -s res://addons/gut/gut_cmdln.gd -gtest=res://tests/engine/map/test_map_importer.gd -gexit`
+Run: `godot --headless --path . -s res://addons/gut/gut_cmdln.gd -gdir=res://tests -ginclude_subdirs -gselect=test_map_importer.gd -gexit`
 Expected: FAIL／報錯 —「Identifier "MapImporter" not declared」（檔案尚未建立）。
 
 - [ ] **Step 3: 寫最小實作** — 建立 `engine/map/map_importer.gd`
@@ -366,7 +367,8 @@ static func _facing_word_to_dir(word: String) -> int:
 
 - [ ] **Step 4: 跑測試確認通過**
 
-Run: `godot --headless --path . -s res://addons/gut/gut_cmdln.gd -gtest=res://tests/engine/map/test_map_importer.gd -gexit`
+先重匯入（新 `class_name` 需要）：`godot --headless --path . --import`
+再跑：`godot --headless --path . -s res://addons/gut/gut_cmdln.gd -gdir=res://tests -ginclude_subdirs -gselect=test_map_importer.gd -gexit`
 Expected: PASS（全部 test_* 綠燈、0 fail）。
 
 - [ ] **Step 5: Commit**
@@ -516,8 +518,8 @@ func _ready() -> void:
 
 - [ ] **Step 6: 跑相關測試確認通過**
 
-Run: `godot --headless --path . -s res://addons/gut/gut_cmdln.gd -gtest=res://tests/autoload/test_map_manager.gd -gexit`
-然後：`godot --headless --path . -s res://addons/gut/gut_cmdln.gd -gtest=res://tests/content/test_world_maps.gd -gexit`
+Run: `godot --headless --path . -s res://addons/gut/gut_cmdln.gd -gdir=res://tests -ginclude_subdirs -gselect=test_map_manager.gd -gexit`
+然後：`godot --headless --path . -s res://addons/gut/gut_cmdln.gd -gdir=res://tests -ginclude_subdirs -gselect=test_world_maps.gd -gexit`
 Expected: 兩者皆 PASS（`test_world_maps` 的 neighbors/links/entries 斷言靠忠實轉檔維持綠）。
 
 - [ ] **Step 7: Commit**
@@ -558,8 +560,8 @@ func _map(ascii: String) -> MapData:
 
 - [ ] **Step 3: 跑這兩個測試確認通過**
 
-Run: `godot --headless --path . -s res://addons/gut/gut_cmdln.gd -gtest=res://tests/engine/map/test_map_builder.gd -gexit`
-然後：`godot --headless --path . -s res://addons/gut/gut_cmdln.gd -gtest=res://tests/presentation/test_world_builder.gd -gexit`
+Run: `godot --headless --path . -s res://addons/gut/gut_cmdln.gd -gdir=res://tests -ginclude_subdirs -gselect=test_map_builder.gd -gexit`
+然後：`godot --headless --path . -s res://addons/gut/gut_cmdln.gd -gdir=res://tests -ginclude_subdirs -gselect=test_world_builder.gd -gexit`
 Expected: 兩者皆 PASS。
 
 - [ ] **Step 4: Commit**
@@ -599,8 +601,8 @@ Expected: 無輸出（所有地圖路徑已改 `.json`）。
 
 - [ ] **Step 4: 跑全測試套件確認全綠**
 
-Run: `godot --headless --path . -s res://addons/gut/gut_cmdln.gd`
-Expected: 0 failing、0 errors、0 orphans 相關失敗；通過率 100%（測試數會因移除舊 importer 測試 + 新增 `test_map_importer` 而與 247 略有出入，重點是**全綠**）。
+Run: `godot --headless --path . -s res://addons/gut/gut_cmdln.gd -gdir=res://tests -ginclude_subdirs -gexit`
+Expected: 0 failing、0 errors、0 orphans 相關失敗；通過率 100%（測試數會因移除舊 importer 測試 + 新增 `test_map_importer` 而與 M7 結束時的 278 略有出入，重點是**全綠**）。
 
 - [ ] **Step 5: 手動 smoke（呈現層，照本專案慣例）**
 
