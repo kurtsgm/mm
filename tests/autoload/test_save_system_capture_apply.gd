@@ -56,3 +56,22 @@ func test_apply_to_restores_state_and_clears_encounters():
 	assert_eq(gs.player_facing, GridDirection.Dir.WEST)
 	assert_eq(mm.current_map.map_id, "level01")
 	assert_false(mm.current_map.has_encounter(enc), "已清遭遇應被抹除")
+
+func test_capture_from_reads_explored():
+	var ss = _sys()
+	var gs = _gs()
+	gs.mark_explored("level01", Vector2i(2, 2), 5, 5)
+	var data = ss.capture_from(gs)
+	assert_true(data.explored["level01"].has(Vector2i(2, 2)))
+
+func test_apply_to_restores_explored():
+	var ss = _sys()
+	var gs = _gs()
+	var mm = _mm()
+	mm.load_by_id("level01")
+	var data := SaveData.new()
+	data.map_id = "level01"
+	data.party = Party.create_default()
+	data.explored = {"level01": {Vector2i(3, 3): true}}
+	ss.apply_to(data, gs, mm)
+	assert_true(gs.explored["level01"].has(Vector2i(3, 3)))
