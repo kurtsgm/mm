@@ -11,6 +11,10 @@ enum TileType { FLOOR = 0, WALL = 1, DOOR = 2, STAIRS_UP = 3, STAIRS_DOWN = 4 }
 @export var start_facing: int  # GridDirection.Dir；0 = NORTH
 @export var encounters: Dictionary = {}  # Vector2i -> String（遭遇 id）
 @export var theme_id: String = "default"  # 對應 ThemeCatalog 的主題 id
+@export var display_name: String = ""             # 顯示名（切換訊息用），空 → 退回 map_id
+@export var neighbors: Dictionary = {}            # int(GridDirection.Dir) -> String(map_id)
+@export var entries: Dictionary = {}              # String(name) -> { "pos": Vector2i, "facing": int }
+@export var links: Dictionary = {}                # Vector2i(cell) -> { "map": String, "entry": String }
 
 func get_tile(pos: Vector2i) -> int:
 	if pos.x < 0 or pos.x >= width or pos.y < 0 or pos.y >= height:
@@ -25,3 +29,21 @@ func get_encounter(pos: Vector2i) -> String:
 
 func clear_encounter(pos: Vector2i) -> void:
 	encounters.erase(pos)
+
+func has_neighbor(dir: int) -> bool:
+	return neighbors.has(dir)
+
+func get_neighbor(dir: int) -> String:
+	return neighbors.get(dir, "")
+
+func has_entry(name: String) -> bool:
+	return entries.has(name)
+
+func get_entry(name: String) -> Dictionary:
+	return entries.get(name, {})
+
+func has_link(pos: Vector2i) -> bool:
+	return links.has(pos)
+
+func get_link(pos: Vector2i) -> Dictionary:
+	return links.get(pos, {})

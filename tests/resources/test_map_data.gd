@@ -38,3 +38,34 @@ func test_encounters_accessors():
 func test_theme_id_defaults_to_default():
 	var map := MapData.new()
 	assert_eq(map.theme_id, "default")
+
+func test_world_fields_default_empty():
+	var map := MapData.new()
+	assert_eq(map.display_name, "")
+	assert_eq(map.neighbors, {})
+	assert_eq(map.entries, {})
+	assert_eq(map.links, {})
+
+func test_neighbor_accessors():
+	var map := MapData.new()
+	map.neighbors = { GridDirection.Dir.EAST: "east_map" }
+	assert_true(map.has_neighbor(GridDirection.Dir.EAST))
+	assert_eq(map.get_neighbor(GridDirection.Dir.EAST), "east_map")
+	assert_false(map.has_neighbor(GridDirection.Dir.WEST))
+	assert_eq(map.get_neighbor(GridDirection.Dir.WEST), "")
+
+func test_entry_accessors():
+	var map := MapData.new()
+	map.entries = { "gate": {"pos": Vector2i(2, 1), "facing": GridDirection.Dir.SOUTH} }
+	assert_true(map.has_entry("gate"))
+	assert_eq(map.get_entry("gate"), {"pos": Vector2i(2, 1), "facing": GridDirection.Dir.SOUTH})
+	assert_false(map.has_entry("none"))
+	assert_eq(map.get_entry("none"), {})
+
+func test_link_accessors():
+	var map := MapData.new()
+	map.links = { Vector2i(3, 3): {"map": "town_oak", "entry": "gate"} }
+	assert_true(map.has_link(Vector2i(3, 3)))
+	assert_eq(map.get_link(Vector2i(3, 3)), {"map": "town_oak", "entry": "gate"})
+	assert_false(map.has_link(Vector2i(0, 0)))
+	assert_eq(map.get_link(Vector2i(0, 0)), {})
