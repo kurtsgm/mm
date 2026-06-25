@@ -2,6 +2,8 @@ extends Node
 # Autoload 單例 "MapManager"：持有當前地圖與衍生走位格。
 # 故意不給 class_name，避免與 autoload 名稱衝突。
 
+const MAPS_DIR := "res://content/maps"
+
 var current_map: MapData
 var current_grid: GridData
 
@@ -14,7 +16,12 @@ func load_text(text: String) -> MapData:
 func load_text_file(path: String) -> MapData:
 	var text := FileAccess.get_file_as_string(path)
 	assert(text != "", "MapManager.load_text_file: cannot read %s" % path)
-	return load_text(text)
+	var map := load_text(text)
+	map.map_id = path.get_file().get_basename()  # "level01.txt" → "level01"
+	return map
+
+func load_by_id(id: String) -> MapData:
+	return load_text_file("%s/%s.txt" % [MAPS_DIR, id])
 
 func _set_current(map: MapData) -> void:
 	current_map = map
