@@ -19,6 +19,7 @@ func _ready() -> void:
 	add_child(_hud)
 	_hud.setup(GameState, _player)            # 先連上 facing_changed
 	_player.entered_cell.connect(_on_entered_cell)
+	_player.facing_changed.connect(_on_facing_changed)
 
 	_combat_layer = CombatLayer.new()
 	add_child(_combat_layer)
@@ -26,13 +27,21 @@ func _ready() -> void:
 
 	_player.setup(MapManager.current_grid, map.start_pos, map.start_facing)
 
+	GameState.current_map_id = map.map_id
+	GameState.player_pos = map.start_pos
+	GameState.player_facing = map.start_facing
+
 func _on_entered_cell(pos: Vector2i) -> void:
+	GameState.player_pos = pos
 	if MapManager.current_map.has_encounter(pos):
 		_start_combat(pos)
 		return
 	var text := TileMessages.for_tile(MapManager.current_map.get_tile(pos))
 	if text != "":
 		GameState.message_log.push(text)
+
+func _on_facing_changed(facing: int) -> void:
+	GameState.player_facing = facing
 
 func _start_combat(pos: Vector2i) -> void:
 	var id := MapManager.current_map.get_encounter(pos)
@@ -52,6 +61,7 @@ func _on_combat_finished(result: int) -> void:
 	if result == CombatSystem.Result.VICTORY:
 		_grant_rewards()
 		MapManager.current_map.clear_encounter(_combat_pos)
+		GameState.mark_encounter_cleared(MapManager.current_map.map_id, _combat_pos)
 		GameState.message_log.push("戰鬥勝利！")
 		_player.set_enabled(true)
 	elif result == CombatSystem.Result.FLED:
