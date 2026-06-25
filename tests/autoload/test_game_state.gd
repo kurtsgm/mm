@@ -40,3 +40,12 @@ func test_ready_seeds_starting_inventory():
 	assert_eq(gs.inventory.count_of("short_sword"), 1)
 	assert_eq(gs.inventory.count_of("leather"), 1)
 	assert_eq(gs.inventory.count_of("potion"), 2)
+
+func test_ready_seeds_starting_spells():
+	var gs = _fresh_gs()
+	var by_class := {}
+	for m in gs.party.members:
+		by_class[m.char_class] = m
+	assert_eq(by_class["Sorcerer"].known_spells, ["spark", "flame_wave", "weaken"])
+	assert_eq(by_class["Cleric"].known_spells, ["heal", "revive", "bless"])
+	assert_eq(by_class["Paladin"].known_spells, ["heal"])

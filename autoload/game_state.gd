@@ -15,6 +15,7 @@ var cleared_encounters: Dictionary = {}  # String map_id -> Array[Vector2i]
 func _ready() -> void:
 	if party == null:
 		party = Party.create_default()
+		_seed_starting_spells()
 	if message_log == null:
 		message_log = MessageLog.new()
 	if inventory == null:
@@ -35,3 +36,12 @@ func _seed_starting_items() -> void:
 	inventory.add("short_sword", 1)
 	inventory.add("leather", 1)
 	inventory.add("potion", 2)
+
+func _seed_starting_spells() -> void:
+	# 骨架起始法術：讓施法系統開局即可操演。正式法術習得屬內容期。
+	# Cleric（Marcus）預設昏迷，故另給清醒的 Paladin（Cordelia）heal，野外治療開箱可用。
+	for m in party.members:
+		match m.char_class:
+			"Sorcerer": m.known_spells = ["spark", "flame_wave", "weaken"]
+			"Cleric": m.known_spells = ["heal", "revive", "bless"]
+			"Paladin": m.known_spells = ["heal"]
