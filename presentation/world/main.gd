@@ -3,9 +3,10 @@ extends Node3D
 const MAP_PATH := "res://content/maps/level01.txt"
 
 # 環境光 + 天空。太暗就調高 AMBIENT_ENERGY；想換色調改 AMBIENT_COLOR。
-# 背景用程序天空（零素材）；要換真實 HDRI 全景見 _setup_environment 內註解。
+# 天空用真實 HDRI 全景（Poly Haven, CC0）；換別張改 SKY_PANORAMA（等距全景 .hdr/.exr，2:1）。
 const AMBIENT_COLOR := Color(0.72, 0.74, 0.82)
 const AMBIENT_ENERGY := 0.5
+const SKY_PANORAMA := "res://content/sky/citrus_orchard_road_puresky_2k.exr"
 
 @onready var _world_builder: WorldBuilder = $WorldBuilder
 @onready var _player: PlayerController = $PlayerController
@@ -59,14 +60,12 @@ func _ready() -> void:
 	GameState.player_facing = map.start_facing
 
 func _setup_environment() -> void:
-	# 背景天空：程序天空（零素材；太陽光暈方向跟隨 DirectionalLight3D）。
-	# 要換真實天空：下載一張「等距全景 HDRI」(Poly Haven HDRIs，.hdr/.exr，2:1)，
-	#   放進 res://content/sky/ → Godot import → 把下面兩行換成：
-	#     var pano := PanoramaSkyMaterial.new()
-	#     pano.panorama = load("res://content/sky/<檔名>.hdr")
-	#     sky.sky_material = pano
+	# 背景天空：真實 HDRI 全景（Poly Haven, CC0）。換別張改 SKY_PANORAMA。
+	# 想回零素材程序天空：sky.sky_material = ProceduralSkyMaterial.new()（移除 panorama）。
+	var pano := PanoramaSkyMaterial.new()
+	pano.panorama = load(SKY_PANORAMA)
 	var sky := Sky.new()
-	sky.sky_material = ProceduralSkyMaterial.new()
+	sky.sky_material = pano
 	var env := Environment.new()
 	env.background_mode = Environment.BG_SKY
 	env.sky = sky
