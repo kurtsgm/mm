@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="SpellDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/spell_def.gd" id="1_spell"]
+
+[resource]
+script = ExtResource("1_spell")
+id = "revive"
+display_name = "復活術"
+school = 1
+sp_cost = 5
+target = 2
+effect = 2
+power = 5
+scale_stat = 0

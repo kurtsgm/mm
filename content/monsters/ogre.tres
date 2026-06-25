@@ -16,3 +16,7 @@ xp_reward = 80
 gold_reward = 30
 drop_item_id = "lucky_charm"
 drop_chance = 1.0
+resistances = {
+1: 50,
+2: -25
+}

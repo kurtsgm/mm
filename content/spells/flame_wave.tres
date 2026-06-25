@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="SpellDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/spell_def.gd" id="1_spell"]
+
+[resource]
+script = ExtResource("1_spell")
+id = "flame_wave"
+display_name = "烈焰波"
+school = 0
+sp_cost = 4
+target = 1
+effect = 0
+power = 3
+scale_stat = 2
+scale_per_point = 0.25
+element = 1

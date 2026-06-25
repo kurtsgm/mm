@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SpellDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/spell_def.gd" id="1_spell"]
+
+[resource]
+script = ExtResource("1_spell")
+id = "weaken"
+display_name = "弱化"
+school = 0
+sp_cost = 2
+target = 0
+effect = 3
+status_stat = 1
+status_amount = -2
+status_duration = 3

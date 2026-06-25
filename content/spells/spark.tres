@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="SpellDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/spell_def.gd" id="1_spell"]
+
+[resource]
+script = ExtResource("1_spell")
+id = "spark"
+display_name = "火花"
+school = 0
+sp_cost = 2
+target = 0
+effect = 0
+power = 4
+scale_stat = 2
+scale_per_point = 0.5
+element = 1

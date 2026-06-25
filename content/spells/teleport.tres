@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="SpellDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/spell_def.gd" id="1_spell"]
+
+[resource]
+script = ExtResource("1_spell")
+id = "teleport"
+display_name = "瞬間移動"
+school = 0
+sp_cost = 4
+target = 0
+effect = 4
+power = 3
