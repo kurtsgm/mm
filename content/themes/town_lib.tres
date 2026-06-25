@@ -1,6 +1,6 @@
 [gd_resource type="MeshLibrary" format=3]
 
-[ext_resource type="Material" path="res://content/materials/castle_wall/castle_wall.tres" id="1_wall"]
+[ext_resource type="Material" path="res://content/materials/castle_wall_slates/castle_wall_slates.tres" id="1_wall"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_floor"]
 albedo_color = Color(0.25, 0.25, 0.28, 1)
