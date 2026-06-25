@@ -11,6 +11,7 @@ var _combat_layer: CombatLayer
 var _combat: CombatSystem
 var _combat_pos: Vector2i
 var _save_menu: SaveMenu
+var _inventory_menu: InventoryMenu
 
 func _ready() -> void:
 	var map := MapManager.load_text_file(MAP_PATH)
@@ -30,6 +31,11 @@ func _ready() -> void:
 	add_child(_save_menu)
 	_save_menu.closed.connect(_on_menu_closed)
 	SaveSystem.loaded.connect(_on_loaded)
+
+	_inventory_menu = InventoryMenu.new()
+	add_child(_inventory_menu)
+	_inventory_menu.closed.connect(_on_menu_closed)
+	SaveSystem.item_resolver = Callable(ItemCatalog, "get_item")
 
 	_player.setup(MapManager.current_grid, map.start_pos, map.start_facing)
 
@@ -66,6 +72,7 @@ func _start_combat(pos: Vector2i) -> void:
 func _on_combat_finished(result: int) -> void:
 	if result == CombatSystem.Result.VICTORY:
 		_grant_rewards()
+		_grant_drops()
 		MapManager.current_map.clear_encounter(_combat_pos)
 		GameState.mark_encounter_cleared(MapManager.current_map.map_id, _combat_pos)
 		GameState.message_log.push("戰鬥勝利！")
@@ -100,6 +107,15 @@ func _grant_rewards() -> void:
 	if leveled:
 		GameState.message_log.push("有隊員升級了！")
 
+func _grant_drops() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.randomize()
+	for id in LootSystem.roll_drops(_combat.monsters, rng):
+		GameState.inventory.add(id, 1)
+		var item := ItemCatalog.get_item(id)
+		var label: String = item.display_name if item != null else String(id)
+		GameState.message_log.push("獲得道具：%s" % label)
+
 func _show_game_over() -> void:
 	var layer := CanvasLayer.new()
 	var label := Label.new()
@@ -112,18 +128,25 @@ func _show_game_over() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not (event is InputEventKey and event.pressed and not event.echo):
 		return
-	if event.keycode != KEY_TAB:
-		return
 	if _combat != null:
 		return  # 戰鬥中禁用選單
-	if _save_menu.is_open():
-		_save_menu.close()
+	if event.keycode == KEY_TAB:
+		_toggle_menu(_save_menu, _inventory_menu)
+	elif event.keycode == KEY_I:
+		_toggle_menu(_inventory_menu, _save_menu)
+
+func _toggle_menu(menu, other) -> void:
+	if other.is_open():
+		return  # 另一個選單開著時不切換
+	if menu.is_open():
+		menu.close()
 	else:
 		_player.set_enabled(false)
-		_save_menu.open()
+		menu.open()
 
 func _on_menu_closed() -> void:
 	_player.set_enabled(true)
+	_hud.refresh()
 
 func _on_loaded() -> void:
 	_world_builder.build(MapManager.current_map)
