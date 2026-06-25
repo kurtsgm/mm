@@ -14,3 +14,4 @@ extends Resource
 @export var gold_reward: int = 0
 @export var drop_item_id: String = ""
 @export var drop_chance: float = 0.0
+@export var resistances: Dictionary = {}   # Element(int) -> int 百分比（可負）

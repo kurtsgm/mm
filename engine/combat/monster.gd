@@ -14,9 +14,23 @@ var xp_reward: int
 var gold_reward: int
 var drop_item_id: String = ""
 var drop_chance: float = 0.0
+var statuses: Array[StatusEffect] = []
+var resistances: Dictionary = {}
 
 func is_alive() -> bool:
 	return hp > 0
+
+func resist_for(element: int) -> int:
+	return resistances.get(element, 0)
+
+func effective_attack() -> int:
+	return might + StatusMods.sum(statuses, StatusEffect.Stat.ATTACK)
+
+func effective_armor() -> int:
+	return armor + StatusMods.sum(statuses, StatusEffect.Stat.ARMOR)
+
+func effective_accuracy() -> int:
+	return accuracy + StatusMods.sum(statuses, StatusEffect.Stat.ACCURACY)
 
 static func from_def(def: MonsterDef) -> Monster:
 	var m := Monster.new()
@@ -33,4 +47,5 @@ static func from_def(def: MonsterDef) -> Monster:
 	m.gold_reward = def.gold_reward
 	m.drop_item_id = def.drop_item_id
 	m.drop_chance = def.drop_chance
+	m.resistances = def.resistances.duplicate()
 	return m

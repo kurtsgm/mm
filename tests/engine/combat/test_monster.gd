@@ -43,3 +43,36 @@ func test_from_def_copies_drop_fields():
 	var m := Monster.from_def(def)
 	assert_eq(m.drop_item_id, "potion")
 	assert_almost_eq(m.drop_chance, 0.25, 0.0001)
+
+func test_resist_for_default_zero():
+	var m := Monster.new()
+	assert_eq(m.resist_for(SpellDef.Element.FIRE), 0)
+
+func test_resist_for_returns_value():
+	var m := Monster.new()
+	m.resistances = { SpellDef.Element.FIRE: -50 }
+	assert_eq(m.resist_for(SpellDef.Element.FIRE), -50)
+	assert_eq(m.resist_for(SpellDef.Element.COLD), 0)
+
+func test_effective_attack_includes_status():
+	var m := Monster.new(); m.might = 8
+	assert_eq(m.effective_attack(), 8)
+	m.statuses.append(StatusEffect.new(StatusEffect.Stat.ATTACK, -3, 2))
+	assert_eq(m.effective_attack(), 5)
+
+func test_effective_armor_includes_status():
+	var m := Monster.new(); m.armor = 10
+	m.statuses.append(StatusEffect.new(StatusEffect.Stat.ARMOR, -4, 2))
+	assert_eq(m.effective_armor(), 6)
+
+func test_effective_accuracy_includes_status():
+	var m := Monster.new(); m.accuracy = 7
+	m.statuses.append(StatusEffect.new(StatusEffect.Stat.ACCURACY, 2, 2))
+	assert_eq(m.effective_accuracy(), 9)
+
+func test_from_def_copies_resistances():
+	var d := MonsterDef.new()
+	d.hp_max = 5
+	d.resistances = { SpellDef.Element.FIRE: 50 }
+	var m := Monster.from_def(d)
+	assert_eq(m.resist_for(SpellDef.Element.FIRE), 50)

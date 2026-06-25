@@ -32,3 +32,7 @@ func test_drop_defaults_and_fields():
 	d.drop_item_id = "potion"; d.drop_chance = 0.5
 	assert_eq(d.drop_item_id, "potion")
 	assert_almost_eq(d.drop_chance, 0.5, 0.0001)
+
+func test_resistances_default_empty():
+	var d := MonsterDef.new()
+	assert_eq(d.resistances.size(), 0)
