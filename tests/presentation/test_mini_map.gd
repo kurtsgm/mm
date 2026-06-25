@@ -16,7 +16,7 @@ func test_tile_colors_by_type():
 
 func test_panel_side_holds_full_window():
 	var window_px := (2 * MiniMapScript.RADIUS + 1) * MiniMapScript.CELL_PX
-	assert_eq(MiniMapScript.panel_side(), window_px + MiniMapScript.PAD * 2)
+	assert_eq(MiniMapScript.panel_side(), float(window_px + MiniMapScript.PAD * 2))
 
 func test_cell_top_left_center_offset_is_radius_cells():
 	var c := Vector2i(5, 5)
