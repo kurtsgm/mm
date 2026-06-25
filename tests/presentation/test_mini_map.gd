@@ -13,3 +13,23 @@ func test_tile_colors_by_type():
 	assert_eq(MiniMapScript.tile_color(MapData.TileType.DOOR, false), MiniMapScript.COL_DOOR)
 	assert_eq(MiniMapScript.tile_color(MapData.TileType.STAIRS_UP, false), MiniMapScript.COL_STAIRS_UP)
 	assert_eq(MiniMapScript.tile_color(MapData.TileType.STAIRS_DOWN, false), MiniMapScript.COL_STAIRS_DOWN)
+
+func test_panel_side_holds_full_window():
+	var window_px := (2 * MiniMapScript.RADIUS + 1) * MiniMapScript.CELL_PX
+	assert_eq(MiniMapScript.panel_side(), window_px + MiniMapScript.PAD * 2)
+
+func test_cell_top_left_center_offset_is_radius_cells():
+	var c := Vector2i(5, 5)
+	var edge := MiniMapScript.PAD + MiniMapScript.RADIUS * MiniMapScript.CELL_PX
+	assert_eq(MiniMapScript.cell_top_left(c, c), Vector2(edge, edge))
+
+func test_cell_top_left_steps_by_cell_px():
+	var c := Vector2i(2, 2)
+	var a := MiniMapScript.cell_top_left(c, c)
+	var b := MiniMapScript.cell_top_left(c + Vector2i(1, 1), c)
+	assert_eq(b - a, Vector2(MiniMapScript.CELL_PX, MiniMapScript.CELL_PX))
+
+func test_cell_top_left_depends_only_on_offset_from_center():
+	# 相同「全域 - 中心」位移 → 相同像素（與絕對座標無關，含負座標鄰圖）
+	assert_eq(MiniMapScript.cell_top_left(Vector2i(7, 3), Vector2i(5, 5)),
+		MiniMapScript.cell_top_left(Vector2i(2, 8), Vector2i(0, 10)))

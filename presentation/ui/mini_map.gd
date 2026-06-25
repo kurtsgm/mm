@@ -1,13 +1,14 @@
 class_name MiniMap
 extends CanvasLayer
-# 右上角常駐俯視小地圖（迷霧探索）。程式建構 placeholder UI，鏡射 Hud。
-# 每格一色塊：已探索才畫（未探索露出底板＝迷霧）；玩家為朝向三角形。
-# 資料來源：MapManager.current_map（tile/portal）、GameState（explored/pos/facing）。
+# 右上角常駐俯視小地圖（以隊伍為中心 + 鄰圖拼裝 + 迷霧探索）。程式建構 UI，鏡射 Hud。
+# 視窗 (2*RADIUS+1)² 格、隊伍恆置中、地圖捲動；觸及邊界拼進相鄰地圖（含對角）。
+# 每張圖各套自己的 explored 迷霧。資料：MapManager.current_map/peek_map、GameState。
 
-const CELL_PX := 16
+const RADIUS := 6        # 以隊伍為中心、每側可見格數（視窗 13×13）
+const CELL_PX := 22
 const PAD := 6
 const BORDER := 1.0
-const MARGIN := 12  # 離畫面右上角
+const MARGIN := 12       # 離畫面右上角
 
 const COL_BACKDROP := Color(0, 0, 0, 0.55)
 const COL_BORDER := Color(1, 1, 1, 0.35)
@@ -19,33 +20,48 @@ const COL_STAIRS_DOWN := Color(0.66, 0.46, 0.85)
 const COL_PORTAL := Color(0.36, 0.82, 0.46)
 const COL_PLAYER := Color(0.95, 0.3, 0.3)
 
-var _panel: Control
+var _panel                       # _MiniMapPanel（untyped 以容許動態 .loader 屬性）
+var _map_cache: Dictionary = {}  # id -> MapData（會快取 null，避免重試不存在的檔）
 
 func setup(player: PlayerController) -> void:
 	_panel = _MiniMapPanel.new()
 	_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_panel.loader = Callable(self, "_peek_cached")
 	add_child(_panel)
 	player.entered_cell.connect(func(_p): _panel.queue_redraw())
 	player.facing_changed.connect(func(_f): _panel.queue_redraw())
 	refresh()
 
-# 依當前地圖尺寸把面板釘在右上角並重畫。切圖/讀檔後由 main 呼叫。
+# 切圖/讀檔後由 main 呼叫：清鄰圖快取（鄰里換了）+ 重設固定面板大小（右上角）+ 重畫。
 func refresh() -> void:
 	if _panel == null:
 		return
-	var map := MapManager.current_map
-	var w: int = map.width if map != null else 0
-	var h: int = map.height if map != null else 0
-	var pw: float = w * CELL_PX + PAD * 2
-	var ph: float = h * CELL_PX + PAD * 2
+	_map_cache.clear()
+	var side := panel_side()
 	_panel.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	_panel.offset_top = MARGIN
-	_panel.offset_bottom = MARGIN + ph
+	_panel.offset_bottom = MARGIN + side
 	_panel.offset_right = -MARGIN
-	_panel.offset_left = -MARGIN - pw
+	_panel.offset_left = -MARGIN - side
 	_panel.queue_redraw()
 
-# tile type + 是否 portal → 色塊顏色（portal 旗標優先）。純函式、可測。
+# 無副作用載入鄰圖並快取（含 null）。供 WorldStitch 的 loader 用。
+func _peek_cached(id: String) -> MapData:
+	if not _map_cache.has(id):
+		_map_cache[id] = MapManager.peek_map(id)
+	return _map_cache[id]
+
+# 面板邊長（含 pad）。純、可測。
+static func panel_side() -> float:
+	return (2 * RADIUS + 1) * CELL_PX + PAD * 2
+
+# 全域格 → 面板像素左上角（隊伍 center 恆落在視窗正中）。純、可測。
+static func cell_top_left(global: Vector2i, center: Vector2i) -> Vector2:
+	return Vector2(
+		PAD + (global.x - (center.x - RADIUS)) * CELL_PX,
+		PAD + (global.y - (center.y - RADIUS)) * CELL_PX)
+
+# tile type + 是否 portal → 色塊顏色（portal 旗標優先）。純、可測。
 static func tile_color(tile: int, is_portal: bool) -> Color:
 	if is_portal:
 		return COL_PORTAL
@@ -56,33 +72,42 @@ static func tile_color(tile: int, is_portal: bool) -> Color:
 		MapData.TileType.STAIRS_DOWN: return COL_STAIRS_DOWN
 		_: return COL_FLOOR
 
-# 內部繪製面板。_draw 在 CanvasItem(Control) 上，讀 autoload；與 MiniMap 拆開。
+# 內部繪製面板。_draw 在 CanvasItem(Control) 上，讀 autoload + 注入的 loader。
 class _MiniMapPanel extends Control:
+	var loader: Callable
+
 	func _draw() -> void:
 		var map = MapManager.current_map
 		if map == null:
 			return
 		draw_rect(Rect2(Vector2.ZERO, size), MiniMap.COL_BACKDROP, true)
 		draw_rect(Rect2(Vector2.ZERO, size), MiniMap.COL_BORDER, false, MiniMap.BORDER)
-		var explored: Dictionary = GameState.explored_for(map.map_id)
-		for y in map.height:
-			for x in map.width:
-				var cell := Vector2i(x, y)
-				if not explored.has(cell):
-					continue
-				var col := MiniMap.tile_color(map.get_tile(cell), map.has_link(cell))
-				var r := Rect2(
-					MiniMap.PAD + x * MiniMap.CELL_PX,
-					MiniMap.PAD + y * MiniMap.CELL_PX,
-					MiniMap.CELL_PX - 1, MiniMap.CELL_PX - 1)
-				draw_rect(r, col, true)
-		_draw_player()
+		var center: Vector2i = GameState.player_pos
+		var r: int = MiniMap.RADIUS
+		var csz: float = MiniMap.CELL_PX - 1
+		var placed := WorldStitch.place(map, loader, r, center)
+		for node in placed:
+			var pm: MapData = node["map"]
+			var ox: int = node["ox"]
+			var oy: int = node["oy"]
+			var explored: Dictionary = GameState.explored_for(pm.map_id)
+			for cy in pm.height:
+				for cx in pm.width:
+					var cell := Vector2i(cx, cy)
+					if not explored.has(cell):
+						continue
+					var gx := ox + cx
+					var gy := oy + cy
+					if gx < center.x - r or gx > center.x + r or gy < center.y - r or gy > center.y + r:
+						continue
+					var tl := MiniMap.cell_top_left(Vector2i(gx, gy), center)
+					var col := MiniMap.tile_color(pm.get_tile(cell), pm.has_link(cell))
+					draw_rect(Rect2(tl.x, tl.y, csz, csz), col, true)
+		_draw_player(center)
 
-	func _draw_player() -> void:
-		var pos: Vector2i = GameState.player_pos
-		var c := Vector2(
-			MiniMap.PAD + pos.x * MiniMap.CELL_PX + MiniMap.CELL_PX * 0.5,
-			MiniMap.PAD + pos.y * MiniMap.CELL_PX + MiniMap.CELL_PX * 0.5)
+	func _draw_player(center: Vector2i) -> void:
+		var tl := MiniMap.cell_top_left(center, center)
+		var c := tl + Vector2(MiniMap.CELL_PX * 0.5, MiniMap.CELL_PX * 0.5)
 		var r: float = MiniMap.CELL_PX * 0.42
 		var fwd := _facing_vec(GameState.player_facing)
 		var side := Vector2(-fwd.y, fwd.x)
