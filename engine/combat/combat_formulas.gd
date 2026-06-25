@@ -20,3 +20,7 @@ static func roll_damage(might: int, armor: int, defending: bool, rng: RandomNumb
 	if defending:
 		dmg = maxi(1, dmg / 2)
 	return dmg
+
+static func roll_spell_damage(base: int, rng: RandomNumberGenerator) -> int:
+	var b: int = maxi(1, base)
+	return rng.randi_range(b, b + b / 2)

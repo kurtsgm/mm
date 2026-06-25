@@ -48,3 +48,13 @@ func test_roll_hit_low_chance_mostly_false():
 		if CombatFormulas.roll_hit(0, 1000, rng):
 			trues += 1
 	assert_lt(trues, 150)
+
+func test_roll_spell_damage_within_range():
+	var rng := RandomNumberGenerator.new(); rng.seed = 1
+	for i in 30:
+		var d := CombatFormulas.roll_spell_damage(10, rng)
+		assert_true(d >= 10 and d <= 15, "base 10 → 10..15，實得 %d" % d)
+
+func test_roll_spell_damage_min_base():
+	var rng := RandomNumberGenerator.new(); rng.seed = 2
+	assert_true(CombatFormulas.roll_spell_damage(0, rng) >= 1)
