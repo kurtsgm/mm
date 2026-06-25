@@ -1,6 +1,8 @@
 extends Node3D
 
-const MAP_PATH := "res://content/maps/level01.txt"
+const START_MAP_ID := "wild_nw"   # 起始地圖（M7 示範世界入口）
+const HOME_MAP_ID := "town_oak"   # town_portal（recall）目的地
+const HOME_ENTRY := "gate"
 
 # 環境光由天空驅動（地牢吃到 HDRI 的色溫與亮度）。
 # 太亮調低 AMBIENT_ENERGY（過曝可降到 ~0.3）；太暗調高。
@@ -25,15 +27,17 @@ var _spell_menu: SpellMenu
 var _menus: Array = []
 
 func _ready() -> void:
-	var map := MapManager.load_text_file(MAP_PATH)
+	var map := MapManager.enter_map(START_MAP_ID, GameState.cleared_for(START_MAP_ID))
 	_world_builder.build(map)
 	_setup_environment()
+	_setup_fade()
 
 	_hud = Hud.new()
 	add_child(_hud)
 	_hud.setup(GameState, _player)            # 先連上 facing_changed
 	_player.entered_cell.connect(_on_entered_cell)
 	_player.facing_changed.connect(_on_facing_changed)
+	_player.edge_exit_attempted.connect(_on_edge_exit_attempted)
 
 	_combat_layer = CombatLayer.new()
 	add_child(_combat_layer)
@@ -58,7 +62,7 @@ func _ready() -> void:
 
 	_player.setup(MapManager.current_grid, map.start_pos, map.start_facing)
 
-	GameState.current_map_id = map.map_id
+	GameState.current_map_id = START_MAP_ID
 	GameState.player_pos = map.start_pos
 	GameState.player_facing = map.start_facing
 
@@ -82,6 +86,10 @@ func _setup_environment() -> void:
 
 func _on_entered_cell(pos: Vector2i) -> void:
 	GameState.player_pos = pos
+	var link := MapTransitions.resolve_link(MapManager.current_map, pos)
+	if not link.is_empty():
+		_enter_via_link(link["map"], link["entry"])
+		return
 	if MapManager.current_map.has_encounter(pos):
 		_start_combat(pos)
 		return
@@ -91,6 +99,60 @@ func _on_entered_cell(pos: Vector2i) -> void:
 
 func _on_facing_changed(facing: int) -> void:
 	GameState.player_facing = facing
+
+var _fade_rect: ColorRect
+
+func _setup_fade() -> void:
+	var layer := CanvasLayer.new()
+	layer.layer = 100
+	_fade_rect = ColorRect.new()
+	_fade_rect.color = Color(0, 0, 0, 0)
+	_fade_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_fade_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	layer.add_child(_fade_rect)
+	add_child(layer)
+
+func _fade(target_alpha: float) -> void:
+	var tween := create_tween()
+	tween.tween_property(_fade_rect, "color:a", target_alpha, 0.2)
+	await tween.finished
+
+# 入口連結切換：淡出 → 載入目的地 + 命名入口 → 重建定位 → 訊息 → 淡入。
+func _enter_via_link(map_id: String, entry_name: String) -> void:
+	_player.set_enabled(false)
+	await _fade(1.0)
+	var dest := MapManager.enter_map(map_id, GameState.cleared_for(map_id))
+	var e := dest.get_entry(entry_name)
+	var pos: Vector2i = e.get("pos", dest.start_pos)
+	var facing: int = e.get("facing", GridDirection.Dir.NORTH)
+	_world_builder.build(MapManager.current_map)
+	_player.setup(MapManager.current_grid, pos, facing)
+	GameState.current_map_id = map_id
+	GameState.player_pos = pos
+	GameState.player_facing = facing
+	var nm: String = dest.display_name if dest.display_name != "" else map_id
+	GameState.message_log.push("你來到%s。" % nm)
+	_hud.refresh()
+	await _fade(0.0)
+	_player.set_enabled(true)
+
+# 邊緣接壤：即時、無黑幕、保持面向（野外無縫）。
+func _on_edge_exit_attempted(move_dir: int) -> void:
+	var ex := MapTransitions.edge_exit(MapManager.current_map, GameState.player_pos, move_dir)
+	if ex.is_empty():
+		return
+	var neighbor_id: String = ex["neighbor_id"]
+	var dest := MapManager.enter_map(neighbor_id, GameState.cleared_for(neighbor_id))
+	var cell := MapTransitions.arrival_cell(dest, ex["edge_dir"], ex["lateral"])
+	if cell == Vector2i(-1, -1):
+		# 對邊實心 → 不能過去；還原當前地圖（enter_map 已切走 current）
+		MapManager.enter_map(GameState.current_map_id, GameState.cleared_for(GameState.current_map_id))
+		return
+	_world_builder.build(MapManager.current_map)
+	_player.setup(MapManager.current_grid, cell, GameState.player_facing)
+	GameState.current_map_id = neighbor_id
+	GameState.player_pos = cell
+	_hud.refresh()
 
 func _start_combat(pos: Vector2i) -> void:
 	var id := MapManager.current_map.get_encounter(pos)
@@ -203,8 +265,8 @@ func _cast_teleport(spell: SpellDef) -> void:
 	GameState.message_log.push("%s 尚未接上世界效果。" % spell.display_name)
 
 func _cast_recall(spell: SpellDef) -> void:
-	# STUB（M5c 殼）：城市傳送目的地待多地圖基建後實作。
-	GameState.message_log.push("%s 尚未接上世界效果。" % spell.display_name)
+	GameState.message_log.push("%s 發動……" % spell.display_name)
+	_enter_via_link(HOME_MAP_ID, HOME_ENTRY)
 
 func _on_loaded() -> void:
 	_world_builder.build(MapManager.current_map)
