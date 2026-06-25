@@ -12,6 +12,8 @@ var _combat: CombatSystem
 var _combat_pos: Vector2i
 var _save_menu: SaveMenu
 var _inventory_menu: InventoryMenu
+var _spell_menu: SpellMenu
+var _menus: Array = []
 
 func _ready() -> void:
 	var map := MapManager.load_text_file(MAP_PATH)
@@ -36,6 +38,13 @@ func _ready() -> void:
 	add_child(_inventory_menu)
 	_inventory_menu.closed.connect(_on_menu_closed)
 	SaveSystem.item_resolver = Callable(ItemCatalog, "get_item")
+
+	_spell_menu = SpellMenu.new()
+	add_child(_spell_menu)
+	_spell_menu.closed.connect(_on_menu_closed)
+	_spell_menu.world_spell_cast.connect(_on_world_spell_cast)
+
+	_menus = [_save_menu, _inventory_menu, _spell_menu]
 
 	_player.setup(MapManager.current_grid, map.start_pos, map.start_facing)
 
@@ -131,22 +140,43 @@ func _unhandled_input(event: InputEvent) -> void:
 	if _combat != null:
 		return  # 戰鬥中禁用選單
 	if event.keycode == KEY_TAB:
-		_toggle_menu(_save_menu, _inventory_menu)
+		_toggle_menu(_save_menu)
 	elif event.keycode == KEY_I:
-		_toggle_menu(_inventory_menu, _save_menu)
+		_toggle_menu(_inventory_menu)
+	elif event.keycode == KEY_M:
+		_toggle_menu(_spell_menu)
 
-func _toggle_menu(menu, other) -> void:
-	if other.is_open():
-		return  # 另一個選單開著時不切換
+func _toggle_menu(menu) -> void:
 	if menu.is_open():
 		menu.close()
-	else:
-		_player.set_enabled(false)
-		menu.open()
+		return
+	for other in _menus:
+		if other != menu and other.is_open():
+			return  # 另一選單開著時不切換
+	_player.set_enabled(false)
+	menu.open()
 
 func _on_menu_closed() -> void:
 	_player.set_enabled(true)
 	_hud.refresh()
+
+func _on_world_spell_cast(spell: SpellDef) -> void:
+	# 工具法術擴充樣板：加新 utility = 加一個 SpellDef.Effect + 一個 case + 一張 .tres。
+	# SP 已由 SpellMenu 扣除，這裡不再付費；僅做世界效果 dispatch。
+	match spell.effect:
+		SpellDef.Effect.TELEPORT:
+			_cast_teleport(spell)
+		SpellDef.Effect.RECALL:
+			_cast_recall(spell)
+	_hud.refresh()
+
+func _cast_teleport(spell: SpellDef) -> void:
+	# STUB（M5c 殼）：實際前方穿牆位移待後續以 PlayerController.warp_to 實作。
+	GameState.message_log.push("%s 尚未接上世界效果。" % spell.display_name)
+
+func _cast_recall(spell: SpellDef) -> void:
+	# STUB（M5c 殼）：城市傳送目的地待多地圖基建後實作。
+	GameState.message_log.push("%s 尚未接上世界效果。" % spell.display_name)
 
 func _on_loaded() -> void:
 	_world_builder.build(MapManager.current_map)
