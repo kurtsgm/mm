@@ -3,6 +3,7 @@ extends Node3D
 
 signal entered_cell(pos: Vector2i)
 signal facing_changed(facing: int)
+signal edge_exit_attempted(move_dir: int)
 
 const MOVE_TIME := 0.18
 
@@ -43,10 +44,14 @@ func _unhandled_input(event: InputEvent) -> void:
 		_attempt_turn(GridDirection.turn_right(_facing))
 
 func _attempt_move(move: int) -> void:
-	var new_pos := GridMovement.resolve(_grid, _pos, _facing, move)
-	if new_pos == _pos:
-		return  # 撞牆，不動
-	_pos = new_pos
+	var move_dir := GridMovement.direction_of(_facing, move)
+	var target := _pos + GridDirection.to_vector(move_dir)
+	if not _grid.in_bounds(target):
+		edge_exit_attempted.emit(move_dir)  # 出界 → 交給 main 判斷是否切換
+		return
+	if not _grid.is_walkable(target):
+		return  # 界內撞牆，不動
+	_pos = target
 	entered_cell.emit(_pos)
 	_is_busy = true
 	var tween := create_tween()

@@ -74,3 +74,21 @@ func test_enabled_processes_input():
 	ev.pressed = true
 	pc._unhandled_input(ev)
 	assert_eq(pc._pos, Vector2i(1, 0))  # 北移動一格
+
+func test_edge_move_emits_edge_exit_attempted():
+	# 站最北排 (1,0) 面向 NORTH 前進 → 出界 → 發 edge_exit_attempted(NORTH)
+	var pc := _make_pc(GridData.new(3, 3), Vector2i(1, 0), GridDirection.Dir.NORTH)
+	watch_signals(pc)
+	pc._attempt_move(GridMovement.Move.FORWARD)
+	assert_signal_emitted_with_parameters(pc, "edge_exit_attempted", [GridDirection.Dir.NORTH])
+	assert_signal_not_emitted(pc, "entered_cell")
+	assert_eq(pc._pos, Vector2i(1, 0), "出界不移動")
+
+func test_inbounds_wall_does_not_emit_edge_exit():
+	var grid := GridData.new(3, 3)
+	grid.set_solid(Vector2i(1, 0), true)  # 界內牆
+	var pc := _make_pc(grid, Vector2i(1, 1), GridDirection.Dir.NORTH)
+	watch_signals(pc)
+	pc._attempt_move(GridMovement.Move.FORWARD)
+	assert_signal_not_emitted(pc, "edge_exit_attempted")
+	assert_signal_not_emitted(pc, "entered_cell")
