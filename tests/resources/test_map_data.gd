@@ -34,3 +34,7 @@ func test_encounters_accessors():
 	assert_eq(map.get_encounter(Vector2i(0, 0)), "")
 	map.clear_encounter(Vector2i(2, 1))
 	assert_false(map.has_encounter(Vector2i(2, 1)))
+
+func test_theme_id_defaults_to_default():
+	var map := MapData.new()
+	assert_eq(map.theme_id, "default")

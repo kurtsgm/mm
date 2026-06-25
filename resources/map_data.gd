@@ -10,6 +10,7 @@ enum TileType { FLOOR = 0, WALL = 1, DOOR = 2, STAIRS_UP = 3, STAIRS_DOWN = 4 }
 @export var start_pos: Vector2i
 @export var start_facing: int  # GridDirection.Dir；0 = NORTH
 @export var encounters: Dictionary = {}  # Vector2i -> String（遭遇 id）
+@export var theme_id: String = "default"  # 對應 ThemeCatalog 的主題 id
 
 func get_tile(pos: Vector2i) -> int:
 	if pos.x < 0 or pos.x >= width or pos.y < 0 or pos.y >= height:
