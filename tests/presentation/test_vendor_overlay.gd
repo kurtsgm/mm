@@ -52,3 +52,85 @@ func test_goods_esc_closes_and_finishes():
 	ov._unhandled_input(_key(KEY_ESCAPE))
 	assert_false(ov.is_open())
 	assert_signal_emitted(ov, "finished")
+
+# --- 5b: spells + services ---
+func _member(cls: String, cond := Character.Condition.OK) -> Character:
+	var c := Character.new()
+	c.name = cls
+	c.char_class = cls
+	c.hp = 5
+	c.hp_max = 20
+	c.sp = 0
+	c.sp_max = 10
+	c.condition = cond
+	return c
+
+func _state_with(members: Array, gold := 999) -> FakeState:
+	var st := FakeState.new()
+	st.gold = gold
+	st.party.members = members
+	return st
+
+func _spells_vendor() -> Dictionary:
+	return {"id": "m", "kind": "spells", "name": "塔", "spells": ["spark", "heal"]}
+
+func test_spells_learn_flow():
+	var sorc := _member("Sorcerer")
+	var st := _state_with([sorc, _member("Knight")])
+	var ov := _overlay()
+	ov.open(_spells_vendor(), st)
+	watch_signals(ov)
+	# 選第一個法術 spark(arcane) → 進選角色 → 選 Sorcerer(合格) → Enter 學會
+	ov._unhandled_input(_key(KEY_ENTER))        # 選 spark → 進選角色
+	ov._unhandled_input(_key(KEY_ENTER))        # 選第一個合格對象
+	assert_true(sorc.known_spells.has("spark"))
+	assert_signal_emitted(ov, "transacted")
+
+func _services_vendor() -> Dictionary:
+	return {"id": "t", "kind": "services", "name": "神殿",
+			"offers": [
+				{"name": "復活", "cost": 100, "effect": "revive", "target": "character"},
+				{"name": "住宿", "cost": 20, "effect": "rest", "target": "party"}]}
+
+func test_service_rest_party_applies_all():
+	var a := _member("Knight", Character.Condition.UNCONSCIOUS)
+	a.hp = 0
+	var b := _member("Cleric")
+	var st := _state_with([a, b])
+	var ov := _overlay()
+	ov.open(_services_vendor(), st)
+	watch_signals(ov)
+	# 游標移到第二項(住宿/party) → Enter 直接套全隊
+	ov._unhandled_input(_key(KEY_DOWN))
+	ov._unhandled_input(_key(KEY_ENTER))
+	assert_eq(a.hp, 20)
+	assert_eq(a.condition, Character.Condition.OK)
+	assert_signal_emitted(ov, "transacted")
+
+func test_service_revive_picks_valid_target():
+	var dead := _member("Knight", Character.Condition.DEAD)
+	var st := _state_with([_member("Cleric"), dead])
+	var ov := _overlay()
+	ov.open(_services_vendor(), st)
+	# 第一項(復活/character) → Enter 進選角色 → 只列死/昏迷者 → Enter 復活
+	ov._unhandled_input(_key(KEY_ENTER))
+	ov._unhandled_input(_key(KEY_ENTER))
+	assert_eq(dead.condition, Character.Condition.OK)
+
+# 控制器要求：heal_full 服務端對端覆蓋（治療傷勢，target=character）。
+func _temple_heal_vendor() -> Dictionary:
+	return {"id": "t2", "kind": "services", "name": "神殿",
+			"offers": [
+				{"name": "治療傷勢", "cost": 30, "effect": "heal_full", "target": "character"}]}
+
+func test_service_heal_full_restores_hp():
+	var hurt := _member("Knight")   # hp=5, hp_max=20, condition=OK（受傷但活著）
+	var st := _state_with([hurt, _member("Cleric")])
+	var ov := _overlay()
+	ov.open(_temple_heal_vendor(), st)
+	watch_signals(ov)
+	# 第一項(治療傷勢/character) → Enter 進選角色 → 第一個可治療對象 → Enter 治療
+	ov._unhandled_input(_key(KEY_ENTER))
+	ov._unhandled_input(_key(KEY_ENTER))
+	assert_eq(hurt.hp, hurt.hp_max)
+	assert_signal_emitted(ov, "transacted")
