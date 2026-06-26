@@ -1,0 +1,21 @@
+{
+  "id": "demo_event",
+  "start": "root",
+  "nodes": {
+    "root": {
+      "image": "demo_event",
+      "text": "一位旅人攔住你：「想交易嗎？」",
+      "choices": [
+        { "text": "買藥水 (20G)", "require": {"gold_gte": 20},
+          "effects": [{"op": "gold", "value": -20}, {"op": "give", "item": "potion"}],
+          "goto": "bought" },
+        { "text": "打聽消息", "require": {"flag": "demo_heard", "is": false},
+          "effects": [{"op": "set_flag", "flag": "demo_heard"}],
+          "goto": "rumor" },
+        { "text": "離開", "goto": null }
+      ]
+    },
+    "bought": { "text": "「好交易，旅途平安。」", "choices": [ {"text": "…", "goto": null} ] },
+    "rumor":  { "text": "「北方礦坑最近不太平，當心。」", "choices": [ {"text": "…", "goto": null} ] }
+  }
+}
