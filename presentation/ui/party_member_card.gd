@@ -25,12 +25,23 @@ const _TINT := {
 	FaceVisual.DEAD: Color(0.3, 0.3, 0.3),
 }
 
+# 真頭像 shader 參數（tint 染色 / grayscale 去色 / brightness 明暗）。
+# 暈倒/死亡為「無共用圖時」的 fallback 灰階值；有共用圖時走 override 不用這裡。
+const _SHADER := {
+	FaceVisual.OK: { "tint": Color(1, 1, 1), "gray": 0.0, "bright": 1.0 },
+	FaceVisual.HURT: { "tint": Color(1.0, 0.7, 0.7), "gray": 0.1, "bright": 0.95 },
+	FaceVisual.HIT: { "tint": Color(1.0, 0.45, 0.45), "gray": 0.0, "bright": 1.15 },
+	FaceVisual.UNCONSCIOUS: { "tint": Color(1, 1, 1), "gray": 0.7, "bright": 0.6 },
+	FaceVisual.DEAD: { "tint": Color(1, 1, 1), "gray": 1.0, "bright": 0.4 },
+}
+
 var _character: Character
 var _hit_until_msec: int = 0
 var _portrait_texture: Texture2D            # 真頭像（無則為 null → 用色塊 placeholder）
 
 var _portrait: ColorRect
 var _portrait_tex: TextureRect
+var _portrait_mat: ShaderMaterial
 var _portrait_glyph: Label
 var _name_label: Label
 var _hp_fill: ColorRect
@@ -62,6 +73,9 @@ func _build() -> void:
 	_portrait_tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_portrait_tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	_portrait_tex.texture = _portrait_texture
+	_portrait_mat = ShaderMaterial.new()
+	_portrait_mat.shader = preload("res://presentation/ui/portrait_state.gdshader")
+	_portrait_tex.material = _portrait_mat
 	_portrait.add_child(_portrait_tex)
 	_portrait_glyph = Label.new()
 	_portrait_glyph.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -155,12 +169,24 @@ func current_visual() -> int:
 
 func _apply_face() -> void:
 	var v := current_visual()
-	if _portrait_texture != null:
-		# 真頭像：顯示貼圖、狀態以 modulate 上色（受擊紅閃/暈倒灰/死亡暗）；字符隱藏。
+	# 暈倒/死亡：若有共用圖（倒下身體/墓碑）→ 取代頭像顯示（受擊閃臉期間先不取代）。
+	var override_tex: Texture2D = null
+	if v != FaceVisual.HIT:
+		override_tex = StateImageCatalog.override_texture(_character, PortraitState.for_character(_character))
+	if override_tex != null:
 		_portrait_tex.visible = true
 		_portrait_glyph.visible = false
+		_portrait_tex.texture = override_tex
+		_set_shader(FaceVisual.OK)            # 共用圖原色顯示
 		_portrait.modulate = Color(1, 1, 1)
-		_portrait_tex.modulate = _TINT[v]
+		return
+	if _portrait_texture != null:
+		# 真頭像 + 依狀態套 shader（受傷紅暈/受擊紅閃；暈倒死亡無共用圖時灰階 fallback）。
+		_portrait_tex.visible = true
+		_portrait_glyph.visible = false
+		_portrait_tex.texture = _portrait_texture
+		_set_shader(v)
+		_portrait.modulate = Color(1, 1, 1)
 	else:
 		# placeholder：職業色塊 + 表情字符，整體以 modulate 上狀態色。
 		_portrait_tex.visible = false
@@ -168,6 +194,12 @@ func _apply_face() -> void:
 		_portrait_glyph.text = _GLYPH[v]
 		_portrait.color = _class_color(_character.char_class)
 		_portrait.modulate = _TINT[v]
+
+func _set_shader(v: int) -> void:
+	var p: Dictionary = _SHADER[v]
+	_portrait_mat.set_shader_parameter("tint", p["tint"])
+	_portrait_mat.set_shader_parameter("grayscale", p["gray"])
+	_portrait_mat.set_shader_parameter("brightness", p["bright"])
 
 func _process(_delta: float) -> void:
 	if not is_hit_active():
