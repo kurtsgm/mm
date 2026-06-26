@@ -28,6 +28,14 @@ static func apply(effects, ctx) -> Array:
 				ctx.flags[String(e.get("flag", ""))] = true
 			"clear_flag":
 				ctx.flags.erase(String(e.get("flag", "")))
+			"accept_quest":
+				var aqid := String(e.get("quest", ""))
+				if aqid != "":
+					ctx.accept_quest(aqid)
+			"advance_quest":
+				var vqid := String(e.get("quest", ""))
+				if vqid != "":
+					ctx.advance_quest(vqid)
 			_:
 				pass
 	return out
