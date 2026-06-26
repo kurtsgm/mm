@@ -1121,17 +1121,19 @@ git commit -m "feat(quest): GameState 任務狀態 + 編排（accept/advance/not
 
 ---
 
-## Task 9: 存檔整合（VERSION 6 + quests）
+## Task 9: 存檔整合（VERSION 6 + quests，移除舊版接受）
 
 **Files:**
 - Modify: `engine/save/save_data.gd`
 - Modify: `engine/save/save_serializer.gd`
 - Modify: `autoload/save_system.gd`
-- Modify: `tests/engine/save/test_save_serializer_flags.gd`、`tests/engine/save/test_save_serializer.gd`、`tests/engine/save/test_save_serializer_spells.gd`（VERSION 斷言 5→6）
+- Modify: 4 個存檔測試檔（`test_save_serializer.gd`、`test_save_serializer_flags.gd`、`test_save_serializer_spells.gd`、`test_save_serializer_items.gd`）：VERSION 斷言 5→6、舊版載入測試改寫
 - Test: `tests/engine/save/test_save_serializer_quests.gd`
 
+**設計決策（使用者 2026-06-26 拍板）**：依「不需向後相容」guideline，**移除舊版接受清單**，`from_dict` 只接受目前 VERSION（6），version != 6 一律回 null。既有「載舊版 vX」測試一併改寫：原本驗「缺新欄→空預設」的，改成在目前版本下驗（version 設 `SaveSerializer.VERSION`，斷言不變）；原本驗「舊版被接受」的，改成驗「舊版被拒（null）」。
+
 **Interfaces:**
-- Produces: `SaveData.quests: Dictionary`；序列化 `state.quests`（`{id:{status,stage,count}}`）；`SaveSerializer.VERSION == 6`
+- Produces: `SaveData.quests: Dictionary`；序列化 `state.quests`（`{id:{status,stage,count}}`）；`SaveSerializer.VERSION == 6`；`from_dict` 對 version != 6 一律回 null
 
 - [ ] **Step 1: 寫失敗測試**
 
@@ -1162,13 +1164,32 @@ func test_quests_absent_is_empty():
 
 func test_version_is_6():
 	assert_eq(SaveSerializer.to_dict(_data())["version"], 6)
+
+func test_old_version_rejected():
+	var raw := SaveSerializer.to_dict(_data())
+	raw["version"] = 5
+	assert_null(SaveSerializer.from_dict(raw), "舊版不再接受（只收 v6）")
 ```
 
-並把以下三檔的版本斷言 5→6：
-- `tests/engine/save/test_save_serializer_flags.gd:12` → `assert_eq(SaveSerializer.to_dict(_data())["version"], 6)`
-- `tests/engine/save/test_save_serializer.gd:79` → `assert_eq(SaveSerializer.to_dict(_sample())["version"], 6)`（函式名 `test_to_dict_version_is_5` 一併改 `test_to_dict_version_is_6`）
-- `tests/engine/save/test_save_serializer_spells.gd:16` → `assert_eq(SaveSerializer.to_dict(_sample())["version"], 6)`（函式名同上改 6）
-- `tests/engine/save/test_save_serializer_flags.gd` 的 `func test_version_is_5` 改名 `test_version_is_6`
+改寫既有 4 檔（移除「舊版被接受」假設）。逐項精確修改：
+
+`tests/engine/save/test_save_serializer.gd`：
+- 第 78–79 行 `test_to_dict_version_is_5` → 改名 `test_to_dict_version_is_6`、body 改 `assert_eq(SaveSerializer.to_dict(_sample())["version"], 6)`。
+- 第 93–104 行 `test_old_v3_save_gets_empty_explored` → 改名 `test_missing_explored_loads_empty`，把 raw 內 `"version": 3,` 改成 `"version": SaveSerializer.VERSION,`，其餘斷言（`assert_not_null` + `back.explored.size()==0`）不變。
+- 第 121–126 行 `test_opened_objects_absent_is_empty` → 把 `var raw := {"version": 4, "state": {"player_pos": [0, 0]}}` 改成 `var raw := {"version": SaveSerializer.VERSION, "state": {"player_pos": [0, 0]}}`，其餘不變。
+- `test_from_dict_rejects_version_mismatch`（v999）保留不動。
+
+`tests/engine/save/test_save_serializer_flags.gd`：
+- 第 11–12 行 `test_version_is_5` → 改名 `test_version_is_6`、body 改 `assert_eq(SaveSerializer.to_dict(_data())["version"], 6)`。
+- 第 20–28 行 `test_old_v4_without_new_fields_loads_empty` → 改名 `test_missing_flags_and_scenes_load_empty`，刪除 `raw["version"] = 4` 那一行（raw 由 to_dict 產生已是 6），其餘（erase flags/triggered_scenes + 斷言空）不變。
+
+`tests/engine/save/test_save_serializer_spells.gd`：
+- 第 15–16 行 `test_version_is_5` → 改名 `test_version_is_6`、body 改 `assert_eq(SaveSerializer.to_dict(_sample())["version"], 6)`。
+- 第 18–30 行 `test_version_2_save_gets_empty_known_spells` → 改名 `test_missing_known_spells_loads_empty`，把 raw 內 `"version": 2,` 改成 `"version": SaveSerializer.VERSION,`，其餘斷言不變。
+- 第 32–42 行 `test_version_1_save_still_accepted` → 改名 `test_old_version_1_rejected`，保留 raw（含 `"version": 1`），body 改 `assert_null(SaveSerializer.from_dict(raw), "舊版 v1 不再接受")`。
+
+`tests/engine/save/test_save_serializer_items.gd`：
+- 第 50–65 行 `test_accepts_version_1_save_with_empty_items` → 改名 `test_missing_items_fields_load_empty`，把 raw 內 `"version": 1,` 改成 `"version": SaveSerializer.VERSION,`，其餘斷言（gold 50 / inventory 空 / equipment total_attack 0）不變。
 
 - [ ] **Step 2: 跑測試確認失敗**
 
@@ -1191,11 +1212,14 @@ var quests: Dictionary = {}  # String id -> { status, stage, count }
 			"quests": _quests_to_dict(data.quests),
 ```
 
-3. `from_dict` 的版本守門加上 `v != 5`：
+3. `from_dict` 的版本守門整行換成（移除舊版接受清單）：
 
 ```gdscript
-	if v != VERSION and v != 1 and v != 2 and v != 3 and v != 4 and v != 5:   # 接受目前版本與已知舊版
+	if v != VERSION:   # 不需向後相容：只接受目前版本，舊檔不再載入
+		return null
 ```
+
+（原行為 `if v != VERSION and v != 1 ... : return null` 兩行，換成上面這兩行。）
 
 4. `from_dict` 的指派區，`data.triggered_scenes = ...` 之後加：
 
@@ -1246,7 +1270,7 @@ Expected: PASS（含新 quests 檔 + 三檔 version 6 + 既有不退化）
 
 ```bash
 git add engine/save/save_data.gd engine/save/save_serializer.gd autoload/save_system.gd tests/engine/save/
-git commit -m "feat(quest): 存檔加入 quests（VERSION 6）+ SaveSystem capture/apply"
+git commit -m "feat(quest): 存檔加入 quests（VERSION 6，移除舊版接受）+ SaveSystem capture/apply"
 ```
 
 ---
@@ -1756,5 +1780,5 @@ git commit -m "feat(quest): main 接線（QuestLog/J、notify_enter/kill/collect
 - 測試：Task 1–12 皆含 GUT；main 以全套不退化 + boot smoke(Task 13) ✅
 - collect「目前持有≥N」限制：demo 用 lucky_charm（非消耗/非起始）+ 階段順序 kill 先行避免一次性遭遇陷阱(Task 12 設計備忘) ✅
 - 型別一致性：state `{status,stage,count}`、have_count=`Callable(inventory,"count_of")`、resolver=`Callable(QuestCatalog,"load_quest")` 全程一致 ✅
-- 不需向後相容：Task 9 直接升 6（保留既有舊版接受清單僅為不額外破壞既有測試；未來可另行清掉舊版協商，非本里程碑） ✅
+- 不需向後相容：Task 9 直接升 6 並**移除舊版接受清單**（只收 v6）；既有「載舊版」測試改寫為「目前版本缺欄→空」或「舊版被拒」（使用者 2026-06-26 拍板） ✅
 ```
