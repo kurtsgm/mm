@@ -16,6 +16,7 @@ static func to_dict(data: SaveData) -> Dictionary:
 			"inventory": _inventory_to_array(data.inventory),
 			"cleared_encounters": _cleared_to_dict(data.cleared_encounters),
 			"explored": _explored_to_dict(data.explored),
+			"opened_objects": _opened_to_dict(data.opened_objects),
 		},
 	}
 
@@ -40,6 +41,7 @@ static func from_dict(raw: Dictionary, resolver := Callable()) -> SaveData:
 	data.inventory = _inventory_from_array(s.get("inventory", []))
 	data.cleared_encounters = _cleared_from_dict(s.get("cleared_encounters", {}))
 	data.explored = _explored_from_dict(s.get("explored", {}))
+	data.opened_objects = _opened_from_dict(s.get("opened_objects", {}))
 	return data
 
 # --- internal ---
@@ -176,4 +178,25 @@ static func _explored_from_dict(raw) -> Dictionary:
 			if _is_vec_shape(a):
 				seen[_to_vec(a)] = true
 		out[String(map_id)] = seen
+	return out
+
+static func _opened_to_dict(opened: Dictionary) -> Dictionary:
+	var out: Dictionary = {}
+	for map_id in opened:
+		var arr: Array = []
+		for pos in opened[map_id]:
+			arr.append(_vec(pos))
+		out[map_id] = arr
+	return out
+
+static func _opened_from_dict(raw) -> Dictionary:
+	var out: Dictionary = {}
+	if typeof(raw) != TYPE_DICTIONARY:
+		return out
+	for map_id in raw:
+		var positions: Array[Vector2i] = []
+		for a in raw[map_id]:
+			if _is_vec_shape(a):
+				positions.append(_to_vec(a))
+		out[String(map_id)] = positions
 	return out

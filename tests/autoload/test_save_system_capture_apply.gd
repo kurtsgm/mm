@@ -75,3 +75,15 @@ func test_apply_to_restores_explored():
 	data.explored = {"level01": {Vector2i(3, 3): true}}
 	ss.apply_to(data, gs, mm)
 	assert_true(gs.explored["level01"].has(Vector2i(3, 3)))
+
+func test_capture_apply_carries_opened_objects():
+	var gs := GameStateScript.new()
+	add_child_autofree(gs)
+	gs.current_map_id = "town_oak"  # apply_to 會 enter_map(map_id)，需給真實地圖避免無關 assert
+	gs.opened_objects = {"town_oak": [Vector2i(1, 1)]}
+	var data := SaveSystem.capture_from(gs)
+	assert_eq(data.opened_objects, {"town_oak": [Vector2i(1, 1)]})
+	var gs2 := GameStateScript.new()
+	add_child_autofree(gs2)
+	SaveSystem.apply_to(data, gs2, MapManager)
+	assert_eq(gs2.opened_objects, {"town_oak": [Vector2i(1, 1)]})

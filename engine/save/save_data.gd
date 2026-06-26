@@ -9,3 +9,4 @@ var party: Party = null
 var inventory: Inventory = null
 var cleared_encounters: Dictionary = {}  # String map_id -> Array[Vector2i]
 var explored: Dictionary = {}  # String map_id -> Dictionary[Vector2i -> true]
+var opened_objects: Dictionary = {}  # String map_id -> Array[Vector2i]

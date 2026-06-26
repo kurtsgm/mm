@@ -65,6 +65,7 @@ func capture_from(gs) -> SaveData:
 	data.inventory = gs.inventory
 	data.cleared_encounters = gs.cleared_encounters
 	data.explored = gs.explored
+	data.opened_objects = gs.opened_objects
 	return data
 
 func apply_to(data: SaveData, gs, mm) -> void:
@@ -76,6 +77,7 @@ func apply_to(data: SaveData, gs, mm) -> void:
 	gs.player_facing = data.player_facing
 	gs.cleared_encounters = data.cleared_encounters
 	gs.explored = data.explored
+	gs.opened_objects = data.opened_objects
 	mm.enter_map(data.map_id, gs.cleared_for(data.map_id))
 
 func capture() -> SaveData:

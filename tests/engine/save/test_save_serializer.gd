@@ -110,3 +110,17 @@ func test_explored_malformed_coords_skipped():
 	assert_not_null(back)
 	assert_true(back.explored["level01"].has(Vector2i(1, 1)))
 	assert_eq(back.explored["level01"].size(), 1, "畸形座標被略過")
+
+func test_opened_objects_round_trip():
+	var d := SaveData.new()
+	d.opened_objects = {"town_oak": [Vector2i(1, 1), Vector2i(3, 1)]}
+	var raw := SaveSerializer.to_dict(d)
+	var back := SaveSerializer.from_dict(raw)
+	assert_eq(back.opened_objects, {"town_oak": [Vector2i(1, 1), Vector2i(3, 1)]})
+
+func test_opened_objects_absent_is_empty():
+	# 舊檔（無此欄）→ 空字典，不報錯（向後相容）
+	var raw := {"version": 4, "state": {"player_pos": [0, 0]}}
+	var back := SaveSerializer.from_dict(raw)
+	assert_not_null(back)
+	assert_eq(back.opened_objects, {})
