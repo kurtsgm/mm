@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1_def")
+id = "ogre"
 display_name = "食人魔"
 level = 5
 hp_max = 40

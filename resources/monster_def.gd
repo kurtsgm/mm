@@ -1,6 +1,7 @@
 class_name MonsterDef
 extends Resource
 
+@export var id: String = ""
 @export var display_name: String = ""
 @export var sprite: Texture2D = null
 @export var level: int = 1

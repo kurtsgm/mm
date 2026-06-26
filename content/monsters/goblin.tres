@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1_def")
+id = "goblin"
 display_name = "哥布林"
 level = 2
 hp_max = 12

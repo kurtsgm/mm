@@ -1,6 +1,7 @@
 class_name Monster
 extends RefCounted
 
+var monster_id: String
 var name: String
 var level: int
 var hp: int
@@ -34,6 +35,7 @@ func effective_accuracy() -> int:
 
 static func from_def(def: MonsterDef) -> Monster:
 	var m := Monster.new()
+	m.monster_id = def.id
 	m.name = def.display_name
 	m.level = def.level
 	m.hp = def.hp_max
