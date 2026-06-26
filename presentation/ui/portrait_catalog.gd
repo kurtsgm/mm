@@ -6,6 +6,7 @@ extends RefCounted
 
 const _BY_NAME := {
 	"Gerard": "res://content/portraits/gerard.png",
+	"Cordelia": "res://content/portraits/cordelia.png",
 }
 
 static func texture_for(c: Character) -> Texture2D:
