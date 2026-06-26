@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://content/models/chest/chest.gd" id="1_chest"]
+
+[node name="ChestClosed" type="Node3D"]
+script = ExtResource("1_chest")
+opened = false
