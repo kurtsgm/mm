@@ -16,6 +16,10 @@ var opened_objects: Dictionary = {}  # String map_id -> Array[Vector2i]
 var flags: Dictionary = {}  # String flag_name -> true（全域故事旗標，當 set）
 var triggered_scenes: Dictionary = {}  # String map_id -> Array[Vector2i]（once 場景已觸發）
 
+var quests: Dictionary = {}        # String id -> { "status", "stage", "count" }
+var quest_resolver: Callable = Callable()  # 注入 func(id)->QuestDef（鏡射 SaveSystem.item_resolver）
+signal quests_changed
+
 func _ready() -> void:
 	if party == null:
 		party = Party.create_default()
@@ -89,6 +93,91 @@ func _seed_starting_items() -> void:
 	inventory.add("short_sword", 1)
 	inventory.add("leather", 1)
 	inventory.add("potion", 2)
+
+# --- 任務 ---
+
+func accept_quest(id: String) -> void:
+	if quests.has(id):
+		return  # 已接/已完成，冪等
+	var def = _quest_def(id)
+	if def == null:
+		return
+	quests[id] = QuestSystem.initial_state()
+	message_log.push(QuestProgress.accepted_message(def))
+	quests_changed.emit()
+
+func advance_quest(id: String) -> void:
+	_run_quest(id, "advance")
+
+func notify_kill(monster_id: String) -> void:
+	for id in quests.keys():
+		_run_quest(id, "kill", monster_id)
+
+func notify_enter(map_id: String, pos: Vector2i) -> void:
+	for id in quests.keys():
+		_run_quest(id, "enter", map_id, pos)
+
+func refresh_collect() -> void:
+	for id in quests.keys():
+		_run_quest(id, "collect")
+
+func is_quest_active(id: String) -> bool:
+	return quests.has(id) and String(quests[id].get("status", "")) == "active"
+
+func is_quest_done(id: String) -> bool:
+	return quests.has(id) and String(quests[id].get("status", "")) == "done"
+
+func is_quest_inactive(id: String) -> bool:
+	return not quests.has(id)
+
+func quest_stage(id: String) -> int:
+	if is_quest_active(id):
+		return int(quests[id]["stage"])
+	return -1
+
+func _quest_def(id: String):
+	if not quest_resolver.is_valid():
+		return null
+	return quest_resolver.call(id)
+
+# 對單一任務套用一種事件，計算新 state 並 commit。
+func _run_quest(id: String, kind: String, a = null, b = null) -> void:
+	if not is_quest_active(id):
+		return
+	var def = _quest_def(id)
+	if def == null:
+		return
+	var before: Dictionary = quests[id]
+	var after: Dictionary = before
+	match kind:
+		"advance":
+			after = QuestSystem.notify_advance(def, before)
+		"kill":
+			after = QuestSystem.notify_kill(def, before, String(a))
+		"enter":
+			after = QuestSystem.notify_enter(def, before, String(a), b)
+		"collect":
+			after = QuestSystem.check_collect(def, before, Callable(inventory, "count_of"))
+	_commit_quest(id, def, before, after)
+
+func _commit_quest(id: String, def, before: Dictionary, after: Dictionary) -> void:
+	var changed: bool = after["status"] != before["status"] or after["stage"] != before["stage"] or after["count"] != before["count"]
+	if not changed:
+		return
+	quests[id] = after
+	if String(after["status"]) == "done":
+		_grant_quest_rewards(def)
+		message_log.push(QuestProgress.completed_message(def))
+	else:
+		message_log.push("任務更新：" + QuestProgress.stage_line(def, after, Callable(inventory, "count_of")))
+	quests_changed.emit()
+
+func _grant_quest_rewards(def) -> void:
+	var g := int(def.rewards.get("gold", 0))
+	if g > 0:
+		gold += g
+	for it in def.rewards.get("items", []):
+		inventory.add(String(it), 1)
 
 func _seed_starting_spells() -> void:
 	# 骨架起始法術：讓施法系統開局即可操演。正式法術習得屬內容期。
