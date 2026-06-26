@@ -8,6 +8,8 @@ extends Node3D
 var loader: Callable = Callable(MapManager, "peek_map")
 # 測試 seam：func(container: Node3D, map: MapData)。預設無效 → 建真 WorldBuilder+ObjectLayer。
 var region_builder: Callable = Callable()
+# 開啟狀態提供者：map_id -> Array[Vector2i]。預設讀 GameState；測試可注入。
+var opened_provider: Callable = Callable(GameState, "opened_for")
 
 var _regions: Dictionary = {}  # map_id -> Node3D 容器
 
@@ -51,3 +53,23 @@ func _build_content(container: Node3D, map: MapData) -> void:
 	var ol := ObjectLayer.new()
 	container.add_child(ol)
 	ol.build(map)
+	var cl := ChestLayer.new()
+	container.add_child(cl)
+	cl.build(map, _opened_set(map.map_id))
+
+# 開箱當下：只重建「目前區」那一張圖的 ChestLayer（不動其他區、不動地形、不動 pooling）。
+func refresh_objects(map: MapData) -> void:
+	if map == null or not _regions.has(map.map_id):
+		return
+	var container: Node3D = _regions[map.map_id]
+	for child in container.get_children():
+		if child is ChestLayer:
+			(child as ChestLayer).build(map, _opened_set(map.map_id))
+			return
+
+func _opened_set(map_id: String) -> Dictionary:
+	var out: Dictionary = {}
+	if opened_provider.is_valid():
+		for pos in opened_provider.call(map_id):
+			out[pos] = true
+	return out

@@ -106,3 +106,51 @@ func test_default_path_builds_real_worldbuilder_and_objectlayer():
 	assert_eq(container.position, Vector3.ZERO)
 	assert_true(container.get_child(0) is WorldBuilder, "容器含 WorldBuilder")
 	assert_true(container.get_child(1) is ObjectLayer, "容器含 ObjectLayer")
+
+func _no_opened(_map_id: String) -> Array:
+	return []
+
+func _chest_layer_of(container: Node3D) -> ChestLayer:
+	for c in container.get_children():
+		if c is ChestLayer:
+			return c
+	return null
+
+func test_default_path_builds_chest_layer():
+	var a := _map("a", 3, 3)
+	a.theme_id = "default"
+	var t := PackedInt32Array()
+	t.resize(9)
+	a.tiles = t
+	_world = { "a": a }
+	var r := WorldStitchRenderer.new()
+	r.loader = Callable(self, "_loader")
+	r.opened_provider = Callable(self, "_no_opened")
+	add_child_autofree(r)
+	r.rebuild(a)
+	var container: Node3D = r.get_child(0)
+	assert_true(container.get_child(2) is ChestLayer, "容器含 ChestLayer（第三層）")
+
+func test_refresh_objects_rebuilds_chest_layer():
+	var a := _map("a", 3, 3)
+	a.theme_id = "default"
+	var t := PackedInt32Array()
+	t.resize(9)
+	a.tiles = t
+	a.objects = [{"pos": Vector2i(1, 1), "items": [], "gold": 0, "model": "chest"}]
+	_world = { "a": a }
+	var r := WorldStitchRenderer.new()
+	r.loader = Callable(self, "_loader")
+	r.opened_provider = Callable(self, "_no_opened")
+	add_child_autofree(r)
+	r.rebuild(a)
+	var cl := _chest_layer_of(r.get_child(0))
+	assert_not_null(cl)
+	assert_eq(cl.get_child_count(), 1, "一個寶箱物件 → 一個節點")
+	# 模擬 stale：清空後 refresh 應重建
+	for c in cl.get_children():
+		cl.remove_child(c)
+		c.free()
+	assert_eq(cl.get_child_count(), 0)
+	r.refresh_objects(a)
+	assert_eq(cl.get_child_count(), 1, "refresh_objects 重建目標區 ChestLayer")
