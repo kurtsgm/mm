@@ -13,6 +13,8 @@ var player_facing: int = GridDirection.Dir.NORTH
 var cleared_encounters: Dictionary = {}  # String map_id -> Array[Vector2i]
 var explored: Dictionary = {}  # String map_id -> Dictionary[Vector2i -> true]（內層當 set）
 var opened_objects: Dictionary = {}  # String map_id -> Array[Vector2i]
+var flags: Dictionary = {}  # String flag_name -> true（全域故事旗標，當 set）
+var triggered_scenes: Dictionary = {}  # String map_id -> Array[Vector2i]（once 場景已觸發）
 
 func _ready() -> void:
 	if party == null:
@@ -44,6 +46,27 @@ func is_object_opened(map_id: String, pos: Vector2i) -> bool:
 
 func opened_for(map_id: String) -> Array:
 	return opened_objects.get(map_id, [])
+
+func set_flag(name: String) -> void:
+	flags[name] = true
+
+func clear_flag(name: String) -> void:
+	flags.erase(name)
+
+func has_flag(name: String) -> bool:
+	return flags.has(name)
+
+func mark_scene_triggered(map_id: String, pos: Vector2i) -> void:
+	var list: Array = triggered_scenes.get(map_id, [])
+	if not list.has(pos):
+		list.append(pos)
+	triggered_scenes[map_id] = list
+
+func is_scene_triggered(map_id: String, pos: Vector2i) -> bool:
+	return triggered_scenes.get(map_id, []).has(pos)
+
+func triggered_for(map_id: String) -> Array:
+	return triggered_scenes.get(map_id, [])
 
 func mark_explored(map_id: String, pos: Vector2i, w: int, h: int) -> void:
 	var seen: Dictionary = explored.get(map_id, {})
