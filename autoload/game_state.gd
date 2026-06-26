@@ -12,6 +12,7 @@ var player_pos: Vector2i = Vector2i.ZERO
 var player_facing: int = GridDirection.Dir.NORTH
 var cleared_encounters: Dictionary = {}  # String map_id -> Array[Vector2i]
 var explored: Dictionary = {}  # String map_id -> Dictionary[Vector2i -> true]（內層當 set）
+var opened_objects: Dictionary = {}  # String map_id -> Array[Vector2i]
 
 func _ready() -> void:
 	if party == null:
@@ -31,6 +32,18 @@ func mark_encounter_cleared(map_id: String, pos: Vector2i) -> void:
 
 func cleared_for(map_id: String) -> Array:
 	return cleared_encounters.get(map_id, [])
+
+func mark_object_opened(map_id: String, pos: Vector2i) -> void:
+	var list: Array = opened_objects.get(map_id, [])
+	if not list.has(pos):
+		list.append(pos)
+	opened_objects[map_id] = list
+
+func is_object_opened(map_id: String, pos: Vector2i) -> bool:
+	return opened_objects.get(map_id, []).has(pos)
+
+func opened_for(map_id: String) -> Array:
+	return opened_objects.get(map_id, [])
 
 func mark_explored(map_id: String, pos: Vector2i, w: int, h: int) -> void:
 	var seen: Dictionary = explored.get(map_id, {})
