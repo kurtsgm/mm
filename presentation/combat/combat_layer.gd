@@ -8,6 +8,7 @@ extends CanvasLayer
 # 逐回合驅動 CombatSystem；玩家行動後自動結算怪物回合到下個隊員回合或戰鬥結束。
 
 signal combat_finished(result: int)
+signal turn_resolved
 
 var combat: CombatSystem
 
@@ -132,6 +133,7 @@ func _apply(events: Array) -> void:
 	for e in events:
 		_push_log(e)
 	_resolve()
+	turn_resolved.emit()
 
 # 自動結算怪物回合，直到輪到隊員或戰鬥結束
 func _resolve() -> void:
