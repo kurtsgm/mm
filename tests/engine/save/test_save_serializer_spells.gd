@@ -12,8 +12,8 @@ func test_known_spells_roundtrip():
 	assert_not_null(back)
 	assert_eq(back.party.members[0].known_spells, ["spark", "flame_wave"])
 
-func test_version_is_4():
-	assert_eq(SaveSerializer.to_dict(_sample())["version"], 4)
+func test_version_is_5():
+	assert_eq(SaveSerializer.to_dict(_sample())["version"], 5)
 
 func test_version_2_save_gets_empty_known_spells():
 	var raw := {

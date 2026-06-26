@@ -1,7 +1,7 @@
 class_name SaveSerializer
 extends Object
 
-const VERSION := 4
+const VERSION := 5
 
 static func to_dict(data: SaveData) -> Dictionary:
 	return {
@@ -17,6 +17,8 @@ static func to_dict(data: SaveData) -> Dictionary:
 			"cleared_encounters": _cleared_to_dict(data.cleared_encounters),
 			"explored": _explored_to_dict(data.explored),
 			"opened_objects": _opened_to_dict(data.opened_objects),
+			"flags": data.flags.keys(),
+			"triggered_scenes": _opened_to_dict(data.triggered_scenes),
 		},
 	}
 
@@ -24,7 +26,7 @@ static func to_dict(data: SaveData) -> Dictionary:
 # 不傳（純單元測試）時裝備欄留空；背包不需 resolver（只存 id+count）。
 static func from_dict(raw: Dictionary, resolver := Callable()) -> SaveData:
 	var v := int(raw.get("version", -1))
-	if v != VERSION and v != 1 and v != 2 and v != 3:   # 接受目前版本與已知舊版（向後相容）
+	if v != VERSION and v != 1 and v != 2 and v != 3 and v != 4:   # 接受目前版本與已知舊版（向後相容）
 		return null
 	if not raw.has("state"):
 		return null
@@ -42,6 +44,8 @@ static func from_dict(raw: Dictionary, resolver := Callable()) -> SaveData:
 	data.cleared_encounters = _cleared_from_dict(s.get("cleared_encounters", {}))
 	data.explored = _explored_from_dict(s.get("explored", {}))
 	data.opened_objects = _opened_from_dict(s.get("opened_objects", {}))
+	data.flags = _flags_from_array(s.get("flags", []))
+	data.triggered_scenes = _opened_from_dict(s.get("triggered_scenes", {}))
 	return data
 
 # --- internal ---
@@ -199,4 +203,11 @@ static func _opened_from_dict(raw) -> Dictionary:
 			if _is_vec_shape(a):
 				positions.append(_to_vec(a))
 		out[String(map_id)] = positions
+	return out
+
+static func _flags_from_array(arr) -> Dictionary:
+	var out: Dictionary = {}
+	if arr is Array:
+		for name in arr:
+			out[String(name)] = true
 	return out
