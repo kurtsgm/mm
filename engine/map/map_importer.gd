@@ -40,6 +40,7 @@ static func parse(json_text: String) -> MapData:
 	map.encounters = entities["encounters"]
 	map.links = entities["links"]
 	map.decorations = entities["decorations"]
+	map.objects = entities["objects"]
 	return map
 
 # --- internal ---
@@ -83,6 +84,7 @@ static func _parse_entities(arr, width: int, height: int):
 	var encounters := {}
 	var links := {}
 	var decorations := []
+	var objects := []
 	for e in arr:
 		if typeof(e) != TYPE_DICTIONARY:
 			return null
@@ -114,9 +116,25 @@ static func _parse_entities(arr, width: int, height: int):
 						return null
 					scale = float(e["scale"])
 				decorations.append({"pos": pos, "model": String(e["model"]), "facing": facing, "scale": scale})
+			"chest":
+				var items: Array = []
+				if e.has("items"):
+					if typeof(e["items"]) != TYPE_ARRAY:
+						return null
+					for it in e["items"]:
+						items.append(String(it))
+				var gold := 0
+				if e.has("gold"):
+					if not _is_num(e["gold"]) or int(e["gold"]) < 0:
+						return null
+					gold = int(e["gold"])
+				var model := "chest"
+				if e.has("model"):
+					model = String(e["model"])
+				objects.append({"pos": pos, "items": items, "gold": gold, "model": model})
 			_:
 				return null
-	return {"encounters": encounters, "links": links, "decorations": decorations}
+	return {"encounters": encounters, "links": links, "decorations": decorations, "objects": objects}
 
 # [x, y] -> Vector2i；違規 → null。JSON 數字可能是 float，需 int() 轉。
 static func _parse_pos(v):

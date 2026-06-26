@@ -100,7 +100,7 @@ func test_portal_without_entry_defaults_start():
 	assert_eq(m.get_link(Vector2i(1, 0)), {"map": "town_oak", "entry": "start"})
 
 func test_unknown_entity_type_returns_null():
-	assert_null(_p({"grid": ["@."], "entities": [{"type": "chest", "pos": [1, 0]}]}))
+	assert_null(_p({"grid": ["@."], "entities": [{"type": "trap", "pos": [1, 0]}]}))
 
 func test_entity_missing_pos_returns_null():
 	assert_null(_p({"grid": ["@."], "entities": [{"type": "monster", "encounter": "g"}]}))
@@ -152,3 +152,49 @@ func test_decoration_out_of_bounds_returns_null():
 func test_no_decoration_defaults_empty():
 	var m := _p({"grid": ["@."]})
 	assert_eq(m.decorations.size(), 0)
+
+func test_chest_entity_parsed_into_objects():
+	var json := '{"grid":["@."],"entities":[{"type":"chest","pos":[1,0],"items":["potion","short_sword"],"gold":50}]}'
+	var m := MapImporter.parse(json)
+	assert_not_null(m)
+	assert_eq(m.objects.size(), 1)
+	var o: Dictionary = m.objects[0]
+	assert_eq(o["pos"], Vector2i(1, 0))
+	assert_eq(o["items"], ["potion", "short_sword"])
+	assert_eq(o["gold"], 50)
+	assert_eq(o["model"], "chest")
+
+func test_chest_defaults_when_fields_omitted():
+	var json := '{"grid":["@."],"entities":[{"type":"chest","pos":[1,0]}]}'
+	var m := MapImporter.parse(json)
+	assert_not_null(m)
+	var o: Dictionary = m.objects[0]
+	assert_eq(o["items"], [])
+	assert_eq(o["gold"], 0)
+	assert_eq(o["model"], "chest")
+
+func test_chest_negative_gold_rejected():
+	var json := '{"grid":["@."],"entities":[{"type":"chest","pos":[1,0],"gold":-5}]}'
+	assert_null(MapImporter.parse(json))
+
+func test_chest_non_numeric_gold_rejected():
+	var json := '{"grid":["@."],"entities":[{"type":"chest","pos":[1,0],"gold":"lots"}]}'
+	assert_null(MapImporter.parse(json))
+
+func test_chest_out_of_bounds_rejected():
+	var json := '{"grid":["@."],"entities":[{"type":"chest","pos":[5,0]}]}'
+	assert_null(MapImporter.parse(json))
+
+func test_no_objects_means_empty_array():
+	var json := '{"grid":["@."]}'
+	var m := MapImporter.parse(json)
+	assert_not_null(m)
+	assert_eq(m.objects, [])
+
+func test_map_data_has_and_get_object():
+	var json := '{"grid":["@."],"entities":[{"type":"chest","pos":[1,0],"gold":10}]}'
+	var m := MapImporter.parse(json)
+	assert_true(m.has_object(Vector2i(1, 0)))
+	assert_false(m.has_object(Vector2i(0, 0)))
+	assert_eq(m.get_object(Vector2i(1, 0))["gold"], 10)
+	assert_eq(m.get_object(Vector2i(0, 0)), {})

@@ -16,6 +16,7 @@ enum TileType { FLOOR = 0, WALL = 1, DOOR = 2, STAIRS_UP = 3, STAIRS_DOWN = 4 }
 @export var entries: Dictionary = {}              # String(name) -> { "pos": Vector2i, "facing": int }
 @export var links: Dictionary = {}                # Vector2i(cell) -> { "map": String, "entry": String }
 @export var decorations: Array = []         # [{ pos:Vector2i, model:String, facing:int, scale:float }]
+@export var objects: Array = []            # [{ pos:Vector2i, items:Array, gold:int, model:String }]
 
 func get_tile(pos: Vector2i) -> int:
 	if pos.x < 0 or pos.x >= width or pos.y < 0 or pos.y >= height:
@@ -48,3 +49,15 @@ func has_link(pos: Vector2i) -> bool:
 
 func get_link(pos: Vector2i) -> Dictionary:
 	return links.get(pos, {})
+
+func has_object(pos: Vector2i) -> bool:
+	for o in objects:
+		if o["pos"] == pos:
+			return true
+	return false
+
+func get_object(pos: Vector2i) -> Dictionary:
+	for o in objects:
+		if o["pos"] == pos:
+			return o
+	return {}
