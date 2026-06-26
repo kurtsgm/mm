@@ -69,3 +69,11 @@ func test_link_accessors():
 	assert_eq(map.get_link(Vector2i(3, 3)), {"map": "town_oak", "entry": "gate"})
 	assert_false(map.has_link(Vector2i(0, 0)))
 	assert_eq(map.get_link(Vector2i(0, 0)), {})
+
+func test_quest_giver_accessors():
+	var m := MapData.new()
+	m.quest_givers = [{"pos": Vector2i(1, 1), "dialogue": "qg_x"}]
+	assert_true(m.has_quest_giver(Vector2i(1, 1)))
+	assert_false(m.has_quest_giver(Vector2i(0, 0)))
+	assert_eq(m.get_quest_giver(Vector2i(1, 1))["dialogue"], "qg_x")
+	assert_eq(m.get_quest_giver(Vector2i(0, 0)), {})

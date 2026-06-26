@@ -19,6 +19,7 @@ enum TileType { FLOOR = 0, WALL = 1, DOOR = 2, STAIRS_UP = 3, STAIRS_DOWN = 4 }
 @export var objects: Array = []            # [{ pos:Vector2i, items:Array, gold:int, model:String }]
 @export var scenes: Array = []             # [{ pos:Vector2i, dialogue:String, require, once:bool }]
 @export var vendors: Array = []            # [{ pos:Vector2i, id:String }]
+@export var quest_givers: Array = []       # [{ pos:Vector2i, dialogue:String }]
 
 func get_tile(pos: Vector2i) -> int:
 	if pos.x < 0 or pos.x >= width or pos.y < 0 or pos.y >= height:
@@ -86,4 +87,16 @@ func get_vendor(pos: Vector2i) -> Dictionary:
 	for v in vendors:
 		if v["pos"] == pos:
 			return v
+	return {}
+
+func has_quest_giver(pos: Vector2i) -> bool:
+	for q in quest_givers:
+		if q["pos"] == pos:
+			return true
+	return false
+
+func get_quest_giver(pos: Vector2i) -> Dictionary:
+	for q in quest_givers:
+		if q["pos"] == pos:
+			return q
 	return {}

@@ -209,3 +209,14 @@ func test_vendor_entity_parsed():
 func test_vendor_entity_missing_id_rejected():
 	var json := '{"grid":["@."],"entities":[{"type":"vendor","pos":[1,0]}]}'
 	assert_null(MapImporter.parse(json))
+
+func test_questgiver_entity_parsed():
+	var json := '{"grid":["@."],"entities":[{"type":"questgiver","pos":[1,0],"dialogue":"qg_x"}]}'
+	var map := MapImporter.parse(json)
+	assert_not_null(map)
+	assert_true(map.has_quest_giver(Vector2i(1, 0)))
+	assert_eq(map.get_quest_giver(Vector2i(1, 0))["dialogue"], "qg_x")
+
+func test_questgiver_missing_dialogue_rejected():
+	var json := '{"grid":["@."],"entities":[{"type":"questgiver","pos":[1,0]}]}'
+	assert_null(MapImporter.parse(json))
