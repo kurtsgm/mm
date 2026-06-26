@@ -28,6 +28,9 @@ var _spell_menu: SpellMenu
 var _mini_map: MiniMap
 var _chest_prompt: ChestPrompt
 var _chest_pos: Vector2i
+var _dialogue_overlay: DialogueOverlay
+var _scene_pos: Vector2i
+var _scene_once: bool = false
 var _menus: Array = []
 var _transitioning := false
 
@@ -75,6 +78,11 @@ func _ready() -> void:
 	_chest_prompt.confirmed.connect(_on_chest_confirmed)
 	_chest_prompt.declined.connect(_on_chest_declined)
 
+	_dialogue_overlay = DialogueOverlay.new()
+	add_child(_dialogue_overlay)
+	_dialogue_overlay.advanced.connect(_on_dialogue_advanced)
+	_dialogue_overlay.finished.connect(_on_dialogue_finished)
+
 	_menus = [_save_menu, _inventory_menu, _spell_menu]
 
 	_player.setup(MapManager.current_grid, map.start_pos, map.start_facing)
@@ -115,6 +123,8 @@ func _on_entered_cell(pos: Vector2i) -> void:
 		return
 	if _has_unopened_chest(pos):
 		_prompt_chest(pos)
+		return
+	if _try_scene(pos):
 		return
 	var text := TileMessages.for_tile(MapManager.current_map.get_tile(pos))
 	if text != "":
@@ -246,6 +256,35 @@ func _on_chest_confirmed() -> void:
 func _on_chest_declined() -> void:
 	_player.set_enabled(true)
 
+func _try_scene(pos: Vector2i) -> bool:
+	var map := MapManager.current_map
+	if not map.has_scene(pos):
+		return false
+	var scene := map.get_scene(pos)
+	var triggered := GameState.is_scene_triggered(map.map_id, pos)
+	if not SceneTrigger.should_trigger(scene, GameState, triggered):
+		return false
+	var data := DialogueCatalog.load_dialogue(String(scene["dialogue"]))
+	if data == null:
+		GameState.message_log.push("（對話 %s 遺失）" % scene["dialogue"])
+		return false
+	_scene_pos = pos
+	_scene_once = bool(scene.get("once", false))
+	_player.set_enabled(false)
+	_dialogue_overlay.open(DialogueRunner.new(data, GameState))
+	return true
+
+func _on_dialogue_advanced(descriptions: Array) -> void:
+	for d in descriptions:
+		GameState.message_log.push(String(d))
+	_hud.refresh()
+
+func _on_dialogue_finished() -> void:
+	if _scene_once:
+		GameState.mark_scene_triggered(MapManager.current_map.map_id, _scene_pos)
+	_player.set_enabled(true)
+	_hud.refresh()
+
 func _grant_rewards() -> void:
 	var total_xp := 0
 	var total_gold := 0
@@ -292,6 +331,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		return  # 戰鬥中禁用選單
 	if _chest_prompt.is_open():
 		return  # 開箱確認中，不開其他選單
+	if _dialogue_overlay.is_open():
+		return  # 對話中，不開其他選單
 	if event.keycode == KEY_TAB:
 		_toggle_menu(_save_menu)
 	elif event.keycode == KEY_I:
