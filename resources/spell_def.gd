@@ -11,6 +11,7 @@ enum Element { PHYSICAL = 0, FIRE = 1, COLD = 2, ELECTRIC = 3, POISON = 4, MAGIC
 @export var display_name: String = ""
 @export var school: int = School.ARCANE
 @export var sp_cost: int = 0
+@export var gold_cost: int = 0
 @export var target: int = Target.SINGLE_ENEMY
 @export var effect: int = Effect.DAMAGE
 @export var power: int = 0
