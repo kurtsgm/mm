@@ -3,7 +3,10 @@
   "theme": "town",
   "grid": ["#####", "#...#", "#.@.#", "#...#", "#####"],
   "entities": [
-    { "type": "portal", "pos": [2, 3], "to": "wild_nw", "entry": "from_town" }
+    { "type": "portal", "pos": [2, 3], "to": "wild_nw", "entry": "from_town" },
+    { "type": "chest", "pos": [1, 1], "items": ["potion"], "gold": 50 },
+    { "type": "chest", "pos": [3, 1], "items": ["short_sword"], "gold": 30 },
+    { "type": "monster", "pos": [3, 1], "encounter": "g" }
   ],
   "entries": { "gate": { "pos": [2, 1], "facing": "S" } }
 }

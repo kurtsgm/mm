@@ -48,3 +48,10 @@ func test_wild_nw_has_town_decoration():
 	assert_eq(nw.decorations.size(), 1)
 	assert_eq(nw.decorations[0]["pos"], Vector2i(3, 3))
 	assert_eq(nw.decorations[0]["model"], "town_oak_ext")
+
+func test_town_oak_has_demo_chests():
+	var town := _load("town_oak")
+	assert_true(town.has_object(Vector2i(1, 1)), "普通寶箱在 (1,1)")
+	assert_eq(town.get_object(Vector2i(1, 1))["gold"], 50)
+	assert_true(town.has_object(Vector2i(3, 1)), "看守寶箱在 (3,1)")
+	assert_true(town.has_encounter(Vector2i(3, 1)), "(3,1) 同格有遭遇（看守怪）")
