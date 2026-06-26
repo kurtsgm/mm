@@ -191,3 +191,21 @@ func test_equipped_armor_reduces_incoming_damage():
 	var cs2 := CombatSystem.new(_party([h2]), _monsters([_monster("M", 500, 8, 1000, 50)]), _rng(seed))
 	_step_n(cs2, 8)
 	assert_gt(h2.hp, h1.hp, "裝甲應減少受到的傷害")
+
+func test_monster_act_emits_damaged_on_target():
+	var hero := _char("Hero", 50, 1, 1, 1)        # 慢 → 怪物先動
+	var mon := _monster("Mon", 100, 5, 1000, 20)  # 高命中（命中率上限 95%）
+	var cs := CombatSystem.new(_party([hero]), _monsters([mon]), _rng(2))  # seed 2 → 命中（seed 1 會 miss）
+	assert_false(cs.is_party_turn())
+	watch_signals(hero)
+	cs.monster_act()
+	assert_signal_emitted(hero, "damaged")
+	assert_lt(hero.hp, 50)
+
+func test_monster_act_kos_member_at_zero_hp():
+	var hero := _char("Hero", 3, 1, 1, 1)
+	var mon := _monster("Mon", 100, 50, 1000, 20)
+	var cs := CombatSystem.new(_party([hero]), _monsters([mon]), _rng(2))  # seed 2 → 命中（seed 1 會 miss）
+	cs.monster_act()
+	assert_eq(hero.hp, 0)
+	assert_eq(hero.condition, Character.Condition.UNCONSCIOUS)

@@ -80,7 +80,7 @@ func monster_act() -> Array:
 	var defending := _defending.has(target)
 	if CombatFormulas.roll_hit(actor.effective_accuracy(), target.speed, _rng):
 		var dmg := CombatFormulas.roll_damage(actor.effective_attack(), target.armor_value(), defending, _rng)
-		target.hp -= dmg
+		target.take_damage(dmg)
 		events.append("%s 攻擊 %s，造成 %d 傷害。" % [actor.name, target.name, dmg])
 		if target.hp <= 0:
 			target.hp = 0

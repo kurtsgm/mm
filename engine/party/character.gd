@@ -23,11 +23,17 @@ var equipment: Equipment = Equipment.new()
 var known_spells: Array[String] = []
 var statuses: Array[StatusEffect] = []
 
+signal damaged(amount: int)
+
 func is_alive() -> bool:
 	return condition != Condition.DEAD
 
 func is_conscious() -> bool:
 	return condition == Condition.OK
+
+func take_damage(amount: int) -> void:
+	hp = maxi(hp - amount, 0)
+	damaged.emit(amount)
 
 func attack_power() -> int:
 	return might + equipment.total_attack() + StatusMods.sum(statuses, StatusEffect.Stat.ATTACK)

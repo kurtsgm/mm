@@ -53,6 +53,7 @@ func _ready() -> void:
 	_combat_layer = CombatLayer.new()
 	add_child(_combat_layer)
 	_combat_layer.combat_finished.connect(_on_combat_finished)
+	_combat_layer.turn_resolved.connect(_hud.refresh)
 
 	_save_menu = SaveMenu.new()
 	add_child(_save_menu)
