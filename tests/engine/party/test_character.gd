@@ -110,3 +110,25 @@ func test_status_and_equipment_stack_on_attack():
 	c.equipment.equip(w)
 	c.statuses.append(StatusEffect.new(StatusEffect.Stat.ATTACK, 2, 2))
 	assert_eq(c.attack_power(), 18)   # 10 + 6 + 2
+
+func test_take_damage_reduces_hp():
+	var c := Character.new()
+	c.hp = 20
+	c.hp_max = 20
+	c.take_damage(5)
+	assert_eq(c.hp, 15)
+
+func test_take_damage_clamps_at_zero():
+	var c := Character.new()
+	c.hp = 3
+	c.hp_max = 20
+	c.take_damage(10)
+	assert_eq(c.hp, 0)
+
+func test_take_damage_emits_damaged_signal():
+	var c := Character.new()
+	c.hp = 20
+	c.hp_max = 20
+	watch_signals(c)
+	c.take_damage(7)
+	assert_signal_emitted(c, "damaged")
