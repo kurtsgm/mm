@@ -333,6 +333,10 @@ func _cast_recall(spell: SpellDef) -> void:
 
 func _on_loaded() -> void:
 	_world_renderer.rebuild(MapManager.current_map)
+	# 讀檔後目前區可能是 pooling 沿用的容器（rebuild 不會重建其內容），
+	# 需單區重繪寶箱層讓開/關視覺對齊讀入的 opened_objects。
+	# （未來若 edge-stitch 的 wild_* 也放寶箱，須改為重繪所有區的寶箱層。）
+	_world_renderer.refresh_objects(MapManager.current_map)
 	_player.setup(MapManager.current_grid, GameState.player_pos, GameState.player_facing)
 	GameState.mark_explored(GameState.current_map_id, GameState.player_pos, MapManager.current_map.width, MapManager.current_map.height)
 	_mini_map.refresh()
