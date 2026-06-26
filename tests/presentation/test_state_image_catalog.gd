@@ -27,3 +27,9 @@ func test_non_down_states_have_no_path():
 func test_override_texture_null_for_stateless_face():
 	# 非暈倒/死亡（無共用圖路徑）→ override 永遠回 null（卡片用頭像）
 	assert_null(StateImageCatalog.override_texture(_char("Gerard"), PortraitState.Face.OK))
+
+func test_dead_override_returns_tombstone_texture():
+	# 墓碑素材已放入 → 死亡 override 取得貼圖
+	var tex := StateImageCatalog.override_texture(_char("Gerard"), PortraitState.Face.DEAD)
+	assert_not_null(tex)
+	assert_true(tex is Texture2D)
