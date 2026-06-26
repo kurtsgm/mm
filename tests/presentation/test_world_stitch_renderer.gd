@@ -61,6 +61,22 @@ func test_pooling_reuses_region_node_across_rebuild():
 	var a2 := _container_with_marker(r, "marker_a")
 	assert_eq(a1, a2, "沿用同一節點實例，未重建")
 
+func test_reused_container_repositioned_when_current_region_changes():
+	# 沿用的容器在 current 改變時必須重定位（位置賦值不可移進 else）。
+	var a := _map("a", 5, 5, { GridDirection.Dir.EAST: "e" })
+	var e := _map("e", 5, 5, { GridDirection.Dir.WEST: "a" })
+	_world = { "a": a, "e": e }
+	var r := _renderer()
+	r.rebuild(a)   # a 為 current，在原點
+	var a1 := _container_with_marker(r, "marker_a")
+	assert_not_null(a1)
+	assert_eq(a1.position, Vector3.ZERO, "a 為 current 時在原點")
+	r.rebuild(e)   # e 為 current → a 變成西鄰，容器沿用但須重定位
+	var a2 := _container_with_marker(r, "marker_a")
+	assert_eq(a1, a2, "沿用同一容器實例（pooled，未重建）")
+	assert_eq(a2.position, Vector3(-a.width * GridGeometry.CELL_SIZE, 0, 0),
+		"沿用的容器在 current 改變後重定位到西鄰偏移")
+
 func test_pooling_frees_departed_region():
 	var a := _map("a", 5, 5, { GridDirection.Dir.EAST: "e" })
 	var e := _map("e", 5, 5, { GridDirection.Dir.WEST: "a" })

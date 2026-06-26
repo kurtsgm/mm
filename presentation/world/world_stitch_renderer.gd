@@ -37,6 +37,7 @@ func rebuild(current_map: MapData) -> void:
 			add_child(container)
 			_regions[m.map_id] = container
 			_build_content(container, m)
+		# 必須在 if/else 外（無條件）：沿用的容器在目前區域改變時也要重定位 — 無縫跨界的關鍵不變式。
 		container.position = Vector3(
 			node["ox"] * GridGeometry.CELL_SIZE, 0.0, node["oy"] * GridGeometry.CELL_SIZE)
 
