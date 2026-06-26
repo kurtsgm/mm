@@ -69,3 +69,21 @@ func test_goto_null_finishes_and_closes():
 	ov._unhandled_input(_key(KEY_1))                  # 唯一選項 leave（goto null）
 	assert_signal_emitted(ov, "finished")
 	assert_false(ov.is_open())
+
+func _dead_end_runner() -> DialogueRunner:
+	# 末端節點作者未給 choices（parse 成 []）→ 零可選項，避免 soft-lock 的情境。
+	var data := DialogueData.parse({
+		"id": "d", "start": "root",
+		"nodes": {
+			"root": { "text": "the end", "image": "demo_event", "choices": [] },
+		},
+	})
+	return DialogueRunner.new(data, FakeCtx.new())
+
+func test_empty_choices_dismisses_with_any_key_and_finishes():
+	var ov := _overlay()
+	ov.open(_dead_end_runner())
+	watch_signals(ov)
+	ov._unhandled_input(_key(KEY_SPACE))             # 非數字鍵；零選項時任意鍵離開
+	assert_signal_emitted(ov, "finished")
+	assert_false(ov.is_open())

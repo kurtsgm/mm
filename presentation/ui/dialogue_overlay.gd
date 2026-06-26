@@ -71,6 +71,13 @@ func _render() -> void:
 		_choice_box.remove_child(c)
 		c.free()
 	var choices := _runner.available_choices()
+	if choices.is_empty():
+		# 零可選項（末端節點/全被 require 擋下）→ 死路提示，任意鍵離開（避免 soft-lock）。
+		var hint := Label.new()
+		hint.add_theme_font_size_override("font_size", 18)
+		hint.text = "（按任意鍵離開）"
+		_choice_box.add_child(hint)
+		return
 	for i in choices.size():
 		var lbl := Label.new()
 		lbl.add_theme_font_size_override("font_size", 18)
@@ -87,6 +94,11 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not visible:
 		return
 	if not (event is InputEventKey and event.pressed and not event.echo):
+		return
+	if _runner.available_choices().is_empty():
+		# 死路：任意鍵走正常結束路徑（main._on_dialogue_finished 會重新啟用玩家）。
+		close()
+		finished.emit()
 		return
 	var idx: int = event.keycode - KEY_1   # KEY_1..KEY_9 → 0..8
 	if idx < 0 or idx > 8:
