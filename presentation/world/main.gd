@@ -29,6 +29,7 @@ var _mini_map: MiniMap
 var _chest_prompt: ChestPrompt
 var _chest_pos: Vector2i
 var _dialogue_overlay: DialogueOverlay
+var _vendor_overlay: VendorOverlay
 var _scene_pos: Vector2i
 var _scene_once: bool = false
 var _menus: Array = []
@@ -83,6 +84,11 @@ func _ready() -> void:
 	_dialogue_overlay.advanced.connect(_on_dialogue_advanced)
 	_dialogue_overlay.finished.connect(_on_dialogue_finished)
 
+	_vendor_overlay = VendorOverlay.new()
+	add_child(_vendor_overlay)
+	_vendor_overlay.transacted.connect(_on_vendor_transacted)
+	_vendor_overlay.finished.connect(_on_vendor_finished)
+
 	_menus = [_save_menu, _inventory_menu, _spell_menu]
 
 	_player.setup(MapManager.current_grid, map.start_pos, map.start_facing)
@@ -125,6 +131,8 @@ func _on_entered_cell(pos: Vector2i) -> void:
 		_prompt_chest(pos)
 		return
 	if _try_scene(pos):
+		return
+	if _try_vendor(pos):
 		return
 	var text := TileMessages.for_tile(MapManager.current_map.get_tile(pos))
 	if text != "":
@@ -274,6 +282,19 @@ func _try_scene(pos: Vector2i) -> bool:
 	_dialogue_overlay.open(DialogueRunner.new(data, GameState))
 	return true
 
+func _try_vendor(pos: Vector2i) -> bool:
+	var map := MapManager.current_map
+	if not map.has_vendor(pos):
+		return false
+	var entry := map.get_vendor(pos)
+	var vendor := VendorCatalog.load_vendor(String(entry["id"]))
+	if vendor.is_empty():
+		GameState.message_log.push("（商店 %s 遺失）" % entry["id"])
+		return false
+	_player.set_enabled(false)
+	_vendor_overlay.open(vendor, GameState)
+	return true
+
 func _on_dialogue_advanced(descriptions: Array) -> void:
 	for d in descriptions:
 		GameState.message_log.push(String(d))
@@ -282,6 +303,15 @@ func _on_dialogue_advanced(descriptions: Array) -> void:
 func _on_dialogue_finished() -> void:
 	if _scene_once:
 		GameState.mark_scene_triggered(MapManager.current_map.map_id, _scene_pos)
+	_player.set_enabled(true)
+	_hud.refresh()
+
+func _on_vendor_transacted(events: Array) -> void:
+	for e in events:
+		GameState.message_log.push(String(e))
+	_hud.refresh()
+
+func _on_vendor_finished() -> void:
 	_player.set_enabled(true)
 	_hud.refresh()
 
@@ -331,8 +361,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		return  # 戰鬥中禁用選單
 	if _chest_prompt.is_open():
 		return  # 開箱確認中，不開其他選單
-	if _dialogue_overlay.is_open():
-		return  # 對話中，不開其他選單
+	if _dialogue_overlay.is_open() or _vendor_overlay.is_open():
+		return  # 對話/商店中，不開其他選單
 	if event.keycode == KEY_TAB:
 		_toggle_menu(_save_menu)
 	elif event.keycode == KEY_I:
