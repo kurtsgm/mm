@@ -4,6 +4,11 @@ class FakeCtx:
 	var gold: int = 0
 	var inventory := Inventory.new()
 	var flags: Dictionary = {}
+	var quests: Dictionary = {}   # id -> {"status","stage"}
+	func is_quest_inactive(id) -> bool: return not quests.has(id)
+	func is_quest_active(id) -> bool: return quests.has(id) and quests[id]["status"] == "active"
+	func is_quest_done(id) -> bool: return quests.has(id) and quests[id]["status"] == "done"
+	func quest_stage(id) -> int: return int(quests[id]["stage"]) if is_quest_active(id) else -1
 
 func _ctx(gold := 0) -> FakeCtx:
 	var c := FakeCtx.new()
@@ -43,3 +48,28 @@ func test_multiple_keys_are_and():
 
 func test_unknown_key_fails():
 	assert_false(DialogueCondition.passes({"weather": "rain"}, _ctx()))
+
+func test_quest_inactive():
+	var c := _ctx()
+	assert_true(DialogueCondition.passes({"quest_inactive": "q"}, c))
+	c.quests["q"] = {"status": "active", "stage": 0}
+	assert_false(DialogueCondition.passes({"quest_inactive": "q"}, c))
+
+func test_quest_active_and_done():
+	var c := _ctx()
+	c.quests["q"] = {"status": "active", "stage": 0}
+	assert_true(DialogueCondition.passes({"quest_active": "q"}, c))
+	assert_false(DialogueCondition.passes({"quest_done": "q"}, c))
+	c.quests["q"] = {"status": "done", "stage": 4}
+	assert_true(DialogueCondition.passes({"quest_done": "q"}, c))
+
+func test_quest_stage_eq():
+	var c := _ctx()
+	c.quests["q"] = {"status": "active", "stage": 3}
+	assert_true(DialogueCondition.passes({"quest_stage": {"id": "q", "eq": 3}}, c))
+	assert_false(DialogueCondition.passes({"quest_stage": {"id": "q", "eq": 2}}, c))
+
+func test_quest_stage_false_when_done():
+	var c := _ctx()
+	c.quests["q"] = {"status": "done", "stage": 4}
+	assert_false(DialogueCondition.passes({"quest_stage": {"id": "q", "eq": 4}}, c))

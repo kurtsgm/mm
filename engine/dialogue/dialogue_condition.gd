@@ -23,6 +23,21 @@ static func passes(require, ctx) -> bool:
 					return false
 			"is":
 				pass  # 與 "flag" 成對，於 flag 分支處理
+			"quest_active":
+				if not ctx.is_quest_active(String(require[key])):
+					return false
+			"quest_done":
+				if not ctx.is_quest_done(String(require[key])):
+					return false
+			"quest_inactive":
+				if not ctx.is_quest_inactive(String(require[key])):
+					return false
+			"quest_stage":
+				var spec = require[key]
+				if typeof(spec) != TYPE_DICTIONARY:
+					return false
+				if ctx.quest_stage(String(spec.get("id", ""))) != int(spec.get("eq", -999)):
+					return false
 			_:
 				return false
 	return true
