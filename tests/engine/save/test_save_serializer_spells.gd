@@ -12,12 +12,12 @@ func test_known_spells_roundtrip():
 	assert_not_null(back)
 	assert_eq(back.party.members[0].known_spells, ["spark", "flame_wave"])
 
-func test_version_is_5():
-	assert_eq(SaveSerializer.to_dict(_sample())["version"], 5)
+func test_version_is_6():
+	assert_eq(SaveSerializer.to_dict(_sample())["version"], 6)
 
-func test_version_2_save_gets_empty_known_spells():
+func test_missing_known_spells_loads_empty():
 	var raw := {
-		"version": 2,
+		"version": SaveSerializer.VERSION,
 		"state": {
 			"gold": 0, "map_id": "level01",
 			"player_pos": [0, 0], "player_facing": 0,
@@ -29,7 +29,7 @@ func test_version_2_save_gets_empty_known_spells():
 	assert_not_null(back, "v2 舊檔仍可讀")
 	assert_eq(back.party.members[0].known_spells, [])
 
-func test_version_1_save_still_accepted():
+func test_old_version_1_rejected():
 	var raw := {
 		"version": 1,
 		"state": {
@@ -39,4 +39,4 @@ func test_version_1_save_still_accepted():
 			"cleared_encounters": {},
 		},
 	}
-	assert_not_null(SaveSerializer.from_dict(raw))
+	assert_null(SaveSerializer.from_dict(raw), "舊版 v1 不再接受")

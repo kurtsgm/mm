@@ -75,8 +75,8 @@ func test_from_dict_rejects_version_mismatch():
 func test_from_dict_rejects_missing_state():
 	assert_null(SaveSerializer.from_dict({"version": SaveSerializer.VERSION}))
 
-func test_to_dict_version_is_5():
-	assert_eq(SaveSerializer.to_dict(_sample())["version"], 5)
+func test_to_dict_version_is_6():
+	assert_eq(SaveSerializer.to_dict(_sample())["version"], 6)
 
 func test_roundtrip_explored_multi_map():
 	var d := _sample()
@@ -90,9 +90,9 @@ func test_roundtrip_explored_multi_map():
 	assert_true(back.explored["level01"].has(Vector2i(2, 1)))
 	assert_true(back.explored["town_oak"].has(Vector2i(0, 0)))
 
-func test_old_v3_save_gets_empty_explored():
+func test_missing_explored_loads_empty():
 	var raw := {
-		"version": 3,
+		"version": SaveSerializer.VERSION,
 		"state": {
 			"gold": 0, "map_id": "level01",
 			"player_pos": [1, 1], "player_facing": 0,
@@ -100,7 +100,7 @@ func test_old_v3_save_gets_empty_explored():
 		},
 	}
 	var back := SaveSerializer.from_dict(raw)
-	assert_not_null(back, "v3 舊檔仍可讀")
+	assert_not_null(back)
 	assert_eq(back.explored.size(), 0)
 
 func test_explored_malformed_coords_skipped():
@@ -120,7 +120,7 @@ func test_opened_objects_round_trip():
 
 func test_opened_objects_absent_is_empty():
 	# 舊檔（無此欄）→ 空字典，不報錯（向後相容）
-	var raw := {"version": 4, "state": {"player_pos": [0, 0]}}
+	var raw := {"version": SaveSerializer.VERSION, "state": {"player_pos": [0, 0]}}
 	var back := SaveSerializer.from_dict(raw)
 	assert_not_null(back)
 	assert_eq(back.opened_objects, {})

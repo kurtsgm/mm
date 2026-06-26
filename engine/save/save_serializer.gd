@@ -1,7 +1,7 @@
 class_name SaveSerializer
 extends Object
 
-const VERSION := 5
+const VERSION := 6
 
 static func to_dict(data: SaveData) -> Dictionary:
 	return {
@@ -19,6 +19,7 @@ static func to_dict(data: SaveData) -> Dictionary:
 			"opened_objects": _opened_to_dict(data.opened_objects),
 			"flags": data.flags.keys(),
 			"triggered_scenes": _opened_to_dict(data.triggered_scenes),
+			"quests": _quests_to_dict(data.quests),
 		},
 	}
 
@@ -26,7 +27,7 @@ static func to_dict(data: SaveData) -> Dictionary:
 # 不傳（純單元測試）時裝備欄留空；背包不需 resolver（只存 id+count）。
 static func from_dict(raw: Dictionary, resolver := Callable()) -> SaveData:
 	var v := int(raw.get("version", -1))
-	if v != VERSION and v != 1 and v != 2 and v != 3 and v != 4:   # 接受目前版本與已知舊版（向後相容）
+	if v != VERSION:   # 不需向後相容：只接受目前版本，舊檔不再載入
 		return null
 	if not raw.has("state"):
 		return null
@@ -46,6 +47,7 @@ static func from_dict(raw: Dictionary, resolver := Callable()) -> SaveData:
 	data.opened_objects = _opened_from_dict(s.get("opened_objects", {}))
 	data.flags = _flags_from_array(s.get("flags", []))
 	data.triggered_scenes = _opened_from_dict(s.get("triggered_scenes", {}))
+	data.quests = _quests_from_dict(s.get("quests", {}))
 	return data
 
 # --- internal ---
@@ -210,4 +212,30 @@ static func _flags_from_array(arr) -> Dictionary:
 	if arr is Array:
 		for name in arr:
 			out[String(name)] = true
+	return out
+
+static func _quests_to_dict(quests: Dictionary) -> Dictionary:
+	var out: Dictionary = {}
+	for id in quests:
+		var q: Dictionary = quests[id]
+		out[String(id)] = {
+			"status": String(q.get("status", "active")),
+			"stage": int(q.get("stage", 0)),
+			"count": int(q.get("count", 0)),
+		}
+	return out
+
+static func _quests_from_dict(raw) -> Dictionary:
+	var out: Dictionary = {}
+	if typeof(raw) != TYPE_DICTIONARY:
+		return out
+	for id in raw:
+		var q = raw[id]
+		if typeof(q) != TYPE_DICTIONARY:
+			continue
+		out[String(id)] = {
+			"status": String(q.get("status", "active")),
+			"stage": int(q.get("stage", 0)),
+			"count": int(q.get("count", 0)),
+		}
 	return out

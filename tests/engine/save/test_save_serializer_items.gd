@@ -47,10 +47,10 @@ func test_equipment_dropped_without_resolver():
 	var c: Character = back.party.members[0]
 	assert_eq(c.equipment.total_attack(), 0, "無 resolver → 裝備留空（序列化器保持純可測）")
 
-func test_accepts_version_1_save_with_empty_items():
+func test_missing_items_fields_load_empty():
 	# 模擬 M5a（version 1）舊檔：無 inventory / equipment 欄
 	var raw := {
-		"version": 1,
+		"version": SaveSerializer.VERSION,
 		"state": {
 			"gold": 50, "map_id": "level01",
 			"player_pos": [2, 3], "player_facing": 1,
