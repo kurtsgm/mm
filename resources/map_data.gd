@@ -17,6 +17,7 @@ enum TileType { FLOOR = 0, WALL = 1, DOOR = 2, STAIRS_UP = 3, STAIRS_DOWN = 4 }
 @export var links: Dictionary = {}                # Vector2i(cell) -> { "map": String, "entry": String }
 @export var decorations: Array = []         # [{ pos:Vector2i, model:String, facing:int, scale:float }]
 @export var objects: Array = []            # [{ pos:Vector2i, items:Array, gold:int, model:String }]
+@export var scenes: Array = []             # [{ pos:Vector2i, dialogue:String, require, once:bool }]
 
 func get_tile(pos: Vector2i) -> int:
 	if pos.x < 0 or pos.x >= width or pos.y < 0 or pos.y >= height:
@@ -60,4 +61,16 @@ func get_object(pos: Vector2i) -> Dictionary:
 	for o in objects:
 		if o["pos"] == pos:
 			return o
+	return {}
+
+func has_scene(pos: Vector2i) -> bool:
+	for s in scenes:
+		if s["pos"] == pos:
+			return true
+	return false
+
+func get_scene(pos: Vector2i) -> Dictionary:
+	for s in scenes:
+		if s["pos"] == pos:
+			return s
 	return {}
