@@ -5,7 +5,7 @@ extends VBoxContainer
 # 內部頭像/血條以「撐滿 + anchor 比例」呈現 → 隨視窗縮放、解析度無關（不寫死像素寬）。
 
 const HIT_MS := 400                       # 受擊閃臉持續毫秒
-const _PORTRAIT_MIN_HEIGHT := 72          # 頭像最小高（寬度隨卡片平攤而擴張）
+const _PORTRAIT_MIN_HEIGHT := 96          # 頭像最小高（floor；實際高隨卡片寬維持正方形）
 const _BAR_HEIGHT := 18                    # HP/MP 條高
 
 enum FaceVisual { OK, HURT, HIT, UNCONSCIOUS, DEAD }
@@ -54,6 +54,7 @@ func _build() -> void:
 	_portrait = ColorRect.new()
 	_portrait.custom_minimum_size = Vector2(0, _PORTRAIT_MIN_HEIGHT)
 	_portrait.size_flags_horizontal = Control.SIZE_FILL   # 撐滿卡片寬
+	_portrait.resized.connect(_on_portrait_resized)        # 高=寬 → 正方，隨卡片寬縮放
 	add_child(_portrait)
 	# 真頭像：疊滿色塊、保持比例填滿並裁切（小格也能看清臉）
 	_portrait_tex = TextureRect.new()
@@ -172,6 +173,12 @@ func _process(_delta: float) -> void:
 	if not is_hit_active():
 		set_process(false)
 		_apply_face()
+
+# 頭像維持正方形：高 = 卡片寬（不低於 floor）。隨視窗/卡片寬縮放，正方圖完整不裁切。
+func _on_portrait_resized() -> void:
+	var target_h := maxf(_portrait.size.x, _PORTRAIT_MIN_HEIGHT)
+	if absf(_portrait.custom_minimum_size.y - target_h) > 0.5:
+		_portrait.custom_minimum_size.y = target_h
 
 func _on_self_damaged(_amount: int) -> void:
 	flash_hit()
