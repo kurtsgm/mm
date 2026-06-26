@@ -30,6 +30,7 @@ var _chest_prompt: ChestPrompt
 var _chest_pos: Vector2i
 var _dialogue_overlay: DialogueOverlay
 var _vendor_overlay: VendorOverlay
+var _quest_log: QuestLog
 var _scene_pos: Vector2i
 var _scene_once: bool = false
 var _menus: Array = []
@@ -89,7 +90,13 @@ func _ready() -> void:
 	_vendor_overlay.transacted.connect(_on_vendor_transacted)
 	_vendor_overlay.finished.connect(_on_vendor_finished)
 
-	_menus = [_save_menu, _inventory_menu, _spell_menu]
+	_quest_log = QuestLog.new()
+	add_child(_quest_log)
+	_quest_log.closed.connect(_on_menu_closed)
+	GameState.quest_resolver = Callable(QuestCatalog, "load_quest")
+	GameState.quests_changed.connect(_on_quests_changed)
+
+	_menus = [_save_menu, _inventory_menu, _spell_menu, _quest_log]
 
 	_player.setup(MapManager.current_grid, map.start_pos, map.start_facing)
 
@@ -120,6 +127,8 @@ func _setup_environment() -> void:
 func _on_entered_cell(pos: Vector2i) -> void:
 	GameState.player_pos = pos
 	GameState.mark_explored(GameState.current_map_id, pos, MapManager.current_map.width, MapManager.current_map.height)
+	GameState.notify_enter(GameState.current_map_id, pos)
+	GameState.refresh_collect()
 	var link := MapTransitions.resolve_link(MapManager.current_map, pos)
 	if not link.is_empty():
 		_enter_via_link(link["map"], link["entry"])
@@ -131,6 +140,8 @@ func _on_entered_cell(pos: Vector2i) -> void:
 		_prompt_chest(pos)
 		return
 	if _try_scene(pos):
+		return
+	if _try_quest_giver(pos):
 		return
 	if _try_vendor(pos):
 		return
@@ -219,6 +230,9 @@ func _on_combat_finished(result: int) -> void:
 	if result == CombatSystem.Result.VICTORY:
 		_grant_rewards()
 		_grant_drops()
+		for m in _combat.monsters:
+			GameState.notify_kill(m.monster_id)
+		GameState.refresh_collect()
 		MapManager.current_map.clear_encounter(_combat_pos)
 		GameState.mark_encounter_cleared(MapManager.current_map.map_id, _combat_pos)
 		GameState.message_log.push("戰鬥勝利！")
@@ -258,6 +272,7 @@ func _on_chest_confirmed() -> void:
 		var item := ItemCatalog.get_item(id)
 		var label: String = item.display_name if item != null else String(id)
 		GameState.message_log.push("獲得道具：%s" % label)
+	GameState.refresh_collect()
 	_player.set_enabled(true)
 	_hud.refresh()
 
@@ -278,6 +293,20 @@ func _try_scene(pos: Vector2i) -> bool:
 		return false
 	_scene_pos = pos
 	_scene_once = bool(scene.get("once", false))
+	_player.set_enabled(false)
+	_dialogue_overlay.open(DialogueRunner.new(data, GameState))
+	return true
+
+func _try_quest_giver(pos: Vector2i) -> bool:
+	var map := MapManager.current_map
+	if not map.has_quest_giver(pos):
+		return false
+	var entry := map.get_quest_giver(pos)
+	var data := DialogueCatalog.load_dialogue(String(entry["dialogue"]))
+	if data == null:
+		GameState.message_log.push("（對話 %s 遺失）" % entry["dialogue"])
+		return false
+	_scene_once = false
 	_player.set_enabled(false)
 	_dialogue_overlay.open(DialogueRunner.new(data, GameState))
 	return true
@@ -303,6 +332,7 @@ func _on_dialogue_advanced(descriptions: Array) -> void:
 func _on_dialogue_finished() -> void:
 	if _scene_once:
 		GameState.mark_scene_triggered(MapManager.current_map.map_id, _scene_pos)
+	GameState.refresh_collect()
 	_player.set_enabled(true)
 	_hud.refresh()
 
@@ -369,6 +399,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		_toggle_menu(_inventory_menu)
 	elif event.keycode == KEY_M:
 		_toggle_menu(_spell_menu)
+	elif event.keycode == KEY_J:
+		_toggle_menu(_quest_log)
 
 func _toggle_menu(menu) -> void:
 	if menu.is_open():
@@ -384,6 +416,10 @@ func _on_menu_closed() -> void:
 	if not _transitioning:
 		_player.set_enabled(true)
 	_hud.refresh()
+
+func _on_quests_changed() -> void:
+	if _quest_log.is_open():
+		_quest_log.refresh()
 
 func _on_world_spell_cast(spell: SpellDef) -> void:
 	# 工具法術擴充樣板：加新 utility = 加一個 SpellDef.Effect + 一個 case + 一張 .tres。
