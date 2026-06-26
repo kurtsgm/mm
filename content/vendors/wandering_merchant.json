@@ -1,0 +1,8 @@
+{
+  "id": "wandering_merchant",
+  "kind": "goods",
+  "name": "流浪商人",
+  "greeting": "旅途漫漫，補給一下吧。",
+  "sell_factor": 0.5,
+  "stock": ["potion", "ether"]
+}

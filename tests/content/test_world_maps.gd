@@ -49,6 +49,11 @@ func test_wild_nw_has_town_decoration():
 	assert_eq(nw.decorations[0]["pos"], Vector2i(3, 3))
 	assert_eq(nw.decorations[0]["model"], "town_oak_ext")
 
+func test_wild_ne_has_wandering_merchant():
+	var ne := _load("wild_ne")
+	assert_true(ne.has_vendor(Vector2i(2, 2)), "流浪商人在 (2,2)")
+	assert_eq(ne.get_vendor(Vector2i(2, 2))["id"], "wandering_merchant")
+
 func test_town_oak_has_demo_chests():
 	var town := _load("town_oak")
 	assert_true(town.has_object(Vector2i(1, 1)), "普通寶箱在 (1,1)")

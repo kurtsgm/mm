@@ -2,5 +2,8 @@
   "name": "東北野",
   "theme": "grassland",
   "grid": ["..@..", ".....", ".....", ".....", "....."],
+  "entities": [
+    { "type": "vendor", "pos": [2, 2], "id": "wandering_merchant" }
+  ],
   "neighbors": { "west": "wild_nw", "south": "wild_se" }
 }

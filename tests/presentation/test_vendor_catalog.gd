@@ -15,6 +15,12 @@ func test_load_services():
 	assert_eq(v["kind"], "services")
 	assert_eq(v["offers"][0]["effect"], "revive")
 
+func test_load_wandering_merchant():
+	var v := VendorCatalog.load_vendor("wandering_merchant")
+	assert_eq(v["kind"], "goods")
+	assert_true(v["stock"].has("potion"))
+	assert_true(v["stock"].has("ether"))
+
 func test_missing_returns_empty():
 	assert_true(VendorCatalog.load_vendor("nope_does_not_exist").is_empty())
 
