@@ -1,0 +1,11 @@
+{
+  "id": "goblin_menace",
+  "title": "哥布林的威脅",
+  "stages": [
+    { "type": "kill", "monster": "goblin", "count": 3, "desc": "擊敗巢穴的哥布林" },
+    { "type": "collect", "item": "lucky_charm", "count": 1, "desc": "取得哥布林信物" },
+    { "type": "reach", "map": "wild_ne", "pos": [3, 3], "desc": "確認巢穴最深處" },
+    { "type": "talk", "desc": "回橡鎮向守衛回報" }
+  ],
+  "rewards": { "gold": 100, "items": ["potion"] }
+}
