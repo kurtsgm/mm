@@ -1,0 +1,7 @@
+{
+  "id": "oak_mage",
+  "kind": "spells",
+  "name": "橡鎮法師塔",
+  "greeting": "想學點魔法嗎？",
+  "spells": ["spark", "heal", "bless"]
+}

@@ -1,0 +1,8 @@
+{
+  "id": "oak_general_store",
+  "kind": "goods",
+  "name": "橡鎮雜貨舖",
+  "greeting": "歡迎光臨，需要點什麼？",
+  "sell_factor": 0.5,
+  "stock": ["potion", "ether", "revive", "short_sword", "leather"]
+}

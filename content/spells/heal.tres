@@ -8,6 +8,7 @@ id = "heal"
 display_name = "治療"
 school = 1
 sp_cost = 2
+gold_cost = 80
 target = 2
 effect = 1
 power = 6

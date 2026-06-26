@@ -8,6 +8,7 @@ id = "bless"
 display_name = "祝福"
 school = 1
 sp_cost = 3
+gold_cost = 60
 target = 3
 effect = 3
 status_stat = 0

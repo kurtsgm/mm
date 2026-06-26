@@ -1,0 +1,11 @@
+{
+  "id": "oak_temple",
+  "kind": "services",
+  "name": "橡鎮神殿",
+  "greeting": "願光明與你同在。",
+  "offers": [
+    { "name": "復活同伴", "cost": 100, "effect": "revive", "target": "character" },
+    { "name": "治療傷勢", "cost": 50, "effect": "heal_full", "target": "character" },
+    { "name": "住宿一晚", "cost": 20, "effect": "rest", "target": "party" }
+  ]
+}

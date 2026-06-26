@@ -8,6 +8,7 @@ id = "spark"
 display_name = "火花"
 school = 0
 sp_cost = 2
+gold_cost = 80
 target = 0
 effect = 0
 power = 4
