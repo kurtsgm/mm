@@ -33,3 +33,44 @@ func test_cell_top_left_depends_only_on_offset_from_center():
 	# 相同「全域 - 中心」位移 → 相同像素（與絕對座標無關，含負座標鄰圖）
 	assert_eq(MiniMapScript.cell_top_left(Vector2i(7, 3), Vector2i(5, 5)),
 		MiniMapScript.cell_top_left(Vector2i(2, 8), Vector2i(0, 10)))
+
+# --- 可互動節點標記 marker_color ---
+
+func _chest(pos: Vector2i) -> Dictionary:
+	return {"pos": pos, "items": [], "gold": 0, "model": "chest"}
+
+func test_marker_chest_then_spent_when_opened():
+	var m := MapData.new()
+	m.objects = [_chest(Vector2i(1, 1))]
+	assert_eq(MiniMapScript.marker_color(m, Vector2i(1, 1), [], []), MiniMapScript.COL_MARK_CHEST)
+	assert_eq(MiniMapScript.marker_color(m, Vector2i(1, 1), [Vector2i(1, 1)], []), MiniMapScript.COL_MARK_SPENT)
+
+func test_marker_vendor():
+	var m := MapData.new()
+	m.vendors = [{"pos": Vector2i(2, 2), "id": "shop"}]
+	assert_eq(MiniMapScript.marker_color(m, Vector2i(2, 2), [], []), MiniMapScript.COL_MARK_VENDOR)
+
+func test_marker_questgiver():
+	var m := MapData.new()
+	m.quest_givers = [{"pos": Vector2i(4, 1), "dialogue": "q"}]
+	assert_eq(MiniMapScript.marker_color(m, Vector2i(4, 1), [], []), MiniMapScript.COL_MARK_QUEST)
+
+func test_marker_scene_once_normal_then_spent_when_triggered():
+	var m := MapData.new()
+	m.scenes = [{"pos": Vector2i(3, 3), "dialogue": "d", "require": null, "once": true}]
+	assert_eq(MiniMapScript.marker_color(m, Vector2i(3, 3), [], []), MiniMapScript.COL_MARK_SCENE)
+	assert_eq(MiniMapScript.marker_color(m, Vector2i(3, 3), [], [Vector2i(3, 3)]), MiniMapScript.COL_MARK_SPENT)
+
+func test_marker_scene_non_once_never_spent():
+	var m := MapData.new()
+	m.scenes = [{"pos": Vector2i(3, 3), "dialogue": "d", "require": null, "once": false}]
+	assert_eq(MiniMapScript.marker_color(m, Vector2i(3, 3), [], [Vector2i(3, 3)]), MiniMapScript.COL_MARK_SCENE)
+
+func test_marker_none_returns_null():
+	assert_null(MiniMapScript.marker_color(MapData.new(), Vector2i(0, 0), [], []))
+
+func test_marker_priority_questgiver_over_chest():
+	var m := MapData.new()
+	m.quest_givers = [{"pos": Vector2i(1, 1), "dialogue": "q"}]
+	m.objects = [_chest(Vector2i(1, 1))]
+	assert_eq(MiniMapScript.marker_color(m, Vector2i(1, 1), [], []), MiniMapScript.COL_MARK_QUEST)

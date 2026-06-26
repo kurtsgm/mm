@@ -20,6 +20,14 @@ const COL_STAIRS_DOWN := Color(0.66, 0.46, 0.85)
 const COL_PORTAL := Color(0.36, 0.82, 0.46)
 const COL_PLAYER := Color(0.95, 0.3, 0.3)
 
+# 可互動節點標記（疊在色塊上的小圓點）。已用過（開過寶箱/觸發過 once 事件）→ 灰。
+const COL_MARK_QUEST := Color(1.0, 0.95, 0.3)    # 任務 NPC
+const COL_MARK_VENDOR := Color(0.3, 0.8, 0.9)    # 商店
+const COL_MARK_SCENE := Color(0.9, 0.45, 0.85)   # 事件/對話
+const COL_MARK_CHEST := Color(0.95, 0.75, 0.2)   # 寶箱
+const COL_MARK_SPENT := Color(0.45, 0.45, 0.45)  # 已用過
+const MARK_R := CELL_PX * 0.18                    # 圓點半徑
+
 var _panel                       # _MiniMapPanel（untyped 以容許動態 .loader 屬性）
 var _map_cache: Dictionary = {}  # id -> MapData（會快取 null，避免重試不存在的檔）
 
@@ -72,6 +80,24 @@ static func tile_color(tile: int, is_portal: bool) -> Color:
 		MapData.TileType.STAIRS_DOWN: return COL_STAIRS_DOWN
 		_: return COL_FLOOR
 
+# 該格可互動節點的標記色（無→null；已用→灰）。優先序 questgiver>vendor>scene>chest。
+# opened/triggered 以參數注入（該 map 的已開寶箱 / 已觸發 once 事件），保持純函式可測。
+static func marker_color(map: MapData, cell: Vector2i, opened: Array, triggered: Array) -> Variant:
+	if map.has_quest_giver(cell):
+		return COL_MARK_QUEST
+	if map.has_vendor(cell):
+		return COL_MARK_VENDOR
+	if map.has_scene(cell):
+		var sc := map.get_scene(cell)
+		if bool(sc.get("once", false)) and triggered.has(cell):
+			return COL_MARK_SPENT
+		return COL_MARK_SCENE
+	if map.has_object(cell):   # objects 目前僅 chest
+		if opened.has(cell):
+			return COL_MARK_SPENT
+		return COL_MARK_CHEST
+	return null
+
 # 內部繪製面板。_draw 在 CanvasItem(Control) 上，讀 autoload + 注入的 loader。
 class _MiniMapPanel extends Control:
 	var loader: Callable
@@ -91,6 +117,8 @@ class _MiniMapPanel extends Control:
 			var ox: int = node["ox"]
 			var oy: int = node["oy"]
 			var explored: Dictionary = GameState.explored_for(pm.map_id)
+			var opened: Array = GameState.opened_for(pm.map_id)
+			var triggered: Array = GameState.triggered_for(pm.map_id)
 			for cy in pm.height:
 				for cx in pm.width:
 					var cell := Vector2i(cx, cy)
@@ -103,6 +131,10 @@ class _MiniMapPanel extends Control:
 					var tl := MiniMap.cell_top_left(Vector2i(gx, gy), center)
 					var col := MiniMap.tile_color(pm.get_tile(cell), pm.has_link(cell))
 					draw_rect(Rect2(tl.x, tl.y, csz, csz), col, true)
+					var mk = MiniMap.marker_color(pm, cell, opened, triggered)
+					if mk != null:
+						var mc := Vector2(tl.x + csz * 0.5, tl.y + csz * 0.5)
+						draw_circle(mc, MiniMap.MARK_R, mk)
 		_draw_player(center)
 
 	func _draw_player(center: Vector2i) -> void:
