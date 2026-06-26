@@ -26,6 +26,8 @@ var _save_menu: SaveMenu
 var _inventory_menu: InventoryMenu
 var _spell_menu: SpellMenu
 var _mini_map: MiniMap
+var _chest_prompt: ChestPrompt
+var _chest_pos: Vector2i
 var _menus: Array = []
 var _transitioning := false
 
@@ -67,6 +69,11 @@ func _ready() -> void:
 	_spell_menu.closed.connect(_on_menu_closed)
 	_spell_menu.world_spell_cast.connect(_on_world_spell_cast)
 
+	_chest_prompt = ChestPrompt.new()
+	add_child(_chest_prompt)
+	_chest_prompt.confirmed.connect(_on_chest_confirmed)
+	_chest_prompt.declined.connect(_on_chest_declined)
+
 	_menus = [_save_menu, _inventory_menu, _spell_menu]
 
 	_player.setup(MapManager.current_grid, map.start_pos, map.start_facing)
@@ -104,6 +111,9 @@ func _on_entered_cell(pos: Vector2i) -> void:
 		return
 	if MapManager.current_map.has_encounter(pos):
 		_start_combat(pos)
+		return
+	if _has_unopened_chest(pos):
+		_prompt_chest(pos)
 		return
 	var text := TileMessages.for_tile(MapManager.current_map.get_tile(pos))
 	if text != "":
@@ -193,7 +203,10 @@ func _on_combat_finished(result: int) -> void:
 		MapManager.current_map.clear_encounter(_combat_pos)
 		GameState.mark_encounter_cleared(MapManager.current_map.map_id, _combat_pos)
 		GameState.message_log.push("戰鬥勝利！")
-		_player.set_enabled(true)
+		if _has_unopened_chest(_combat_pos):
+			_prompt_chest(_combat_pos)
+		else:
+			_player.set_enabled(true)
 	elif result == CombatSystem.Result.FLED:
 		GameState.message_log.push("你們逃離了戰鬥。")
 		_player.set_enabled(true)
@@ -202,6 +215,35 @@ func _on_combat_finished(result: int) -> void:
 		_show_game_over()
 	_hud.refresh()
 	_combat = null
+
+func _has_unopened_chest(pos: Vector2i) -> bool:
+	var map := MapManager.current_map
+	return map.has_object(pos) and not GameState.is_object_opened(map.map_id, pos)
+
+func _prompt_chest(pos: Vector2i) -> void:
+	_chest_pos = pos
+	_player.set_enabled(false)
+	_chest_prompt.open()
+
+func _on_chest_confirmed() -> void:
+	var map := MapManager.current_map
+	var chest := map.get_object(_chest_pos)
+	var res := ChestLoot.grant(chest, GameState.inventory)
+	var gold := int(res["gold"])
+	GameState.gold += gold
+	GameState.mark_object_opened(map.map_id, _chest_pos)
+	_world_renderer.refresh_objects(map)
+	if gold > 0:
+		GameState.message_log.push("獲得 %d 金幣。" % gold)
+	for id in res["items"]:
+		var item := ItemCatalog.get_item(id)
+		var label: String = item.display_name if item != null else String(id)
+		GameState.message_log.push("獲得道具：%s" % label)
+	_player.set_enabled(true)
+	_hud.refresh()
+
+func _on_chest_declined() -> void:
+	_player.set_enabled(true)
 
 func _grant_rewards() -> void:
 	var total_xp := 0
@@ -247,6 +289,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if _combat != null:
 		return  # 戰鬥中禁用選單
+	if _chest_prompt.is_open():
+		return  # 開箱確認中，不開其他選單
 	if event.keycode == KEY_TAB:
 		_toggle_menu(_save_menu)
 	elif event.keycode == KEY_I:
