@@ -28,3 +28,4 @@ mono_crash.*.json
 
 # Superpowers SDD scratch
 .superpowers/
+.claude/worktrees/
