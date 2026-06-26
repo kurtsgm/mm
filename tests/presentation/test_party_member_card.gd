@@ -71,3 +71,18 @@ func test_buff_row_renders_one_chip_per_status():
 func test_character_accessor_returns_bound_character():
 	var c := _char("Knight")
 	assert_eq(_card(c).character(), c)
+
+func test_real_portrait_shows_texture_and_hides_glyph():
+	var c := _char("Knight")
+	c.name = "Gerard"                      # PortraitCatalog 有對應貼圖
+	var card := _card(c)
+	assert_true(card._portrait_tex.visible)
+	assert_false(card._portrait_glyph.visible)
+	assert_not_null(card._portrait_tex.texture)
+
+func test_placeholder_when_no_portrait():
+	var c := _char("Knight")
+	c.name = "Nobody"                      # 無對應貼圖 → 回 placeholder
+	var card := _card(c)
+	assert_false(card._portrait_tex.visible)
+	assert_true(card._portrait_glyph.visible)

@@ -27,8 +27,10 @@ const _TINT := {
 
 var _character: Character
 var _hit_until_msec: int = 0
+var _portrait_texture: Texture2D            # 真頭像（無則為 null → 用色塊 placeholder）
 
 var _portrait: ColorRect
+var _portrait_tex: TextureRect
 var _portrait_glyph: Label
 var _name_label: Label
 var _hp_fill: ColorRect
@@ -39,6 +41,7 @@ var _buff_row: HBoxContainer
 
 func setup(character: Character) -> void:
 	_character = character
+	_portrait_texture = PortraitCatalog.texture_for(character)
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL   # 在 PartyPanel 內平均分攤寬度
 	add_theme_constant_override("separation", 3)
 	_build()
@@ -52,6 +55,13 @@ func _build() -> void:
 	_portrait.custom_minimum_size = Vector2(0, _PORTRAIT_MIN_HEIGHT)
 	_portrait.size_flags_horizontal = Control.SIZE_FILL   # 撐滿卡片寬
 	add_child(_portrait)
+	# 真頭像：疊滿色塊、保持比例填滿並裁切（小格也能看清臉）
+	_portrait_tex = TextureRect.new()
+	_portrait_tex.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_portrait_tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_portrait_tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	_portrait_tex.texture = _portrait_texture
+	_portrait.add_child(_portrait_tex)
 	_portrait_glyph = Label.new()
 	_portrait_glyph.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_portrait_glyph.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -144,9 +154,19 @@ func current_visual() -> int:
 
 func _apply_face() -> void:
 	var v := current_visual()
-	_portrait_glyph.text = _GLYPH[v]
-	_portrait.color = _class_color(_character.char_class)
-	_portrait.modulate = _TINT[v]
+	if _portrait_texture != null:
+		# 真頭像：顯示貼圖、狀態以 modulate 上色（受擊紅閃/暈倒灰/死亡暗）；字符隱藏。
+		_portrait_tex.visible = true
+		_portrait_glyph.visible = false
+		_portrait.modulate = Color(1, 1, 1)
+		_portrait_tex.modulate = _TINT[v]
+	else:
+		# placeholder：職業色塊 + 表情字符，整體以 modulate 上狀態色。
+		_portrait_tex.visible = false
+		_portrait_glyph.visible = true
+		_portrait_glyph.text = _GLYPH[v]
+		_portrait.color = _class_color(_character.char_class)
+		_portrait.modulate = _TINT[v]
 
 func _process(_delta: float) -> void:
 	if not is_hit_active():
