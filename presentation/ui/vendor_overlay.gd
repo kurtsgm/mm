@@ -273,6 +273,7 @@ func _input_list_kind(event: InputEventKey, kind: String) -> void:
 				var sel: Dictionary = rows[_cursor]
 				if kind == "services" and String(sel.get("target", "character")) == "party":
 					_commit(kind, sel, _state.party.members)        # 全隊：直接套
+					_render()                                        # 成交後刷新標頭金幣（PICK_TARGET 路徑另有 _render，勿移入 _commit）
 				else:
 					_pending = sel
 					_tcursor = _first_eligible(_targets_for(sel, kind))   # 游標落在第一個合格對象

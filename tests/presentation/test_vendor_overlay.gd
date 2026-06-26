@@ -38,9 +38,10 @@ func test_goods_buy_deducts_gold_and_adds_item():
 	var ov := _overlay()
 	ov.open(_goods(), st)
 	watch_signals(ov)
+	var price := int(ItemCatalog.get_item("potion").value)
 	# cursor 預設指第一項(potion)；Enter 購買
 	ov._unhandled_input(_key(KEY_ENTER))
-	assert_lt(st.gold, 999)
+	assert_eq(st.gold, 999 - price)   # 精確扣 potion.value，不只是 < 999
 	assert_eq(st.inventory.count_of("potion"), 1)
 	assert_signal_emitted(ov, "transacted")
 
@@ -134,3 +135,36 @@ func test_service_heal_full_restores_hp():
 	ov._unhandled_input(_key(KEY_ENTER))
 	assert_eq(hurt.hp, hurt.hp_max)
 	assert_signal_emitted(ov, "transacted")
+
+# Minor #2：賣出後游標夾住（清單變短至空）。
+func test_goods_sell_clamps_cursor_when_list_shortens():
+	var st := FakeState.new()
+	st.gold = 0
+	st.inventory.add("potion", 1)   # 背包剛好 1 件可賣
+	var ov := _overlay()
+	ov.open(_goods(), st)
+	watch_signals(ov)
+	var before := st.gold
+	var sell_price := int(floor(ItemCatalog.get_item("potion").value * 0.5))
+	ov._unhandled_input(_key(KEY_TAB))     # 進賣模式
+	ov._unhandled_input(_key(KEY_ENTER))   # 賣掉唯一一件
+	assert_eq(st.gold, before + sell_price)         # +floor(value*sell_factor)
+	assert_eq(st.inventory.count_of("potion"), 0)
+	assert_signal_emitted(ov, "transacted")
+	assert_eq(ov._goods_rows().size(), 0)            # 賣清單已空
+	assert_true(ov._cursor >= 0)                     # 游標夾住、未越界
+	assert_lt(ov._cursor, maxi(ov._goods_rows().size(), 1))
+
+# Minor #3：金幣不足時標示且 Enter 不成交。
+func test_goods_buy_insufficient_gold_marks_and_blocks():
+	var price := int(ItemCatalog.get_item("potion").value)
+	var st := FakeState.new()
+	st.gold = price - 1   # 不足以買第一項(potion)
+	var ov := _overlay()
+	ov.open(_goods(), st)
+	watch_signals(ov)
+	assert_string_contains(ov._panel.text, "金幣不足")
+	ov._unhandled_input(_key(KEY_ENTER))   # 嘗試購買→應被擋
+	assert_eq(st.gold, price - 1)           # 金幣不變
+	assert_eq(st.inventory.count_of("potion"), 0)   # 未取得物品
+	assert_signal_not_emitted(ov, "transacted")
