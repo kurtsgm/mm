@@ -13,11 +13,10 @@ const AMBIENT_COLOR := Color(0.72, 0.74, 0.82)
 # 天空用真實 HDRI 全景（Poly Haven, CC0）；換別張改 SKY_PANORAMA（等距全景 .hdr/.exr，2:1）。
 const SKY_PANORAMA := "res://content/sky/citrus_orchard_road_puresky_2k.exr"
 
-@onready var _world_builder: WorldBuilder = $WorldBuilder
 @onready var _player: PlayerController = $PlayerController
 @onready var _camera: Camera3D = $PlayerController/Camera3D
 
-var _object_layer: ObjectLayer
+var _world_renderer: WorldStitchRenderer
 
 var _hud: Hud
 var _combat_layer: CombatLayer
@@ -32,10 +31,9 @@ var _transitioning := false
 
 func _ready() -> void:
 	var map := MapManager.enter_map(START_MAP_ID, GameState.cleared_for(START_MAP_ID))
-	_object_layer = ObjectLayer.new()
-	add_child(_object_layer)
-	_world_builder.build(map)
-	_object_layer.build(map)
+	_world_renderer = WorldStitchRenderer.new()
+	add_child(_world_renderer)
+	_world_renderer.rebuild(MapManager.current_map)
 	_setup_environment()
 	_setup_fade()
 
@@ -140,8 +138,7 @@ func _enter_via_link(map_id: String, entry_name: String) -> void:
 	var e := dest.get_entry(entry_name)
 	var pos: Vector2i = e.get("pos", dest.start_pos)
 	var facing: int = e.get("facing", GridDirection.Dir.NORTH)
-	_world_builder.build(MapManager.current_map)
-	_object_layer.build(MapManager.current_map)
+	_world_renderer.rebuild(MapManager.current_map)
 	_player.setup(MapManager.current_grid, pos, facing)
 	GameState.current_map_id = map_id
 	GameState.player_pos = pos
@@ -167,8 +164,7 @@ func _on_edge_exit_attempted(move_dir: int) -> void:
 		# 對邊實心 → 不能過去；還原當前地圖（enter_map 已切走 current）
 		MapManager.enter_map(GameState.current_map_id, GameState.cleared_for(GameState.current_map_id))
 		return
-	_world_builder.build(MapManager.current_map)
-	_object_layer.build(MapManager.current_map)
+	_world_renderer.rebuild(MapManager.current_map)
 	_player.setup(MapManager.current_grid, cell, GameState.player_facing)
 	GameState.current_map_id = neighbor_id
 	GameState.player_pos = cell
@@ -292,8 +288,7 @@ func _cast_recall(spell: SpellDef) -> void:
 	_enter_via_link(HOME_MAP_ID, HOME_ENTRY)
 
 func _on_loaded() -> void:
-	_world_builder.build(MapManager.current_map)
-	_object_layer.build(MapManager.current_map)
+	_world_renderer.rebuild(MapManager.current_map)
 	_player.setup(MapManager.current_grid, GameState.player_pos, GameState.player_facing)
 	GameState.mark_explored(GameState.current_map_id, GameState.player_pos, MapManager.current_map.width, MapManager.current_map.height)
 	_mini_map.refresh()

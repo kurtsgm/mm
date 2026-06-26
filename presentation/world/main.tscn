@@ -1,14 +1,10 @@
-[gd_scene load_steps=4 format=3 uid="uid://c3m1n5w0rldm1"]
+[gd_scene load_steps=3 format=3 uid="uid://c3m1n5w0rldm1"]
 
 [ext_resource type="Script" uid="uid://h57unrnf63d1" path="res://presentation/world/main.gd" id="1_main"]
-[ext_resource type="Script" uid="uid://de0fb3r8rqncv" path="res://presentation/world/world_builder.gd" id="2_wbuild"]
 [ext_resource type="Script" uid="uid://beagnucio0hh" path="res://presentation/world/player_controller.gd" id="3_player"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_main")
-
-[node name="WorldBuilder" type="Node3D" parent="."]
-script = ExtResource("2_wbuild")
 
 [node name="PlayerController" type="Node3D" parent="."]
 script = ExtResource("3_player")
