@@ -1,8 +1,8 @@
 class_name Hud
 extends CanvasLayer
 
-# 程式建構的 placeholder HUD：左上指北針、左下訊息列 + 隊伍卡列（PartyPanel）。
-# 版面錨定左上/左下，解析度無關（預設視窗 1152x648）。
+# 程式建構的 placeholder HUD：左上指北針、底部置中訊息列 + 隊伍卡列（PartyPanel）。
+# 版面用 anchor 比例（隊伍列占視窗下方約 70% 寬、置中），解析度無關，不寫死像素。
 
 const _DIR_NAMES := ["N", "E", "S", "W"]  # 以 GridDirection.Dir 索引
 
@@ -23,11 +23,15 @@ func _build_ui(party: Party) -> void:
 	_compass_label.add_theme_font_size_override("font_size", 22)
 	add_child(_compass_label)
 
+	# 底部置中區塊：寬 = 視窗的 70%（anchor 0.15~0.85），向上長、貼底。
 	var bottom := VBoxContainer.new()
-	bottom.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
-	bottom.offset_left = 20
-	bottom.offset_bottom = -20
-	bottom.grow_horizontal = Control.GROW_DIRECTION_END
+	bottom.anchor_left = 0.15
+	bottom.anchor_right = 0.85
+	bottom.anchor_top = 1.0
+	bottom.anchor_bottom = 1.0
+	bottom.offset_left = 0
+	bottom.offset_right = 0
+	bottom.offset_bottom = -16
 	bottom.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	bottom.add_theme_constant_override("separation", 8)
 	add_child(bottom)
@@ -37,6 +41,7 @@ func _build_ui(party: Party) -> void:
 	bottom.add_child(_message_label)
 
 	_party_panel = PartyPanel.new()
+	_party_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL   # 填滿 70% 區塊寬
 	bottom.add_child(_party_panel)
 	_party_panel.setup(party)
 

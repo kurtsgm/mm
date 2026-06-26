@@ -1,12 +1,12 @@
 class_name PartyMemberCard
 extends VBoxContainer
 # 單一隊友卡：placeholder 頭像（依狀態換臉）＋ HP/MP 條 ＋ buff/debuff 列。
-# 全程式建構、無美術；尺寸/座標為 placeholder（預設視窗 1152x648）。
+# 全程式建構、無美術。卡片以 SIZE_EXPAND_FILL 在 PartyPanel 內平均分攤寬度，
+# 內部頭像/血條以「撐滿 + anchor 比例」呈現 → 隨視窗縮放、解析度無關（不寫死像素寬）。
 
 const HIT_MS := 400                       # 受擊閃臉持續毫秒
-const _CARD_SIZE := Vector2(150, 110)
-const _PORTRAIT_SIZE := Vector2(56, 40)
-const _BAR_SIZE := Vector2(132, 12)
+const _PORTRAIT_MIN_HEIGHT := 72          # 頭像最小高（寬度隨卡片平攤而擴張）
+const _BAR_HEIGHT := 18                    # HP/MP 條高
 
 enum FaceVisual { OK, HURT, HIT, UNCONSCIOUS, DEAD }
 
@@ -39,8 +39,8 @@ var _buff_row: HBoxContainer
 
 func setup(character: Character) -> void:
 	_character = character
-	custom_minimum_size = _CARD_SIZE
-	add_theme_constant_override("separation", 2)
+	size_flags_horizontal = Control.SIZE_EXPAND_FILL   # 在 PartyPanel 內平均分攤寬度
+	add_theme_constant_override("separation", 3)
 	_build()
 	refresh()
 
@@ -49,17 +49,19 @@ func character() -> Character:
 
 func _build() -> void:
 	_portrait = ColorRect.new()
-	_portrait.custom_minimum_size = _PORTRAIT_SIZE
-	_portrait.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	_portrait.custom_minimum_size = Vector2(0, _PORTRAIT_MIN_HEIGHT)
+	_portrait.size_flags_horizontal = Control.SIZE_FILL   # 撐滿卡片寬
 	add_child(_portrait)
 	_portrait_glyph = Label.new()
 	_portrait_glyph.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_portrait_glyph.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_portrait_glyph.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_portrait_glyph.add_theme_font_size_override("font_size", 32)
 	_portrait.add_child(_portrait_glyph)
 
 	_name_label = Label.new()
-	_name_label.add_theme_font_size_override("font_size", 12)
+	_name_label.add_theme_font_size_override("font_size", 16)
+	_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	add_child(_name_label)
 
 	_hp_fill = _make_bar(Color(0.8, 0.2, 0.2))
@@ -74,12 +76,19 @@ func _build() -> void:
 func _make_bar(fill_color: Color) -> ColorRect:
 	var bg := ColorRect.new()
 	bg.color = Color(0.1, 0.1, 0.1)
-	bg.custom_minimum_size = _BAR_SIZE
+	bg.custom_minimum_size = Vector2(0, _BAR_HEIGHT)   # 寬隨卡片擴張
 	add_child(bg)
 	var fill := ColorRect.new()
 	fill.color = fill_color
-	fill.set_anchors_preset(Control.PRESET_TOP_LEFT)
-	fill.size = Vector2(0, _BAR_SIZE.y)
+	# 以 anchor_right 表示比例 → 填色寬隨 bar（卡片）寬自動縮放，解析度無關
+	fill.anchor_left = 0.0
+	fill.anchor_top = 0.0
+	fill.anchor_right = 0.0
+	fill.anchor_bottom = 1.0
+	fill.offset_left = 0
+	fill.offset_top = 0
+	fill.offset_right = 0
+	fill.offset_bottom = 0
 	bg.add_child(fill)
 	return fill
 
@@ -88,7 +97,7 @@ func _bar_label(fill: ColorRect) -> Label:
 	lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	lbl.add_theme_font_size_override("font_size", 10)
+	lbl.add_theme_font_size_override("font_size", 13)
 	(fill.get_parent() as Control).add_child(lbl)   # 疊在 bar 背景上
 	return lbl
 
@@ -102,7 +111,7 @@ func refresh() -> void:
 	_apply_buffs()
 
 func _apply_bar(fill: ColorRect, label: Label, tag: String, value: int, max_value: int) -> void:
-	fill.size = Vector2(bar_ratio(value, max_value) * _BAR_SIZE.x, _BAR_SIZE.y)
+	fill.anchor_right = bar_ratio(value, max_value)   # 填色寬 = 比例 × bar 寬
 	label.text = "%s %d/%d" % [tag, value, max_value]
 
 static func bar_ratio(value: int, max_value: int) -> float:
@@ -155,7 +164,7 @@ func _apply_buffs() -> void:
 		child.free()
 	for s in _character.statuses:
 		var chip := Label.new()
-		chip.add_theme_font_size_override("font_size", 10)
+		chip.add_theme_font_size_override("font_size", 12)
 		chip.text = status_text(s)
 		chip.add_theme_color_override("font_color", status_color(s))
 		_buff_row.add_child(chip)
