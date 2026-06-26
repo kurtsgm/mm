@@ -198,3 +198,14 @@ func test_map_data_has_and_get_object():
 	assert_false(m.has_object(Vector2i(0, 0)))
 	assert_eq(m.get_object(Vector2i(1, 0))["gold"], 10)
 	assert_eq(m.get_object(Vector2i(0, 0)), {})
+
+func test_vendor_entity_parsed():
+	var json := '{"grid":["@."],"entities":[{"type":"vendor","pos":[1,0],"id":"oak_general_store"}]}'
+	var map := MapImporter.parse(json)
+	assert_not_null(map)
+	assert_true(map.has_vendor(Vector2i(1, 0)))
+	assert_eq(map.get_vendor(Vector2i(1, 0))["id"], "oak_general_store")
+
+func test_vendor_entity_missing_id_rejected():
+	var json := '{"grid":["@."],"entities":[{"type":"vendor","pos":[1,0]}]}'
+	assert_null(MapImporter.parse(json))

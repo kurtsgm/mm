@@ -42,6 +42,7 @@ static func parse(json_text: String) -> MapData:
 	map.decorations = entities["decorations"]
 	map.objects = entities["objects"]
 	map.scenes = entities["scenes"]
+	map.vendors = entities["vendors"]
 	return map
 
 # --- internal ---
@@ -87,6 +88,7 @@ static func _parse_entities(arr, width: int, height: int):
 	var decorations := []
 	var objects := []
 	var scenes := []
+	var vendors := []
 	for e in arr:
 		if typeof(e) != TYPE_DICTIONARY:
 			return null
@@ -146,9 +148,13 @@ static func _parse_entities(arr, width: int, height: int):
 					"require": e.get("require", null),
 					"once": once,
 				})
+			"vendor":
+				if not e.has("id"):
+					return null
+				vendors.append({"pos": pos, "id": String(e["id"])})
 			_:
 				return null
-	return {"encounters": encounters, "links": links, "decorations": decorations, "objects": objects, "scenes": scenes}
+	return {"encounters": encounters, "links": links, "decorations": decorations, "objects": objects, "scenes": scenes, "vendors": vendors}
 
 # [x, y] -> Vector2i；違規 → null。JSON 數字可能是 float，需 int() 轉。
 static func _parse_pos(v):
