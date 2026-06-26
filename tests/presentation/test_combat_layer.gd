@@ -58,3 +58,17 @@ func test_turn_resolved_emitted_after_party_action():
 	watch_signals(layer)
 	layer._unhandled_input(_key(KEY_1))            # 攻擊 1 號敵人
 	assert_signal_emitted(layer, "turn_resolved")
+
+func test_turn_resolved_emitted_after_monster_first_opening():
+	# 怪物較快先動：begin() 直接呼叫 _resolve() 跑怪物開場回合，
+	# 此路徑應仍在最後 emit turn_resolved，讓 HUD 即時刷新血條/數字。
+	var cam := Camera3D.new()
+	add_child_autofree(cam)
+	var layer := CombatLayer.new()
+	add_child_autofree(layer)
+	var hero := _char("Hero", 100, 1, 1, 1)        # 慢、撐得住開場一擊
+	var mon := _monster("Mon", 100, 5, 1000, 50)   # 快、必中 → 先動
+	var cs := CombatSystem.new(_party(hero), _monsters(mon), _rng(1))
+	watch_signals(layer)
+	layer.begin(cs, cam)
+	assert_signal_emitted(layer, "turn_resolved")

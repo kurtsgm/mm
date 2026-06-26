@@ -31,6 +31,7 @@ func begin(cs: CombatSystem, camera: Camera3D) -> void:
 	_push_log("戰鬥開始！")
 	set_process_unhandled_input(true)
 	_resolve()  # 怪物若較快先動
+	turn_resolved.emit()  # 怪物開場回合也要刷新 HUD（_resolve 不會 emit）
 
 func _build_ui() -> void:
 	if _prompt_label == null:

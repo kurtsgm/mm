@@ -9,12 +9,10 @@ const _DIR_NAMES := ["N", "E", "S", "W"]  # 以 GridDirection.Dir 索引
 var _compass_label: Label
 var _message_label: Label
 var _party_panel: PartyPanel
-var _bound_party: Party
 var _message_log: MessageLog
 
 func setup(game_state: Node, player: PlayerController) -> void:
 	_build_ui(game_state.party)
-	_bound_party = game_state.party
 	_message_log = game_state.message_log
 	_message_log.changed.connect(_on_message_changed)
 	player.facing_changed.connect(_on_facing_changed)
@@ -44,7 +42,6 @@ func _build_ui(party: Party) -> void:
 
 func refresh() -> void:
 	# 讀檔可能整個換掉 GameState.party 實例 → sync 偵測並在需要時重建卡。
-	_bound_party = GameState.party
 	_party_panel.sync(GameState.party)
 
 func _on_facing_changed(facing: int) -> void:
