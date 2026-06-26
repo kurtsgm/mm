@@ -12,4 +12,5 @@ var explored: Dictionary = {}  # String map_id -> Dictionary[Vector2i -> true]
 var opened_objects: Dictionary = {}  # String map_id -> Array[Vector2i]
 var flags: Dictionary = {}  # String flag -> true
 var triggered_scenes: Dictionary = {}  # String map_id -> Array[Vector2i]
-var quests: Dictionary = {}  # String id -> { status, stage, count }
+var quests: Dictionary = {}  # String id -> { status, stage }
+var kill_counts: Dictionary = {}  # String monster_id -> 累計擊殺數

@@ -16,7 +16,8 @@ var opened_objects: Dictionary = {}  # String map_id -> Array[Vector2i]
 var flags: Dictionary = {}  # String flag_name -> true（全域故事旗標，當 set）
 var triggered_scenes: Dictionary = {}  # String map_id -> Array[Vector2i]（once 場景已觸發）
 
-var quests: Dictionary = {}        # String id -> { "status", "stage", "count" }
+var quests: Dictionary = {}        # String id -> { "status", "stage" }
+var kill_counts: Dictionary = {}   # String monster_id -> 累計擊殺數（持久，供 kill 目標狀態式判定/追認）
 var quest_resolver: Callable = Callable()  # 注入 func(id)->QuestDef（鏡射 SaveSystem.item_resolver）
 signal quests_changed
 
@@ -96,6 +97,13 @@ func _seed_starting_items() -> void:
 
 # --- 任務 ---
 
+# 給 QuestSystem/QuestProgress 的 duck-typed 查詢（狀態式目標判定）。is_explored 已定義於上。
+func kill_count(monster_id: String) -> int:
+	return int(kill_counts.get(monster_id, 0))
+
+func item_count(item_id: String) -> int:
+	return inventory.count_of(item_id) if inventory != null else 0
+
 func accept_quest(id: String) -> void:
 	if quests.has(id):
 		return  # 已接/已完成，冪等
@@ -105,21 +113,26 @@ func accept_quest(id: String) -> void:
 	quests[id] = QuestSystem.initial_state()
 	message_log.push(QuestProgress.accepted_message(def))
 	quests_changed.emit()
+	_run_quest(id, "recheck")   # 接取追認：已完成的階段（殺過/撿過/到過）立即跳過、不卡死
 
 func advance_quest(id: String) -> void:
-	_run_quest(id, "advance")
+	_run_quest(id, "talk")
 
+# 戰鬥勝利每擊敗一隻怪呼叫：累計擊殺（不分有無任務）後重新評估所有任務。
 func notify_kill(monster_id: String) -> void:
+	kill_counts[monster_id] = int(kill_counts.get(monster_id, 0)) + 1
 	for id in quests.keys():
-		_run_quest(id, "kill", monster_id)
+		_run_quest(id, "recheck")
 
-func notify_enter(map_id: String, pos: Vector2i) -> void:
+# 進格 / 背包變動後重新評估（reach 由 main 先 mark_explored；collect 讀 inventory）。
+# 參數於狀態式判定已不需，保留簽章以免動 main。
+func notify_enter(_map_id: String, _pos: Vector2i) -> void:
 	for id in quests.keys():
-		_run_quest(id, "enter", map_id, pos)
+		_run_quest(id, "recheck")
 
 func refresh_collect() -> void:
 	for id in quests.keys():
-		_run_quest(id, "collect")
+		_run_quest(id, "recheck")
 
 func is_quest_active(id: String) -> bool:
 	return quests.has(id) and String(quests[id].get("status", "")) == "active"
@@ -140,28 +153,23 @@ func _quest_def(id: String):
 		return null
 	return quest_resolver.call(id)
 
-# 對單一任務套用一種事件，計算新 state 並 commit。
-func _run_quest(id: String, kind: String, a = null, b = null) -> void:
+# 對單一任務重新評估（狀態式追認）或對話推進 talk，計算新 state 並 commit。
+func _run_quest(id: String, kind: String) -> void:
 	if not is_quest_active(id):
 		return
 	var def = _quest_def(id)
 	if def == null:
 		return
 	var before: Dictionary = quests[id]
-	var after: Dictionary = before
-	match kind:
-		"advance":
-			after = QuestSystem.notify_advance(def, before)
-		"kill":
-			after = QuestSystem.notify_kill(def, before, String(a))
-		"enter":
-			after = QuestSystem.notify_enter(def, before, String(a), b)
-		"collect":
-			after = QuestSystem.check_collect(def, before, Callable(inventory, "count_of"))
+	var after: Dictionary
+	if kind == "talk":
+		after = QuestSystem.advance_talk(def, before, self)
+	else:  # "recheck"
+		after = QuestSystem.catch_up(def, before, self)
 	_commit_quest(id, def, before, after)
 
 func _commit_quest(id: String, def, before: Dictionary, after: Dictionary) -> void:
-	var changed: bool = after["status"] != before["status"] or after["stage"] != before["stage"] or after["count"] != before["count"]
+	var changed: bool = after["status"] != before["status"] or after["stage"] != before["stage"]
 	if not changed:
 		return
 	quests[id] = after
@@ -169,7 +177,7 @@ func _commit_quest(id: String, def, before: Dictionary, after: Dictionary) -> vo
 		_grant_quest_rewards(def)
 		message_log.push(QuestProgress.completed_message(def))
 	else:
-		message_log.push("任務更新：" + QuestProgress.stage_line(def, after, Callable(inventory, "count_of")))
+		message_log.push("任務更新：" + QuestProgress.stage_line(def, after, self))
 	quests_changed.emit()
 
 func _grant_quest_rewards(def) -> void:

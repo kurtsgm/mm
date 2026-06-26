@@ -1,18 +1,20 @@
 class_name QuestProgress
 extends Object
-# 任務日誌/訊息列文字（純）。kill/collect 顯示計數；reach/talk 只顯示描述。
+# 任務日誌/訊息列文字（純）。kill/collect 顯示計數（夾住目標）；reach/talk 只顯示描述。
+# q（duck-typed 查詢）：q.kill_count(id)->int、q.item_count(id)->int。
 
-static func stage_line(def, state, have_count: Callable) -> String:
+static func stage_line(def, state, q) -> String:
 	if String(state.get("status", "")) == "done":
 		return "已完成"
 	var st: Dictionary = def.stage(int(state.get("stage", 0)))
 	var desc := String(st.get("desc", ""))
 	match String(st.get("type", "")):
 		"kill":
-			return "%s %d/%d" % [desc, int(state.get("count", 0)), int(st.get("count", 1))]
+			var nk := int(st.get("count", 1))
+			return "%s %d/%d" % [desc, mini(int(q.kill_count(String(st.get("monster", "")))), nk), nk]
 		"collect":
-			var have := int(have_count.call(String(st.get("item", "")))) if have_count.is_valid() else 0
-			return "%s %d/%d" % [desc, have, int(st.get("count", 1))]
+			var nc := int(st.get("count", 1))
+			return "%s %d/%d" % [desc, mini(int(q.item_count(String(st.get("item", "")))), nc), nc]
 		_:
 			return desc
 

@@ -42,7 +42,7 @@ func _ready() -> void:
 
 func refresh() -> void:
 	_label.text = "\n".join(summary_lines(
-		GameState.quests, GameState.quest_resolver, Callable(GameState.inventory, "count_of")))
+		GameState.quests, GameState.quest_resolver, GameState))
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible:
@@ -54,7 +54,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.keycode == KEY_ESCAPE:
 		close()
 
-static func summary_lines(quests: Dictionary, resolver: Callable, have_count: Callable) -> Array:
+static func summary_lines(quests: Dictionary, resolver: Callable, q) -> Array:
 	var active: Array[String] = []
 	var done: Array[String] = []
 	for id in quests:
@@ -65,7 +65,7 @@ static func summary_lines(quests: Dictionary, resolver: Callable, have_count: Ca
 		if String(state.get("status", "")) == "done":
 			done.append("✓ %s" % def.title)
 		else:
-			active.append("● %s — %s" % [def.title, QuestProgress.stage_line(def, state, have_count)])
+			active.append("● %s — %s" % [def.title, QuestProgress.stage_line(def, state, q)])
 	var lines: Array[String] = ["== 任務日誌 ==  [J/Esc] 關"]
 	lines.append("-- 進行中 --")
 	if active.is_empty():

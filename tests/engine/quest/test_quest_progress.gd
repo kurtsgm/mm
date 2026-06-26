@@ -1,5 +1,13 @@
 extends GutTest
 
+# stage_line 改吃 duck-typed q（kill/collect 顯示由查詢得來、夾住目標）。
+class FakeQ:
+	var kills: Dictionary = {}
+	var items: Dictionary = {}
+	func kill_count(id: String) -> int: return int(kills.get(id, 0))
+	func item_count(id: String) -> int: return int(items.get(id, 0))
+	func is_explored(_m: String, _c) -> bool: return false
+
 func _def() -> QuestDef:
 	return QuestDef.parse({
 		"id": "q", "title": "哥布林的威脅",
@@ -12,27 +20,23 @@ func _def() -> QuestDef:
 		"rewards": {"gold": 100, "items": ["potion"]},
 	})
 
-func _inv(id := "", n := 0) -> Inventory:
-	var inv := Inventory.new()
-	if id != "":
-		inv.add(id, n)
-	return inv
-
 func test_kill_line_shows_count():
-	var st := {"status": "active", "stage": 0, "count": 2}
-	assert_eq(QuestProgress.stage_line(_def(), st, Callable(_inv(), "count_of")), "擊敗哥布林 2/3")
+	var q := FakeQ.new(); q.kills["goblin"] = 2
+	assert_eq(QuestProgress.stage_line(_def(), {"status": "active", "stage": 0}, q), "擊敗哥布林 2/3")
+
+func test_kill_line_clamped_to_target():
+	var q := FakeQ.new(); q.kills["goblin"] = 9
+	assert_eq(QuestProgress.stage_line(_def(), {"status": "active", "stage": 0}, q), "擊敗哥布林 3/3")
 
 func test_collect_line_shows_have():
-	var st := {"status": "active", "stage": 1, "count": 0}
-	assert_eq(QuestProgress.stage_line(_def(), st, Callable(_inv("lucky_charm", 1), "count_of")), "取得信物 1/1")
+	var q := FakeQ.new(); q.items["lucky_charm"] = 1
+	assert_eq(QuestProgress.stage_line(_def(), {"status": "active", "stage": 1}, q), "取得信物 1/1")
 
 func test_reach_line_is_desc_only():
-	var st := {"status": "active", "stage": 2, "count": 0}
-	assert_eq(QuestProgress.stage_line(_def(), st, Callable(_inv(), "count_of")), "前往瞭望點")
+	assert_eq(QuestProgress.stage_line(_def(), {"status": "active", "stage": 2}, FakeQ.new()), "前往瞭望點")
 
 func test_done_line():
-	var st := {"status": "done", "stage": 4, "count": 0}
-	assert_eq(QuestProgress.stage_line(_def(), st, Callable(_inv(), "count_of")), "已完成")
+	assert_eq(QuestProgress.stage_line(_def(), {"status": "done", "stage": 4}, FakeQ.new()), "已完成")
 
 func test_accepted_message():
 	assert_eq(QuestProgress.accepted_message(_def()), "接下任務：哥布林的威脅")

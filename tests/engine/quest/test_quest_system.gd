@@ -1,5 +1,15 @@
 extends GutTest
 
+# 狀態式 QuestSystem：目標由對持久狀態查詢決定。FakeQ 模擬 GameState 的查詢介面。
+class FakeQ:
+	var kills: Dictionary = {}      # monster_id -> int
+	var items: Dictionary = {}      # item_id -> int
+	var explored: Dictionary = {}   # map_id -> Dictionary[cell->true]
+	func kill_count(id: String) -> int: return int(kills.get(id, 0))
+	func item_count(id: String) -> int: return int(items.get(id, 0))
+	func is_explored(map_id: String, cell) -> bool:
+		return explored.has(map_id) and explored[map_id].has(cell)
+
 func _def() -> QuestDef:
 	return QuestDef.parse({
 		"id": "q", "title": "T",
@@ -12,65 +22,60 @@ func _def() -> QuestDef:
 		"rewards": {"gold": 10, "items": []},
 	})
 
-func _inv(id := "", n := 0) -> Inventory:
-	var inv := Inventory.new()
-	if id != "":
-		inv.add(id, n)
-	return inv
-
 func test_initial_state():
-	var s := QuestSystem.initial_state()
-	assert_eq(s, {"status": "active", "stage": 0, "count": 0})
+	assert_eq(QuestSystem.initial_state(), {"status": "active", "stage": 0})
 
-func test_reach_advances_on_match():
-	var s := QuestSystem.notify_enter(_def(), QuestSystem.initial_state(), "wild_ne", Vector2i(3, 3))
-	assert_eq(s["stage"], 1)
-	assert_eq(s["count"], 0)
-
-func test_reach_no_advance_on_wrong_cell():
-	var s := QuestSystem.notify_enter(_def(), QuestSystem.initial_state(), "wild_ne", Vector2i(0, 0))
+func test_catch_up_no_progress_stays():
+	var s := QuestSystem.catch_up(_def(), QuestSystem.initial_state(), FakeQ.new())
 	assert_eq(s["stage"], 0)
 
-func test_kill_counts_then_advances():
-	var st := {"status": "active", "stage": 1, "count": 0}
-	st = QuestSystem.notify_kill(_def(), st, "goblin")
-	assert_eq(st["count"], 1)
-	st = QuestSystem.notify_kill(_def(), st, "goblin")
-	st = QuestSystem.notify_kill(_def(), st, "goblin")
-	assert_eq(st["stage"], 2)
-	assert_eq(st["count"], 0)
+func test_catch_up_reach_then_stops_at_kill():
+	var q := FakeQ.new()
+	q.explored["wild_ne"] = {Vector2i(3, 3): true}
+	var s := QuestSystem.catch_up(_def(), QuestSystem.initial_state(), q)
+	assert_eq(s["stage"], 1)   # reach 追認過、kill 未足停下
 
-func test_kill_wrong_monster_ignored():
-	var st := {"status": "active", "stage": 1, "count": 0}
-	st = QuestSystem.notify_kill(_def(), st, "ogre")
-	assert_eq(st["count"], 0)
+func test_catch_up_chains_to_talk_then_stops():
+	var q := FakeQ.new()
+	q.explored["wild_ne"] = {Vector2i(3, 3): true}
+	q.kills["goblin"] = 3
+	q.items["lucky_charm"] = 1
+	var s := QuestSystem.catch_up(_def(), QuestSystem.initial_state(), q)
+	assert_eq(s["stage"], 3)            # reach→kill→collect 全追認、停在 talk
+	assert_eq(s["status"], "active")
 
-func test_kill_on_non_kill_stage_ignored():
-	var st := QuestSystem.notify_kill(_def(), QuestSystem.initial_state(), "goblin")
-	assert_eq(st["stage"], 0)
-	assert_eq(st["count"], 0)
+func test_catch_up_does_not_auto_pass_talk():
+	var q := FakeQ.new()
+	q.explored["wild_ne"] = {Vector2i(3, 3): true}
+	q.kills["goblin"] = 9
+	q.items["lucky_charm"] = 5
+	var s := QuestSystem.catch_up(_def(), {"status": "active", "stage": 3}, q)
+	assert_eq(s["stage"], 3)
 
-func test_collect_advances_when_have_enough():
-	var st := {"status": "active", "stage": 2, "count": 0}
-	st = QuestSystem.check_collect(_def(), st, Callable(_inv("lucky_charm", 1), "count_of"))
-	assert_eq(st["stage"], 3)
+func test_kill_absolute_retroactive():
+	# kill 用絕對總計：stage 1 在 q.kills>=3 即滿足（與何時殺無關）
+	var q := FakeQ.new(); q.kills["goblin"] = 3
+	var s := QuestSystem.catch_up(_def(), {"status": "active", "stage": 1}, q)
+	assert_eq(s["stage"], 2)
 
-func test_collect_no_advance_when_short():
-	var st := {"status": "active", "stage": 2, "count": 0}
-	st = QuestSystem.check_collect(_def(), st, Callable(_inv(), "count_of"))
-	assert_eq(st["stage"], 2)
+func test_advance_talk_completes_last_stage():
+	var s := QuestSystem.advance_talk(_def(), {"status": "active", "stage": 3}, FakeQ.new())
+	assert_true(QuestSystem.is_complete(s))
 
-func test_talk_advances_and_completes_last_stage():
-	var st := {"status": "active", "stage": 3, "count": 0}
-	st = QuestSystem.notify_advance(_def(), st)
-	assert_true(QuestSystem.is_complete(st))
+func test_advance_talk_on_non_talk_is_noop():
+	var s := QuestSystem.advance_talk(_def(), {"status": "active", "stage": 1}, FakeQ.new())
+	assert_eq(s["stage"], 1)
+
+func test_is_stage_satisfied_talk_false():
+	assert_false(QuestSystem.is_stage_satisfied(_def().stage(3), FakeQ.new()))
 
 func test_input_state_not_mutated():
-	var before := QuestSystem.initial_state()
-	QuestSystem.notify_enter(_def(), before, "wild_ne", Vector2i(3, 3))
-	assert_eq(before["stage"], 0)  # 原 state 未被改動
+	var before := {"status": "active", "stage": 1}
+	var q := FakeQ.new(); q.kills["goblin"] = 3
+	QuestSystem.catch_up(_def(), before, q)
+	assert_eq(before["stage"], 1)
 
-func test_done_state_ignores_events():
-	var st := {"status": "done", "stage": 4, "count": 0}
-	st = QuestSystem.notify_advance(_def(), st)
-	assert_eq(st["stage"], 4)
+func test_done_state_unchanged():
+	var s := QuestSystem.catch_up(_def(), {"status": "done", "stage": 4}, FakeQ.new())
+	assert_eq(s["stage"], 4)
+	assert_eq(s["status"], "done")
