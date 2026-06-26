@@ -1,8 +1,8 @@
 class_name Hud
 extends CanvasLayer
 
-# 程式建構的 placeholder HUD：左上指北針、底部置中訊息列 + 隊伍卡列（PartyPanel）。
-# 版面用 anchor 比例（隊伍列占視窗下方約 70% 寬、置中），解析度無關，不寫死像素。
+# 程式建構的 placeholder HUD：左上指北針、左下訊息列 + 隊伍卡列（PartyPanel）。
+# 版面用 anchor 比例：隊伍列靠左、占視窗下方約 70% 寬，右側 30% 留作其他 UI。解析度無關、不寫死像素。
 
 const _DIR_NAMES := ["N", "E", "S", "W"]  # 以 GridDirection.Dir 索引
 
@@ -23,13 +23,13 @@ func _build_ui(party: Party) -> void:
 	_compass_label.add_theme_font_size_override("font_size", 22)
 	add_child(_compass_label)
 
-	# 底部置中區塊：寬 = 視窗的 70%（anchor 0.15~0.85），向上長、貼底。
+	# 左下區塊：靠左、寬 = 視窗的 70%（anchor 0.0~0.70），右側 30% 留作其他 UI；向上長、貼底。
 	var bottom := VBoxContainer.new()
-	bottom.anchor_left = 0.15
-	bottom.anchor_right = 0.85
+	bottom.anchor_left = 0.0
+	bottom.anchor_right = 0.70
 	bottom.anchor_top = 1.0
 	bottom.anchor_bottom = 1.0
-	bottom.offset_left = 0
+	bottom.offset_left = 16
 	bottom.offset_right = 0
 	bottom.offset_bottom = -16
 	bottom.grow_vertical = Control.GROW_DIRECTION_BEGIN

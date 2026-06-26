@@ -10,7 +10,7 @@
 
 所有 HUD／UI 版面**一律依視窗比例**定位與決定大小，**不得寫死像素**寬高或座標。目標：任何視窗大小、含全螢幕都正確、不會擠成一角或變太小。具體做法：
 
-- **定位與寬度用 anchor 比例**：例如「占畫面下方約 70% 寬、置中」→ `anchor_left = 0.15` / `anchor_right = 0.85`（而非固定 900px）。貼邊／向某方向成長用 `grow_*` + 比例 anchor，不要用固定 offset 當主要尺寸來源。
+- **定位與寬度用 anchor 比例**：例如「靠左占畫面下方約 70% 寬、右側留白」→ `anchor_left = 0.0` / `anchor_right = 0.70`（而非固定 900px）。貼邊／向某方向成長用 `grow_*` + 比例 anchor，不要用固定 offset 當主要尺寸來源（小幅邊距 offset 可接受）。
 - **子元素平均分攤用 `size_flags`**：一排同類元素（如 6 張隊友卡）讓每個 `size_flags_horizontal = SIZE_EXPAND_FILL`，由容器平均分配寬度。
 - **條狀／比例元素用 anchor 比例，不用固定像素**：如 HP/MP 條的填色用 `fill.anchor_right = ratio`（隨父寬自動縮放），不要 `fill.size = ratio * 寫死寬`。
 - 字級、間距等可給固定值，但**版面骨架的寬高定位必須是比例式**。
