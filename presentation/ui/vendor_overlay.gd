@@ -17,6 +17,7 @@ enum Mode { LIST = 0, PICK_TARGET = 1 }
 var _mode: int = Mode.LIST
 var _pending: Dictionary = {}   # 待確認的 spell/offer（進 PICK_TARGET 時暫存）
 var _tcursor: int = 0           # 選角色游標
+var _status: String = ""        # 暫態回饋（成交事件或失敗原因）；顯示在面板最後一行
 
 func is_open() -> bool:
 	return visible
@@ -53,6 +54,7 @@ func open(vendor: Dictionary, state) -> void:
 	_mode = Mode.LIST
 	_pending = {}
 	_tcursor = 0
+	_status = ""
 	visible = true
 	set_process_unhandled_input(true)
 	_render()
@@ -108,7 +110,36 @@ func _render_goods() -> void:
 		var afford := "" if (not _buy_mode or int(_state.gold) >= int(rows[i]["price"])) else "（金幣不足）"
 		var cnt := ("×%d" % int(rows[i]["count"])) if rows[i].has("count") else ""
 		lines.append("%s%s%s  %d 金 %s" % [mark, String(rows[i]["name"]), cnt, int(rows[i]["price"]), afford])
+	_append_status(lines)
 	_panel.text = "\n".join(lines)
+
+# 暫態回饋：非空時附在面板最後一行（成交事件或失敗原因，皆已為中文）。
+func _append_status(lines: Array) -> void:
+	if _status != "":
+		lines.append(">> %s" % _status)
+
+# 依交易結果設定暫態回饋：成功→串接事件；失敗→reason 映射中文。
+func _set_status(res: Dictionary) -> void:
+	if res["ok"]:
+		_status = "／".join(res["events"]) if not res["events"].is_empty() else ""
+	else:
+		_status = _reason_text(String(res["reason"]))
+
+# reason → 中文回饋（未知 reason 用原字串保底）。
+func _reason_text(reason: String) -> String:
+	match reason:
+		"no_gold":
+			return "金幣不足"
+		"not_owned":
+			return "背包沒有可賣的"
+		"invalid_target":
+			return "無法對該對象使用"
+		"wrong_school":
+			return "該角色無法學習"
+		"already_known":
+			return "已學會"
+		_:
+			return reason
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible:
@@ -132,6 +163,7 @@ func _input_goods(event: InputEventKey) -> void:
 		KEY_TAB:
 			_buy_mode = not _buy_mode
 			_cursor = 0
+			_status = ""
 			_render()
 		KEY_UP:
 			if rows.size() > 0:
@@ -153,6 +185,7 @@ func _input_goods(event: InputEventKey) -> void:
 				res = VendorTransaction.buy_goods(_state, item)
 			else:
 				res = VendorTransaction.sell_goods(_state, item, float(_vendor.get("sell_factor", 0.5)))
+			_set_status(res)
 			if res["ok"]:
 				transacted.emit(res["events"])
 			# 賣到清單變短時夾住游標
@@ -173,8 +206,11 @@ func _spell_rows() -> Array:
 	return rows
 
 func _offer_rows() -> Array:
+	# 僅列 v1 字彙 {revive, heal_full, rest}；未知 effect → 略過（spec §4 防呆）。
 	var rows: Array = []
 	for o in _vendor.get("offers", []):
+		if not (String(o.get("effect", "")) in ["revive", "heal_full", "rest"]):
+			continue
 		rows.append(o)
 	return rows
 
@@ -226,7 +262,9 @@ func _render_spells() -> void:
 		for i in rows.size():
 			var mark := "> " if i == _cursor else "  "
 			var sch := "祕法" if int(rows[i]["school"]) == SpellDef.School.ARCANE else "神聖"
-			lines.append("%s%s（%s）  %d 金" % [mark, String(rows[i]["name"]), sch, int(rows[i]["price"])])
+			var afford := "" if int(_state.gold) >= int(rows[i]["price"]) else "（金幣不足）"
+			lines.append("%s%s（%s）  %d 金 %s" % [mark, String(rows[i]["name"]), sch, int(rows[i]["price"]), afford])
+	_append_status(lines)
 	_panel.text = "\n".join(lines)
 
 func _render_services() -> void:
@@ -239,7 +277,10 @@ func _render_services() -> void:
 		var rows := _offer_rows()
 		for i in rows.size():
 			var mark := "> " if i == _cursor else "  "
-			lines.append("%s%s  %d 金" % [mark, String(rows[i]["name"]), int(rows[i].get("cost", 0))])
+			var cost := int(rows[i].get("cost", 0))
+			var afford := "" if int(_state.gold) >= cost else "（金幣不足）"
+			lines.append("%s%s  %d 金 %s" % [mark, String(rows[i]["name"]), cost, afford])
+	_append_status(lines)
 	_panel.text = "\n".join(lines)
 
 func _render_pick(lines: Array, kind: String) -> void:
@@ -278,12 +319,14 @@ func _input_list_kind(event: InputEventKey, kind: String) -> void:
 					_pending = sel
 					_tcursor = _first_eligible(_targets_for(sel, kind))   # 游標落在第一個合格對象
 					_mode = Mode.PICK_TARGET
+					_status = ""                                          # 進選角色清掉舊回饋
 					_render()
 	else:  # PICK_TARGET
 		var ts := _targets_for(_pending, kind)
 		match event.keycode:
 			KEY_ESCAPE:
 				_mode = Mode.LIST
+				_status = ""                                          # 返回清掉舊回饋
 				_render()
 			KEY_UP:
 				if ts.size() > 0:
@@ -306,5 +349,6 @@ func _commit(kind: String, sel: Dictionary, targets: Array) -> void:
 		res = VendorTransaction.learn_spell(_state, SpellBook.get_spell(String(sel["id"])), targets[0])
 	else:
 		res = VendorTransaction.buy_service(_state, sel, targets)
+	_set_status(res)
 	if res["ok"]:
 		transacted.emit(res["events"])

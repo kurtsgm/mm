@@ -79,7 +79,7 @@ static func _parse_grid(rows) -> Dictionary:
 		return {}
 	return {"width": width, "height": height, "tiles": tiles, "start_pos": start_pos}
 
-# arr -> { encounters, links, decorations, objects }；違規 → null。空陣列為合法（回空集合）。
+# arr -> { encounters, links, decorations, objects, scenes, vendors }；違規 → null。空陣列為合法（回空集合）。
 static func _parse_entities(arr, width: int, height: int):
 	if typeof(arr) != TYPE_ARRAY:
 		return null

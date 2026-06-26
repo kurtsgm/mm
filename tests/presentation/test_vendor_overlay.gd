@@ -168,3 +168,32 @@ func test_goods_buy_insufficient_gold_marks_and_blocks():
 	assert_eq(st.gold, price - 1)           # 金幣不變
 	assert_eq(st.inventory.count_of("potion"), 0)   # 未取得物品
 	assert_signal_not_emitted(ov, "transacted")
+
+# Minor #4：法術金幣不足的無聲失敗路徑 → 不學會、不扣金、不發訊號，且面板顯示「金幣不足」回饋。
+func test_spells_insufficient_gold_blocks_and_shows_feedback():
+	var sorc := _member("Sorcerer")
+	var cost := int(SpellBook.get_spell("spark").gold_cost)
+	var st := _state_with([sorc, _member("Knight")], cost - 1)   # 不足以學 spark
+	var ov := _overlay()
+	ov.open(_spells_vendor(), st)
+	watch_signals(ov)
+	ov._unhandled_input(_key(KEY_ENTER))        # 選 spark → 進選角色
+	ov._unhandled_input(_key(KEY_ENTER))        # 選第一個合格對象(Sorcerer) → 嘗試學會
+	assert_false(sorc.known_spells.has("spark"))     # 未學會
+	assert_eq(st.gold, cost - 1)                     # 金幣不變
+	assert_signal_not_emitted(ov, "transacted")
+	assert_string_contains(ov._panel.text, "金幣不足")   # 面板回饋
+
+# Minor #4：服務金幣不足的無聲失敗路徑 → 不套效果、不扣金、不發訊號，且面板顯示「金幣不足」回饋。
+func test_service_insufficient_gold_blocks_and_shows_feedback():
+	var dead := _member("Knight", Character.Condition.DEAD)
+	var st := _state_with([_member("Cleric"), dead], 0)   # 復活需 100 金，身上 0
+	var ov := _overlay()
+	ov.open(_services_vendor(), st)
+	watch_signals(ov)
+	ov._unhandled_input(_key(KEY_ENTER))        # 第一項(復活/character) → 進選角色
+	ov._unhandled_input(_key(KEY_ENTER))        # 選第一個合格對象(死者) → 嘗試復活
+	assert_eq(dead.condition, Character.Condition.DEAD)   # 仍死亡（未復活）
+	assert_eq(st.gold, 0)                                 # 金幣不變
+	assert_signal_not_emitted(ov, "transacted")
+	assert_string_contains(ov._panel.text, "金幣不足")   # 面板回饋
