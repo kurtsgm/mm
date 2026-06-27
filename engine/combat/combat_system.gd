@@ -11,12 +11,13 @@ var _order: Array = []
 var _index: int = 0
 var _result: int = Result.ONGOING
 var _defending: Dictionary = {}   # Character -> true（本輪防禦中）
+var _pending_events: Array = []   # 回合外（DoT/起訖）事件，由 CombatLayer drain 進 log
 
 func _init(p: Party, mons: Array[Monster], rng: RandomNumberGenerator) -> void:
 	party = p
 	monsters = mons
 	_rng = rng
-	_clear_party_statuses()
+	_strip_party_to_persisting()   # 帶毒進場、清掉殘留非持久
 	_start_round()
 
 func result() -> int:
@@ -108,6 +109,7 @@ func party_run() -> Array:
 		return events
 	if _rng.randi_range(1, 100) <= flee_chance():
 		_result = Result.FLED
+		_strip_party_to_persisting()
 		events.append("隊伍成功逃離了戰鬥。")
 	else:
 		events.append("逃跑失敗！")
@@ -190,15 +192,38 @@ func flee_chance() -> int:
 
 # --- internal ---
 
-func _clear_party_statuses() -> void:
+func drain_events() -> Array:
+	var out := _pending_events
+	_pending_events = []
+	return out
+
+func _strip_party_to_persisting() -> void:
 	for m in party.members:
-		m.statuses.clear()
+		m.statuses = StatusRules.keep_persisting(m.statuses)
 
 func _tick_statuses() -> void:
 	for c in party.members:
-		_decay(c.statuses)
+		_dot_and_decay(c, true)
 	for mon in monsters:
-		_decay(mon.statuses)
+		_dot_and_decay(mon, false)
+
+# 先 DoT（可致死）再 decay remaining。is_char 區分倒下處理。
+func _dot_and_decay(combatant, is_char: bool) -> void:
+	var dmg := StatusRules.turn_damage(combatant.statuses)
+	if dmg > 0:
+		if is_char:
+			combatant.take_damage(dmg)
+			_pending_events.append("%s 受到 %d 點持續傷害。" % [combatant.name, dmg])
+			if combatant.hp <= 0:
+				combatant.hp = 0
+				combatant.condition = Character.Condition.UNCONSCIOUS
+				_pending_events.append("%s 倒下了！" % combatant.name)
+		else:
+			combatant.hp = maxi(0, combatant.hp - dmg)
+			_pending_events.append("%s 受到 %d 點持續傷害。" % [combatant.name, dmg])
+			if not combatant.is_alive():
+				_pending_events.append("%s 被擊倒了！" % combatant.name)
+	_decay(combatant.statuses)
 
 func _decay(statuses: Array) -> void:
 	var i := statuses.size() - 1
@@ -244,8 +269,11 @@ func _skip_invalid() -> void:
 			break
 
 func _check_end() -> void:
+	if _result != Result.ONGOING:
+		return
 	if living_monsters().is_empty():
 		_result = Result.VICTORY
+		_strip_party_to_persisting()
 	elif party.is_wiped():
 		_result = Result.DEFEAT
 

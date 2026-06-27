@@ -37,6 +37,8 @@ func begin(cs: CombatSystem, camera: Camera3D) -> void:
 	_log.push("戰鬥開始！")
 	set_process_unhandled_input(true)
 	_resolve()                       # 怪物若較快先動
+	for e in combat.drain_events():  # 入場首輪 DoT
+		_log.push(e)
 	_refresh_all()
 	turn_resolved.emit()
 
@@ -243,6 +245,7 @@ func _use_pending_item(target_index: int) -> void:
 	_pending_item = null
 	var before := _snapshot_monster_hp()
 	var events := combat.party_use_item(item, target_index)
+	events.append_array(combat.drain_events())
 	for e in events:
 		_log.push(e)
 	if not events.is_empty():
@@ -255,6 +258,7 @@ func _use_pending_item(target_index: int) -> void:
 func _apply(action: Callable) -> void:
 	var before := _snapshot_monster_hp()
 	var events: Array = action.call()
+	events.append_array(combat.drain_events())
 	for e in events:
 		_log.push(e)
 	_animate_from(before)
@@ -270,6 +274,7 @@ func _resolve() -> void:
 	# 怪物回合：隊員受擊閃臉由 Character.damaged 信號驅動（隊伍卡已連），這裡不另算。
 	while not combat.is_over() and not combat.is_party_turn():
 		var events := combat.monster_act()
+		events.append_array(combat.drain_events())
 		for e in events:
 			_log.push(e)
 	if combat.is_over():
