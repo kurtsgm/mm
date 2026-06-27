@@ -7,5 +7,5 @@
     { "type": "reach", "map": "wild_ne", "pos": [3, 3], "desc": "確認巢穴最深處" },
     { "type": "talk", "desc": "回橡鎮向守衛回報" }
   ],
-  "rewards": { "gold": 100, "items": ["potion"] }
+  "rewards": { "gold": 100, "xp": 60, "items": ["potion"] }
 }

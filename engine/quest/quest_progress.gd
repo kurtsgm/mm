@@ -26,6 +26,9 @@ static func completed_message(def) -> String:
 	var g := int(def.rewards.get("gold", 0))
 	if g > 0:
 		parts.append("%d 金幣" % g)
+	var xp := int(def.rewards.get("xp", 0))
+	if xp > 0:
+		parts.append("%d 經驗" % xp)
 	for it in def.rewards.get("items", []):
 		parts.append(String(it))
 	var reward := ("，獎勵：" + "、".join(parts)) if not parts.is_empty() else ""

@@ -17,7 +17,7 @@ func _def() -> QuestDef:
 			{"type": "reach", "map": "wild_ne", "pos": [3, 3], "desc": "前往瞭望點"},
 			{"type": "talk", "desc": "回報"},
 		],
-		"rewards": {"gold": 100, "items": ["potion"]},
+		"rewards": {"gold": 100, "xp": 60, "items": ["potion"]},
 	})
 
 func test_kill_line_shows_count():
@@ -42,4 +42,4 @@ func test_accepted_message():
 	assert_eq(QuestProgress.accepted_message(_def()), "接下任務：哥布林的威脅")
 
 func test_completed_message_lists_rewards():
-	assert_eq(QuestProgress.completed_message(_def()), "任務完成：哥布林的威脅，獎勵：100 金幣、potion")
+	assert_eq(QuestProgress.completed_message(_def()), "任務完成：哥布林的威脅，獎勵：100 金幣、60 經驗、potion")

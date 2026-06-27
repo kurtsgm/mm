@@ -9,7 +9,7 @@ func _raw() -> Dictionary:
 			{"type": "collect", "item": "lucky_charm", "count": 1, "desc": "取得信物"},
 			{"type": "talk", "desc": "回報"},
 		],
-		"rewards": {"gold": 100, "items": ["potion"]},
+		"rewards": {"gold": 100, "xp": 60, "items": ["potion"]},
 	}
 
 func test_parse_valid():
@@ -19,6 +19,7 @@ func test_parse_valid():
 	assert_eq(d.title, "測試任務")
 	assert_eq(d.stage_count(), 4)
 	assert_eq(d.rewards["gold"], 100)
+	assert_eq(d.rewards["xp"], 60)
 
 func test_reach_pos_normalized_to_vector2i():
 	var d := QuestDef.parse(_raw())
@@ -52,4 +53,5 @@ func test_rewards_default_empty():
 	var r := _raw(); r.erase("rewards")
 	var d := QuestDef.parse(r)
 	assert_eq(d.rewards.get("gold", 0), 0)
+	assert_eq(d.rewards.get("xp", 0), 0)
 	assert_eq(d.rewards.get("items", []), [])

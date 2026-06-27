@@ -61,10 +61,11 @@ static func _parse_stage(rs) -> Dictionary:
 			return {}
 
 static func _parse_rewards(r) -> Dictionary:
-	var out := {"gold": 0, "items": []}
+	var out := {"gold": 0, "xp": 0, "items": []}
 	if typeof(r) != TYPE_DICTIONARY:
 		return out
 	out["gold"] = int(r.get("gold", 0))
+	out["xp"] = int(r.get("xp", 0))
 	var items: Array = []
 	if r.get("items", null) is Array:
 		for it in r["items"]:

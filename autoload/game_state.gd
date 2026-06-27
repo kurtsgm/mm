@@ -186,6 +186,14 @@ func _grant_quest_rewards(def) -> void:
 		gold += g
 	for it in def.rewards.get("items", []):
 		inventory.add(String(it), 1)
+	var xp := int(def.rewards.get("xp", 0))
+	if xp > 0:
+		var leveled := false
+		for m in party.members:
+			if m.is_conscious() and Leveling.grant_xp(m, xp) > 0:
+				leveled = true
+		if leveled:
+			message_log.push("有隊員升級了！")
 
 func _seed_starting_spells() -> void:
 	# 骨架起始法術：讓施法系統開局即可操演。正式法術習得屬內容期。

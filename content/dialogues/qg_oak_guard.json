@@ -7,6 +7,9 @@
       "choices": [
         { "text": "「哥布林的事，我來幫忙。」", "require": {"quest_inactive": "goblin_menace"},
           "effects": [{"op": "accept_quest", "quest": "goblin_menace"}], "goto": "accepted" },
+        { "text": "「關於哥布林的事…」", "require": {"quest_stage": {"id": "goblin_menace", "eq": 0}}, "goto": "nag_kill" },
+        { "text": "「哥布林清掉了。」", "require": {"quest_stage": {"id": "goblin_menace", "eq": 1}}, "goto": "nag_collect" },
+        { "text": "「信物到手了。」", "require": {"quest_stage": {"id": "goblin_menace", "eq": 2}}, "goto": "nag_reach" },
         { "text": "「任務完成了，來回報。」", "require": {"quest_stage": {"id": "goblin_menace", "eq": 3}},
           "effects": [{"op": "advance_quest", "quest": "goblin_menace"}], "goto": "turned_in" },
         { "text": "「再會。」（已完成）", "require": {"quest_done": "goblin_menace"}, "goto": "thanks" },
@@ -14,6 +17,9 @@
       ]
     },
     "accepted": { "text": "守衛：「感謝！哥布林在東北野的巢穴，先去清掉牠們吧。」", "choices": [ {"text": "…", "goto": null} ] },
+    "nag_kill": { "text": "守衛：「哥布林還在東北野的巢穴作亂，快去清掉牠們。」", "choices": [ {"text": "…", "goto": null} ] },
+    "nag_collect": { "text": "守衛：「找到哥布林的信物了嗎？帶回來給我看看。」", "choices": [ {"text": "…", "goto": null} ] },
+    "nag_reach": { "text": "守衛：「就差最後一步——去巢穴最深處確認清空了，再回來。」", "choices": [ {"text": "…", "goto": null} ] },
     "turned_in": { "text": "守衛：「你做到了！這點謝禮請收下。」", "choices": [ {"text": "…", "goto": null} ] },
     "thanks": { "text": "守衛：「橡鎮多虧有你。」", "choices": [ {"text": "…", "goto": null} ] }
   }

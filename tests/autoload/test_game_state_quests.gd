@@ -91,3 +91,22 @@ func test_accept_without_resolver_is_noop():
 	gs.quest_resolver = Callable()
 	gs.accept_quest("q")
 	assert_true(gs.is_quest_inactive("q"))
+
+func test_xp_reward_granted_to_conscious_member_on_turn_in():
+	var gs = _gs()
+	var c := Character.new()
+	c.condition = Character.Condition.OK   # 清醒
+	c.level = 1
+	c.experience = 0
+	var p := Party.new(); p.members = [c]
+	gs.party = p
+	_def.rewards["xp"] = 30
+	# 先把目標都做完，接取追認到 talk 階段
+	gs.notify_kill("goblin"); gs.notify_kill("goblin")
+	gs.inventory.add("lucky_charm", 1)
+	gs.mark_explored("wild_ne", Vector2i(3, 3), 5, 5)
+	gs.accept_quest("q")
+	assert_eq(gs.quest_stage("q"), 3)   # 追認到回報階段
+	gs.advance_quest("q")               # 回報 → done → 發獎（XP 在此刻才給）
+	assert_true(gs.is_quest_done("q"))
+	assert_eq(c.experience, 30)         # 30 < xp_for_level(1)=100 → 不升級、exp=30
