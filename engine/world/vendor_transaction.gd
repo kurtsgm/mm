@@ -53,7 +53,7 @@ static func _apply_effect(effect: String, targets: Array) -> Array:
 					t.hp = maxi(t.hp, 1)
 					events.append("%s 被救醒了。" % t.name)
 			"heal_full":
-				if t.condition != Character.Condition.DEAD and (t.hp < t.hp_max or t.condition == Character.Condition.UNCONSCIOUS):
+				if t.condition != Character.Condition.DEAD:
 					t.hp = t.hp_max
 					if t.condition == Character.Condition.UNCONSCIOUS:
 						t.condition = Character.Condition.OK

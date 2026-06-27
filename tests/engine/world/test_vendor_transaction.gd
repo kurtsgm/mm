@@ -141,3 +141,16 @@ func test_buy_service_rest_clears_ailments():
 	var res := VendorTransaction.buy_service(ctx, offer, [c])
 	assert_true(res["ok"])
 	assert_eq(c.statuses.size(), 0)                 # 休息後狀態異常清空
+
+func test_buy_service_heal_full_clears_ailments_at_full_hp():
+	var ctx := Ctx.new()
+	ctx.gold = 50
+	var c := _char("Knight")
+	c.condition = Character.Condition.OK             # 清醒
+	c.hp = c.hp_max                                  # 已滿血
+	c.statuses.append(StatusCatalog.poison(3, 4))    # 帶毒
+	var offer := {"name": "神殿全補", "cost": 30, "effect": "heal_full", "target": "character"}
+	var res := VendorTransaction.buy_service(ctx, offer, [c])
+	assert_true(res["ok"])                           # 滿血仍應成功（清異常）
+	assert_eq(c.statuses.size(), 0)                  # 狀態異常清空
+	assert_false(res["events"].is_empty())           # 帶回非空事件
