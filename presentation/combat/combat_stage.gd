@@ -12,6 +12,7 @@ const LUNGE_BACK := 0.22
 const ATTACK_SCALE := 1.15
 const HIT_MS := 220
 const HIT_AMP := 0.06
+const _STATE_TEXTURE_KEY := {"idle": "idle", "attack": "attack", "hit": "hurt"}
 
 var _camera: Camera3D
 var _sprites: Dictionary = {}     # Monster -> Sprite3D
@@ -58,6 +59,7 @@ func flash(monster) -> void:
 	set_process(true)
 	# 受擊抖動（hit 優先，打斷 attack）
 	_kill_tween(s)
+	s.scale = Vector3.ONE   # 打斷攻擊撲擊時可能仍放大(~1.15×)，受擊抖動期間先還原為常態尺寸
 	_anim[s] = "hit"
 	s.texture = texture_for_state("hit", _textures[s])
 	var base: Vector3 = _base_pos[s]
@@ -133,7 +135,7 @@ func clear() -> void:
 
 # 純函式：依動畫態挑該用哪張貼圖；缺該態（null/缺鍵）或不認得的 state → base。
 static func texture_for_state(state: String, textures: Dictionary) -> Texture2D:
-	var key = {"idle": "idle", "attack": "attack", "hit": "hurt"}.get(state, "")
+	var key = _STATE_TEXTURE_KEY.get(state, "")
 	var tex = textures.get(key, null)
 	if tex == null:
 		tex = textures.get("base", null)
