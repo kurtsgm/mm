@@ -132,3 +132,43 @@ func test_take_damage_emits_damaged_signal():
 	watch_signals(c)
 	c.take_damage(7)
 	assert_signal_emitted(c, "damaged")
+
+# --- stats_changed：HP/MP/狀態被改動時即時通知 UI（治療術/喝藥水等都走這個 hook） ---
+
+func test_setting_hp_emits_stats_changed():
+	var c := Character.new()
+	c.hp = 10
+	c.hp_max = 28
+	watch_signals(c)
+	c.hp = 20                       # 模擬治療術回血
+	assert_signal_emitted(c, "stats_changed")
+
+func test_setting_sp_emits_stats_changed():
+	var c := Character.new()
+	c.sp = 4
+	c.sp_max = 8
+	watch_signals(c)
+	c.sp -= 2                       # 模擬施法扣 MP
+	assert_signal_emitted(c, "stats_changed")
+
+func test_setting_condition_emits_stats_changed():
+	var c := Character.new()
+	c.condition = Character.Condition.UNCONSCIOUS
+	watch_signals(c)
+	c.condition = Character.Condition.OK    # 模擬復活術
+	assert_signal_emitted(c, "stats_changed")
+
+func test_setting_hp_to_same_value_does_not_emit():
+	var c := Character.new()
+	c.hp = 20
+	watch_signals(c)
+	c.hp = 20                       # 沒變化 → 不應觸發刷新
+	assert_signal_not_emitted(c, "stats_changed")
+
+func test_take_damage_emits_stats_changed():
+	var c := Character.new()
+	c.hp = 20
+	c.hp_max = 20
+	watch_signals(c)
+	c.take_damage(7)
+	assert_signal_emitted(c, "stats_changed")

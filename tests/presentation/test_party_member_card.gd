@@ -21,6 +21,19 @@ func _card(c: Character) -> PartyMemberCard:
 func test_hp_label_shows_tag_and_values():
 	assert_eq(_card(_char("Knight", 24, 28))._hp_label.text, "HP 24/28")
 
+# 治療術/喝藥水後不需手動 refresh：角色 HP/MP 一變，卡片即時跟著更新。
+func test_card_auto_refreshes_when_hp_changes():
+	var c := _char("Cleric", 10, 28)
+	var card := _card(c)
+	c.hp = 25                               # 模擬治療術回血（直接改 hp，不呼叫 card.refresh）
+	assert_eq(card._hp_label.text, "HP 25/28")
+
+func test_card_auto_refreshes_when_sp_changes():
+	var c := _char("Cleric", 28, 28, 4, 8)
+	var card := _card(c)
+	c.sp -= 2                               # 模擬施法扣 MP
+	assert_eq(card._mp_label.text, "MP 2/8")
+
 func test_mp_label_uses_mp_tag_from_sp_fields():
 	assert_eq(_card(_char("Cleric", 28, 28, 4, 8))._mp_label.text, "MP 4/8")
 

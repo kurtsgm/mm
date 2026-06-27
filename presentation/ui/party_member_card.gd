@@ -61,6 +61,9 @@ func setup(character: Character) -> void:
 	add_theme_constant_override("separation", 3)
 	_build()
 	refresh()
+	# 角色 HP/MP/狀態一變就即時刷新本卡（治療術、喝藥水、扣 MP、復活都會觸發），
+	# 不必等走下一格或關選單。卡被 free 時連線自動斷開，無殘留。
+	character.stats_changed.connect(refresh)
 
 func character() -> Character:
 	return _character
