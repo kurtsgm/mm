@@ -139,6 +139,22 @@ func party_cast(spell: SpellDef, target_index: int) -> Array:
 	_advance()
 	return events
 
+# 隊員對 target_index 隊友使用消耗品。效果套用成功（events 非空）才前進回合。
+# 不碰背包：扣除由呼叫端（CombatLayer）依「events 非空」決定，維持本類對 GameState 解耦。
+func party_use_item(item: ItemDef, target_index: int) -> Array:
+	var events: Array = []
+	var actor = current_combatant()
+	if not (actor is Character):
+		return events
+	if target_index < 0 or target_index >= party.members.size():
+		return events
+	var target: Character = party.members[target_index]
+	events = ItemEffects.apply(item, target)
+	if events.is_empty():
+		return events
+	_advance()
+	return events
+
 func _cast_damage(spell: SpellDef, caster: Character, target_index: int) -> Array:
 	var events: Array = []
 	for t in _enemy_targets(spell, target_index):
