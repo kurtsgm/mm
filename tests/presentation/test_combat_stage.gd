@@ -56,3 +56,21 @@ func test_texture_for_state_falls_back_to_base():
 	assert_eq(CombatStage.texture_for_state("attack", t), base)
 	assert_eq(CombatStage.texture_for_state("hit", t), base)
 	assert_eq(CombatStage.texture_for_state("???", t), base, "不認得的 state → base")
+
+func test_rebuild_initializes_anim_state_fields():
+	var a := _monster("A", 10); var b := _monster("B", 10)
+	var st := _stage_with([a, b])
+	var sa: Sprite3D = st._sprites[a]
+	assert_eq(st._anim[sa], "idle", "初始動畫態 idle")
+	assert_true(st._base_pos.has(sa), "存基準位")
+	assert_true(st._textures[sa].has("base"), "有 base 貼圖")
+	assert_not_null(st._textures[sa]["base"], "base 為 placeholder，非 null")
+	assert_eq(sa.texture, st._textures[sa]["base"], "空 catalog → idle 回退 base 貼圖")
+
+func test_clear_empties_anim_fields():
+	var a := _monster("A", 10)
+	var st := _stage_with([a])
+	st.clear()
+	assert_eq(st._base_pos.size(), 0)
+	assert_eq(st._textures.size(), 0)
+	assert_eq(st._anim.size(), 0)
