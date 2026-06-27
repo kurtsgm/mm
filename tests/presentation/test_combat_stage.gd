@@ -181,3 +181,12 @@ func test_rebuild_goblin_uses_idle_texture_and_normalized_size():
 	assert_eq(s.texture, idle, "初始顯示 goblin idle 真圖")
 	assert_eq(st._textures[s]["base"], idle, "缺態回退 idle 真圖（非紅塊 placeholder）")
 	assert_almost_eq(s.pixel_size, CombatStage.pixel_size_for(idle, CombatStage.DISPLAY_HEIGHT), 0.0001, "pixel_size 依貼圖高度正規化")
+
+func test_apply_texture_recomputes_pixel_size_on_swap():
+	var a := _monster("A", 10)
+	var st := _stage_with([a])
+	var s: Sprite3D = st._sprites[a]
+	var tall := _tex_tall(500)
+	st._apply_texture(s, tall)   # 換到不同高度的貼圖
+	assert_eq(s.texture, tall)
+	assert_almost_eq(s.pixel_size, CombatStage.pixel_size_for(tall, CombatStage.DISPLAY_HEIGHT), 0.0001, "換圖時 pixel_size 跟著貼圖高度重算（不會大小跳動）")

@@ -35,9 +35,8 @@ func rebuild(monsters: Array) -> void:
 		# base = idle 真圖優先，否則純色 placeholder（缺 attack/hurt 時回退到 idle 而非紅塊）
 		var base_tex := base_texture(t["idle"], _placeholder(Color(0.8, 0.3, 0.3)))
 		var textures := {"idle": t["idle"], "attack": t["attack"], "hurt": t["hurt"], "base": base_tex}
-		s.texture = texture_for_state("idle", textures)
 		s.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-		s.pixel_size = pixel_size_for(s.texture, DISPLAY_HEIGHT)   # 解析度無關：依貼圖高度正規化顯示大小
+		_apply_texture(s, texture_for_state("idle", textures))   # 設貼圖 + 依高度正規化 pixel_size（解析度無關）
 		_camera.add_child(s)
 		var spread := (i - (n - 1) / 2.0) * 1.6
 		s.position = Vector3(spread, 0.0, -4.0)
@@ -63,7 +62,7 @@ func flash(monster) -> void:
 	_kill_tween(s)
 	s.scale = Vector3.ONE   # 打斷攻擊撲擊時可能仍放大(~1.15×)，受擊抖動期間先還原為常態尺寸
 	_anim[s] = "hit"
-	s.texture = texture_for_state("hit", _textures[s])
+	_apply_texture(s, texture_for_state("hit", _textures[s]))
 	var base: Vector3 = _base_pos[s]
 	var step := (HIT_MS / 1000.0) / 4.0
 	var tw := create_tween()
@@ -80,7 +79,7 @@ func play_attack(monster) -> void:
 	var s: Sprite3D = _sprites[monster]
 	_kill_tween(s)
 	_anim[s] = "attack"
-	s.texture = texture_for_state("attack", _textures[s])
+	_apply_texture(s, texture_for_state("attack", _textures[s]))
 	var base: Vector3 = _base_pos[s]
 	var lunged := base + Vector3(0.0, 0.0, LUNGE_DIST)   # local +Z 朝隊伍前撲
 	var tw := create_tween()
@@ -97,13 +96,19 @@ func _end_anim(s) -> void:
 	_anim[s] = "idle"
 	s.position = _base_pos[s]
 	s.scale = Vector3.ONE
-	s.texture = texture_for_state("idle", _textures[s])
+	_apply_texture(s, texture_for_state("idle", _textures[s]))
 	_tween.erase(s)
 
 func _kill_tween(s) -> void:
 	if _tween.has(s) and _tween[s] != null and _tween[s].is_valid():
 		_tween[s].kill()
 	_tween.erase(s)
+
+# 設貼圖並依其高度正規化 pixel_size。idle/attack/hurt 換圖都走這裡，
+# 萬一某怪三態尺寸不一也不會在切換時「大小跳一下」。
+func _apply_texture(s: Sprite3D, tex: Texture2D) -> void:
+	s.texture = tex
+	s.pixel_size = pixel_size_for(tex, DISPLAY_HEIGHT)
 
 func _process(_delta: float) -> void:
 	var now := Time.get_ticks_msec()
