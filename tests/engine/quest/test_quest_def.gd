@@ -5,7 +5,7 @@ func _raw() -> Dictionary:
 		"id": "q1", "title": "測試任務",
 		"stages": [
 			{"type": "reach", "map": "wild_ne", "pos": [3, 3], "desc": "前往"},
-			{"type": "kill", "monster": "goblin", "count": 3, "desc": "擊敗哥布林"},
+			{"type": "kill", "targets": ["u-1", "u-2"], "desc": "擊敗哥布林"},
 			{"type": "collect", "item": "lucky_charm", "count": 1, "desc": "取得信物"},
 			{"type": "talk", "desc": "回報"},
 		],
@@ -27,8 +27,15 @@ func test_reach_pos_normalized_to_vector2i():
 
 func test_kill_fields():
 	var d := QuestDef.parse(_raw())
-	assert_eq(d.stage(1)["monster"], "goblin")
-	assert_eq(d.stage(1)["count"], 3)
+	assert_eq(d.stage(1)["targets"], ["u-1", "u-2"])
+
+func test_kill_empty_targets_rejected():
+	var r := _raw(); r["stages"] = [{"type": "kill", "targets": [], "desc": "x"}]
+	assert_null(QuestDef.parse(r))
+
+func test_kill_non_array_targets_rejected():
+	var r := _raw(); r["stages"] = [{"type": "kill", "targets": "u-1", "desc": "x"}]
+	assert_null(QuestDef.parse(r))
 
 func test_empty_stages_rejected():
 	var r := _raw(); r["stages"] = []

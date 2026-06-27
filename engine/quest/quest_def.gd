@@ -48,9 +48,13 @@ static func _parse_stage(rs) -> Dictionary:
 				return {}
 			return {"type": "reach", "map": String(rs["map"]), "pos": pos, "desc": desc}
 		"kill":
-			if not rs.has("monster") or not _is_pos_int(rs.get("count", null)):
+			var targets = rs.get("targets", null)
+			if typeof(targets) != TYPE_ARRAY or targets.is_empty():
 				return {}
-			return {"type": "kill", "monster": String(rs["monster"]), "count": int(rs["count"]), "desc": desc}
+			var ts: Array = []
+			for t in targets:
+				ts.append(String(t))
+			return {"type": "kill", "targets": ts, "desc": desc}
 		"collect":
 			if not rs.has("item") or not _is_pos_int(rs.get("count", null)):
 				return {}
