@@ -1,0 +1,19 @@
+{
+  "id": "qg_ne_scout",
+  "start": "root",
+  "nodes": {
+    "root": {
+      "text": "一名斥候警戒地看著你。",
+      "choices": [
+        { "text": "「我帶了西北野的口信。」", "require": {"quest_stage": {"id": "wild_message", "eq": 0}},
+          "effects": [{"op": "advance_quest", "quest": "wild_message"}], "goto": "received" },
+        { "text": "「你在等什麼嗎？」", "require": {"quest_inactive": "wild_message"}, "goto": "idle" },
+        { "text": "「再會。」", "require": {"quest_done": "wild_message"}, "goto": "done_thanks" },
+        { "text": "離開", "goto": null }
+      ]
+    },
+    "received": { "text": "斥候：「正是這個！這是給你的謝禮。」", "choices": [ {"text": "…", "goto": null} ] },
+    "idle": { "text": "斥候：「我在等西北野的信使捎來口信。」", "choices": [ {"text": "…", "goto": null} ] },
+    "done_thanks": { "text": "斥候：「口信我收到了，謝了。」", "choices": [ {"text": "…", "goto": null} ] }
+  }
+}

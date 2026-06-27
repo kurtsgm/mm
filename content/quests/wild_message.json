@@ -1,0 +1,8 @@
+{
+  "id": "wild_message",
+  "title": "東北野的口信",
+  "stages": [
+    { "type": "talk", "desc": "把口信帶到東北野，交給斥候" }
+  ],
+  "rewards": { "gold": 40, "xp": 30 }
+}

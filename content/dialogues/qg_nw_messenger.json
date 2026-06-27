@@ -1,0 +1,19 @@
+{
+  "id": "qg_nw_messenger",
+  "start": "root",
+  "nodes": {
+    "root": {
+      "text": "一名信使攔住你。",
+      "choices": [
+        { "text": "「我幫你帶口信。」", "require": {"quest_inactive": "wild_message"},
+          "effects": [{"op": "accept_quest", "quest": "wild_message"}], "goto": "accepted" },
+        { "text": "「口信還沒送到…」", "require": {"quest_active": "wild_message"}, "goto": "waiting" },
+        { "text": "「口信送到了。」", "require": {"quest_done": "wild_message"}, "goto": "thanks" },
+        { "text": "離開", "goto": null }
+      ]
+    },
+    "accepted": { "text": "信使：「太好了！東北野有個斥候在等這口信，麻煩你了。」", "choices": [ {"text": "…", "goto": null} ] },
+    "waiting": { "text": "信使：「斥候還在東北野等著呢。」", "choices": [ {"text": "…", "goto": null} ] },
+    "thanks": { "text": "信使：「多虧有你跑這一趟。」", "choices": [ {"text": "…", "goto": null} ] }
+  }
+}

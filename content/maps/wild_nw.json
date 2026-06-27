@@ -4,7 +4,8 @@
   "grid": [".....", ".....", "..@..", ".....", "....."],
   "entities": [
     { "type": "portal", "pos": [3, 3], "to": "town_oak", "entry": "gate" },
-    { "type": "decoration", "pos": [3, 3], "model": "town_oak_ext", "facing": "N", "scale": 0.9 }
+    { "type": "decoration", "pos": [3, 3], "model": "town_oak_ext", "facing": "N", "scale": 0.9 },
+    { "type": "questgiver", "pos": [1, 2], "dialogue": "qg_nw_messenger" }
   ],
   "entries": { "from_town": { "pos": [2, 3], "facing": "N" } },
   "neighbors": { "east": "wild_ne", "south": "wild_sw" }
