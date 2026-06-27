@@ -18,7 +18,7 @@ func before_each():
 	_def = QuestDef.parse({
 		"id": "q", "title": "哥布林的威脅",
 		"stages": [
-			{"type": "kill", "monster": "goblin", "count": 2, "desc": "擊敗"},
+			{"type": "kill", "targets": ["u-wild"], "desc": "擊敗"},
 			{"type": "collect", "item": "lucky_charm", "count": 1, "desc": "取得"},
 			{"type": "reach", "map": "wild_ne", "pos": [3, 3], "desc": "前往"},
 			{"type": "talk", "desc": "回報"},
@@ -38,15 +38,15 @@ func test_accept_idempotent():
 	gs.accept_quest("q"); gs.accept_quest("q")
 	assert_eq(gs.quests.size(), 1)
 
-func test_notify_kill_increments_tally_without_quest():
+func test_mark_defeated_records_uid():
 	var gs = _gs()
-	gs.notify_kill("goblin")
-	assert_eq(int(gs.kill_counts.get("goblin", 0)), 1)
+	gs.mark_encounter_defeated("u-wild")
+	assert_true(gs.is_defeated("u-wild"))
 
 func test_full_flow_completes_and_rewards():
 	var gs = _gs()
 	gs.accept_quest("q")
-	gs.notify_kill("goblin"); gs.notify_kill("goblin")
+	gs.notify_encounter_defeated("u-wild")
 	assert_eq(gs.quest_stage("q"), 1)            # collect
 	gs.inventory.add("lucky_charm", 1)
 	gs.refresh_collect()
@@ -62,18 +62,26 @@ func test_full_flow_completes_and_rewards():
 func test_kill_collect_before_accept_credited_stops_at_reach():
 	# 殺怪+撿物在接取前（retroactive）→ 接取追認 kill+collect → 停在 reach（事件式、需踏到）
 	var gs = _gs()
-	gs.notify_kill("goblin"); gs.notify_kill("goblin")
+	gs.notify_encounter_defeated("u-wild")
 	gs.inventory.add("lucky_charm", 1)
 	gs.accept_quest("q")
 	assert_eq(gs.quest_stage("q"), 2)   # reach（kill/collect 已追認、reach 待踏）
 	gs.notify_enter("wild_ne", Vector2i(3, 3))
 	assert_eq(gs.quest_stage("q"), 3)   # talk
 
+func test_defeating_other_encounter_does_not_satisfy():
+	var gs = _gs()
+	gs.accept_quest("q")
+	gs.notify_encounter_defeated("u-town")   # 別的遇抵（城鎮）
+	assert_eq(gs.quest_stage("q"), 0)         # kill 未滿足、仍在 kill
+	gs.notify_encounter_defeated("u-wild")    # 正確遇抵
+	assert_eq(gs.quest_stage("q"), 1)         # → collect
+
 func test_reach_is_map_and_cell_specific_cross_map():
 	# 直接驗證跨地圖：reach 指定 wild_ne (3,3)；別圖同格/本圖別格皆不算，正確圖+格才過。
 	var gs = _gs()
 	gs.accept_quest("q")
-	gs.notify_kill("goblin"); gs.notify_kill("goblin")
+	gs.notify_encounter_defeated("u-wild")
 	gs.inventory.add("lucky_charm", 1); gs.refresh_collect()
 	assert_eq(gs.quest_stage("q"), 2)               # reach
 	gs.notify_enter("town_oak", Vector2i(3, 3))     # 別圖同格 → 不算
@@ -104,7 +112,7 @@ func test_xp_reward_granted_to_conscious_member_on_turn_in():
 	var p := Party.new(); p.members = [c]
 	gs.party = p
 	_def.rewards["xp"] = 30
-	gs.notify_kill("goblin"); gs.notify_kill("goblin")
+	gs.notify_encounter_defeated("u-wild")
 	gs.inventory.add("lucky_charm", 1)
 	gs.accept_quest("q")                          # kill+collect 追認 → 停在 reach
 	gs.notify_enter("wild_ne", Vector2i(3, 3))   # reach → talk
