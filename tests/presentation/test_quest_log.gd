@@ -40,3 +40,11 @@ func test_summary_empty_when_no_quests():
 	var joined := "\n".join(lines)
 	assert_true(joined.contains("進行中"))
 	assert_true(joined.contains("（無）"))
+
+func test_summary_marks_tracked_and_cursor():
+	var quests := {"q": {"status": "active", "stage": 0}}
+	var q := FakeQ.new()
+	var lines := QuestLog.summary_lines(quests, Callable(self, "_resolve"), q, "q", 0)
+	var joined := "\n".join(lines)
+	assert_true(joined.contains("★"))   # 追蹤標記
+	assert_true(joined.contains(">"))   # 游標
