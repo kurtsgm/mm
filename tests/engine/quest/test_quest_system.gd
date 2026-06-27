@@ -1,14 +1,11 @@
 extends GutTest
 
-# 狀態式 QuestSystem：目標由對持久狀態查詢決定。FakeQ 模擬 GameState 的查詢介面。
+# 狀態式 kill/collect 用 FakeQ；reach 改事件式（advance_reach 帶 map+pos，不走 q）。
 class FakeQ:
-	var kills: Dictionary = {}      # monster_id -> int
-	var items: Dictionary = {}      # item_id -> int
-	var explored: Dictionary = {}   # map_id -> Dictionary[cell->true]
+	var kills: Dictionary = {}
+	var items: Dictionary = {}
 	func kill_count(id: String) -> int: return int(kills.get(id, 0))
 	func item_count(id: String) -> int: return int(items.get(id, 0))
-	func is_explored(map_id: String, cell) -> bool:
-		return explored.has(map_id) and explored[map_id].has(cell)
 
 func _def() -> QuestDef:
 	return QuestDef.parse({
@@ -25,38 +22,35 @@ func _def() -> QuestDef:
 func test_initial_state():
 	assert_eq(QuestSystem.initial_state(), {"status": "active", "stage": 0})
 
-func test_catch_up_no_progress_stays():
-	var s := QuestSystem.catch_up(_def(), QuestSystem.initial_state(), FakeQ.new())
+func test_catch_up_stops_at_reach():
+	# reach 是事件式，catch_up 不自動過（即使其他條件都滿足）
+	var q := FakeQ.new(); q.kills["goblin"] = 9; q.items["lucky_charm"] = 5
+	var s := QuestSystem.catch_up(_def(), QuestSystem.initial_state(), q)
 	assert_eq(s["stage"], 0)
 
-func test_catch_up_reach_then_stops_at_kill():
-	var q := FakeQ.new()
-	q.explored["wild_ne"] = {Vector2i(3, 3): true}
-	var s := QuestSystem.catch_up(_def(), QuestSystem.initial_state(), q)
-	assert_eq(s["stage"], 1)   # reach 追認過、kill 未足停下
-
-func test_catch_up_chains_to_talk_then_stops():
-	var q := FakeQ.new()
-	q.explored["wild_ne"] = {Vector2i(3, 3): true}
-	q.kills["goblin"] = 3
-	q.items["lucky_charm"] = 1
-	var s := QuestSystem.catch_up(_def(), QuestSystem.initial_state(), q)
-	assert_eq(s["stage"], 3)            # reach→kill→collect 全追認、停在 talk
+func test_advance_reach_matching_then_chains():
+	# 踏到 (wild_ne,3,3) → reach 過 → catch_up 把已滿足的 kill/collect 一併追認 → 停在 talk
+	var q := FakeQ.new(); q.kills["goblin"] = 3; q.items["lucky_charm"] = 1
+	var s := QuestSystem.advance_reach(_def(), QuestSystem.initial_state(), "wild_ne", Vector2i(3, 3), q)
+	assert_eq(s["stage"], 3)
 	assert_eq(s["status"], "active")
 
-func test_catch_up_does_not_auto_pass_talk():
-	var q := FakeQ.new()
-	q.explored["wild_ne"] = {Vector2i(3, 3): true}
-	q.kills["goblin"] = 9
-	q.items["lucky_charm"] = 5
-	var s := QuestSystem.catch_up(_def(), {"status": "active", "stage": 3}, q)
-	assert_eq(s["stage"], 3)
+func test_advance_reach_wrong_cell_noop():
+	var s := QuestSystem.advance_reach(_def(), QuestSystem.initial_state(), "wild_ne", Vector2i(0, 0), FakeQ.new())
+	assert_eq(s["stage"], 0)
 
-func test_kill_absolute_retroactive():
-	# kill 用絕對總計：stage 1 在 q.kills>=3 即滿足（與何時殺無關）
+func test_advance_reach_wrong_map_noop():
+	var s := QuestSystem.advance_reach(_def(), QuestSystem.initial_state(), "town_oak", Vector2i(3, 3), FakeQ.new())
+	assert_eq(s["stage"], 0)
+
+func test_advance_reach_on_non_reach_stage_noop():
+	var s := QuestSystem.advance_reach(_def(), {"status": "active", "stage": 1}, "wild_ne", Vector2i(3, 3), FakeQ.new())
+	assert_eq(s["stage"], 1)
+
+func test_kill_state_based_absolute():
 	var q := FakeQ.new(); q.kills["goblin"] = 3
 	var s := QuestSystem.catch_up(_def(), {"status": "active", "stage": 1}, q)
-	assert_eq(s["stage"], 2)
+	assert_eq(s["stage"], 2)   # kill 滿足 → 到 collect
 
 func test_advance_talk_completes_last_stage():
 	var s := QuestSystem.advance_talk(_def(), {"status": "active", "stage": 3}, FakeQ.new())
@@ -66,8 +60,9 @@ func test_advance_talk_on_non_talk_is_noop():
 	var s := QuestSystem.advance_talk(_def(), {"status": "active", "stage": 1}, FakeQ.new())
 	assert_eq(s["stage"], 1)
 
-func test_is_stage_satisfied_talk_false():
-	assert_false(QuestSystem.is_stage_satisfied(_def().stage(3), FakeQ.new()))
+func test_is_stage_satisfied_reach_and_talk_false():
+	assert_false(QuestSystem.is_stage_satisfied(_def().stage(0), FakeQ.new()))  # reach
+	assert_false(QuestSystem.is_stage_satisfied(_def().stage(3), FakeQ.new()))  # talk
 
 func test_input_state_not_mutated():
 	var before := {"status": "active", "stage": 1}

@@ -124,11 +124,10 @@ func notify_kill(monster_id: String) -> void:
 	for id in quests.keys():
 		_run_quest(id, "recheck")
 
-# 進格 / 背包變動後重新評估（reach 由 main 先 mark_explored；collect 讀 inventory）。
-# 參數於狀態式判定已不需，保留簽章以免動 main。
-func notify_enter(_map_id: String, _pos: Vector2i) -> void:
+# 踏入某格（走動或轉場抵達）：reach 事件式推進（精確到該圖該格），順帶 recheck 狀態式階段。
+func notify_enter(map_id: String, pos: Vector2i) -> void:
 	for id in quests.keys():
-		_run_quest(id, "recheck")
+		_run_quest(id, "enter", map_id, pos)
 
 func refresh_collect() -> void:
 	for id in quests.keys():
@@ -153,8 +152,8 @@ func _quest_def(id: String):
 		return null
 	return quest_resolver.call(id)
 
-# 對單一任務重新評估（狀態式追認）或對話推進 talk，計算新 state 並 commit。
-func _run_quest(id: String, kind: String) -> void:
+# 對單一任務套用一種推進（recheck 狀態式 / talk 對話 / enter 踏格），計算新 state 並 commit。
+func _run_quest(id: String, kind: String, a = null, b = null) -> void:
 	if not is_quest_active(id):
 		return
 	var def = _quest_def(id)
@@ -162,10 +161,13 @@ func _run_quest(id: String, kind: String) -> void:
 		return
 	var before: Dictionary = quests[id]
 	var after: Dictionary
-	if kind == "talk":
-		after = QuestSystem.advance_talk(def, before, self)
-	else:  # "recheck"
-		after = QuestSystem.catch_up(def, before, self)
+	match kind:
+		"talk":
+			after = QuestSystem.advance_talk(def, before, self)
+		"enter":
+			after = QuestSystem.advance_reach(def, before, String(a), b, self)
+		_:  # "recheck"
+			after = QuestSystem.catch_up(def, before, self)
 	_commit_quest(id, def, before, after)
 
 func _commit_quest(id: String, def, before: Dictionary, after: Dictionary) -> void:

@@ -184,6 +184,7 @@ func _enter_via_link(map_id: String, entry_name: String) -> void:
 	GameState.player_pos = pos
 	GameState.player_facing = facing
 	GameState.mark_explored(map_id, pos, MapManager.current_map.width, MapManager.current_map.height)
+	GameState.notify_enter(map_id, pos)   # 轉場抵達也算「踏入」→ reach 事件式可在到站當下推進
 	_mini_map.refresh()
 	var nm: String = dest.display_name if dest.display_name != "" else map_id
 	GameState.message_log.push("你來到%s。" % nm)
@@ -209,6 +210,7 @@ func _on_edge_exit_attempted(move_dir: int) -> void:
 	GameState.current_map_id = neighbor_id
 	GameState.player_pos = cell
 	GameState.mark_explored(neighbor_id, cell, MapManager.current_map.width, MapManager.current_map.height)
+	GameState.notify_enter(neighbor_id, cell)   # 邊界接壤抵達也算「踏入」→ reach 事件式
 	_mini_map.refresh()
 	_hud.refresh()
 
