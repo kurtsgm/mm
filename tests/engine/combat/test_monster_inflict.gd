@@ -43,6 +43,22 @@ func test_monster_inflicts_poison_on_hit():
 		if s.kind == StatusEffect.Kind.POISON: has_poison = true
 	assert_true(has_poison)
 
+func test_dream_wisp_tres_inflicts_sleep_on_hit():
+	var def: MonsterDef = load("res://content/monsters/dream_wisp.tres")
+	assert_eq(def.inflict_kind, StatusEffect.Kind.SLEEP, "夢魘妖 .tres 應施加睡眠")
+	var hero := _char("英雄", 30); hero.speed = 0
+	var mon := Monster.from_def(def)
+	mon.accuracy = 999; mon.speed = 99; mon.inflict_chance = 1.0
+	# seed 2：必中（同 poison 測試說明）
+	var cs := CombatSystem.new(_party([hero]), _monsters([mon]), _rng(2))
+	while not cs.is_over() and cs.current_combatant() is Character:
+		cs.party_defend()
+	cs.monster_act()
+	var has_sleep := false
+	for s in hero.statuses:
+		if s.kind == StatusEffect.Kind.SLEEP: has_sleep = true
+	assert_true(has_sleep, "被夢魘妖打中應陷入睡眠")
+
 func test_from_def_carries_inflict():
 	var def := MonsterDef.new()
 	def.inflict_kind = StatusEffect.Kind.SLEEP

@@ -62,3 +62,9 @@ func test_town_oak_has_demo_chests():
 	assert_eq(town.get_object(Vector2i(3, 1))["gold"], 30)
 	assert_eq(town.get_object(Vector2i(3, 1))["items"], ["short_sword"])
 	assert_true(town.has_encounter(Vector2i(3, 1)), "(3,1) 同格有遭遇（看守怪）")
+
+func test_wild_sw_has_dream_wisp_encounter():
+	var sw := _load("wild_sw")
+	assert_true(sw.has_encounter(Vector2i(1, 1)), "夢魘妖遭遇在 (1,1)")
+	assert_eq(sw.get_encounter(Vector2i(1, 1)), "dw")
+	assert_ne(sw.get_encounter_uid(Vector2i(1, 1)), "", "遭遇需有持久 uid")

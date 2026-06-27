@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="MonsterDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/monster_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = "dream_wisp"
+display_name = "夢魘妖"
+level = 2
+hp_max = 8
+might = 2
+armor = 0
+speed = 4
+accuracy = 9
+luck = 2
+xp_reward = 16
+gold_reward = 4
+resistances = {
+0: 25,
+5: -50
+}
+inflict_kind = 3
+inflict_duration = 3
+inflict_chance = 0.5

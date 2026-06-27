@@ -14,3 +14,7 @@ func test_goblin_tres_has_id():
 func test_ogre_tres_has_id():
 	var def: MonsterDef = load("res://content/monsters/ogre.tres")
 	assert_eq(def.id, "ogre")
+
+func test_dream_wisp_tres_has_id():
+	var def: MonsterDef = load("res://content/monsters/dream_wisp.tres")
+	assert_eq(def.id, "dream_wisp")

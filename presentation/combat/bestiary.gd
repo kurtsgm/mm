@@ -6,6 +6,7 @@ const _GROUPS := {
 	"g": {"path": "res://content/monsters/goblin.tres", "count": 3},
 	"o": {"path": "res://content/monsters/ogre.tres", "count": 1},
 	"ps": {"path": "res://content/monsters/poison_spider.tres", "count": 2},
+	"dw": {"path": "res://content/monsters/dream_wisp.tres", "count": 2},
 }
 
 static func group_defs_for(encounter_id: String) -> Array[MonsterDef]:
