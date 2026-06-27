@@ -283,6 +283,9 @@ func _resolve() -> void:
 			continue
 		if combat.is_party_turn():
 			break
+		var actor = combat.current_combatant()
+		if actor is Monster:
+			_stage.play_attack(actor)
 		var events := combat.monster_act()
 		events.append_array(combat.drain_events())
 		for e in events:

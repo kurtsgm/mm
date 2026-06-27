@@ -61,3 +61,41 @@ func test_action_bar_ignored_when_not_in_action_mode():
 	layer._on_action_selected("defend")
 	assert_eq(layer._mode, "spell", "行動列在非 action 模式應被忽略")
 	assert_eq(layer._log._lines.size(), log_before, "未執行防禦行動")
+
+class _StageSpy extends CombatStage:
+	var attacked: Array = []
+	func play_attack(monster) -> void:
+		attacked.append(monster)
+
+# 怪較快 → begin() 的 _resolve 先跑怪物回合；可選讓怪入睡以走 try_skip_turn 分支。
+func _layer_with_spy(asleep: bool) -> Array:
+	var cam := Camera3D.new(); add_child_autofree(cam)
+	var hero := _char("Hero", 30, 1)            # 慢 → 怪先動
+	var mon := _monster("M", 30, 99)            # 快
+	if asleep:
+		# 鏡射 engine/combat/combat_system.gd 對 inflict 的建構：from_data(kind, stat, magnitude, potency, duration)
+		mon.statuses.append(StatusCatalog.from_data(StatusEffect.Kind.SLEEP, -1, 0, 0, 5))
+	var cs := CombatSystem.new(_party([hero]), _monsters([mon]), RandomNumberGenerator.new())
+	var layer := CombatLayer.new(); add_child_autofree(layer)
+	# 注意：begin() 內 _build() 以 `if _stage == null` 一次建好所有子元件，
+	# 不能在 begin 前塞 spy（會跳過子元件建立）。故先正常 begin，再換上 spy 並 rebuild。
+	layer.begin(cs, cam)
+	var spy := _StageSpy.new(); add_child_autofree(spy)
+	spy.setup(cam); spy.rebuild(cs.monsters)
+	layer._stage = spy
+	return [layer, spy, mon]
+
+func test_monster_turn_calls_play_attack():
+	var bundle := _layer_with_spy(false)
+	var layer: CombatLayer = bundle[0]
+	var spy = bundle[1]
+	var mon = bundle[2]
+	layer._defend()   # 隊員行動 → _resolve 推進到怪物回合 → play_attack
+	assert_true(spy.attacked.has(mon), "怪物行動前對行動怪呼叫 play_attack")
+
+func test_skipped_monster_does_not_call_play_attack():
+	var bundle := _layer_with_spy(true)   # 怪入睡
+	var layer: CombatLayer = bundle[0]
+	var spy = bundle[1]
+	layer._defend()   # 隊員行動 → _resolve 遇睡怪走 try_skip_turn → 不 play_attack
+	assert_true(spy.attacked.is_empty(), "被跳過的怪不呼叫 play_attack")
