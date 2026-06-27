@@ -12,6 +12,7 @@ enum Category { WEAPON = 0, ARMOR = 1, ACCESSORY = 2, CONSUMABLE = 3 }
 @export var heal_hp: int = 0
 @export var heal_sp: int = 0
 @export var revive: bool = false
+@export var cure_kinds: Array = []   # 要解除的 StatusEffect.Kind
 @export var value: int = 0
 @export var stackable: bool = false
 

@@ -9,6 +9,8 @@ static func can_use(item: ItemDef, target: Character) -> bool:
 		return false
 	if item.revive:
 		return not target.is_conscious()   # 復活類：對昏迷/死亡才有意義
+	if not item.cure_kinds.is_empty() and _has_curable(item, target):
+		return true
 	if not target.is_alive():
 		return false                        # 非復活類對死亡無效
 	var hp_room := item.heal_hp > 0 and target.hp < target.hp_max
@@ -24,6 +26,18 @@ static func apply(item: ItemDef, target: Character) -> Array:
 		target.hp = maxi(1, mini(item.heal_hp, target.hp_max))
 		events.append("%s 被救醒了。" % target.name)
 		return events
+	if not item.cure_kinds.is_empty():
+		var kept: Array[StatusEffect] = []
+		var removed := 0
+		for s in target.statuses:
+			if item.cure_kinds.has(s.kind):
+				removed += 1
+			else:
+				kept.append(s)
+		if removed > 0:
+			target.statuses = kept
+			events.append("%s 的異常狀態解除了。" % target.name)
+		return events
 	if item.heal_hp > 0:
 		var before := target.hp
 		target.hp = mini(target.hp_max, target.hp + item.heal_hp)
@@ -33,3 +47,9 @@ static func apply(item: ItemDef, target: Character) -> Array:
 		target.sp = mini(target.sp_max, target.sp + item.heal_sp)
 		events.append("%s 回復了 %d 點 SP。" % [target.name, target.sp - before_sp])
 	return events
+
+static func _has_curable(item: ItemDef, target: Character) -> bool:
+	for s in target.statuses:
+		if item.cure_kinds.has(s.kind):
+			return true
+	return false
