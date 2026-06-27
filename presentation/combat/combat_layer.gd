@@ -30,6 +30,7 @@ func begin(cs: CombatSystem, camera: Camera3D) -> void:
 	_mode = "action"
 	_build()
 	_build_party_strip()
+	visible = true
 	_stage.setup(_camera)
 	_stage.rebuild(combat.monsters)
 	_log.clear()
@@ -80,6 +81,8 @@ func _refresh_party() -> void:
 		card.set_defending(combat != null and combat.is_defending(card.character()))
 
 func _refresh_all() -> void:
+	if combat == null:
+		return
 	_stage.refresh()
 	var sel := -1   # target 模式可加鎖定高亮；此處先不預選
 	_enemy.refresh(combat.living_monsters(), sel)
@@ -133,6 +136,8 @@ func _action_input(key: int) -> void:
 
 func _target_input(key: int) -> void:
 	if key == KEY_ESCAPE:
+		_pending_spell = null
+		_pending_item = null
 		_mode = "action"; _refresh_all(); return
 	var living := combat.living_monsters()
 	if key >= KEY_1 and key <= KEY_9 and (key - KEY_1) < living.size():
@@ -143,6 +148,8 @@ func _target_input(key: int) -> void:
 
 func _item_target_input(key: int) -> void:
 	if key == KEY_ESCAPE:
+		_pending_spell = null
+		_pending_item = null
 		_mode = "action"; _refresh_all(); return
 	if key >= KEY_1 and key <= KEY_9 and (key - KEY_1) < combat.party.members.size():
 		_use_pending_item(key - KEY_1)
@@ -283,5 +290,6 @@ func _finish() -> void:
 	var result := combat.result()
 	_stage.clear()
 	set_process_unhandled_input(false)
+	visible = false
 	combat = null
 	combat_finished.emit(result)

@@ -49,5 +49,7 @@ func test_begin_builds_party_strip_with_active_highlight():
 
 func test_attack_quick_path_logs_and_progresses():
 	var layer := _begin()
+	watch_signals(layer)
 	layer._action_input(KEY_1)   # 快速攻擊 1 號怪
 	assert_gt(layer._log._lines.size(), 1, "攻擊後 log 應新增訊息（不只開場行）")
+	assert_signal_emitted(layer, "turn_resolved")
