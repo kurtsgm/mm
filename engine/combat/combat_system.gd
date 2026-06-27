@@ -116,6 +116,20 @@ func party_run() -> Array:
 		_advance()
 	return events
 
+# 若目前行動者被 sleep/paralysis 阻止 → 產生訊息並前進，回傳事件；否則回 []。
+# 僅在有 incapacitating 狀態時擲骰，避免擾動既有命中/傷害 RNG 序列。
+func try_skip_turn() -> Array:
+	var events: Array = []
+	var actor = current_combatant()
+	if actor == null:
+		return events
+	if not StatusRules.incapacitating(actor.statuses):
+		return events
+	if StatusRules.prevents_action(actor.statuses, _rng.randf()):
+		events.append("%s %s，無法行動。" % [actor.name, StatusRules.incap_reason(actor.statuses)])
+		_advance()
+	return events
+
 # 隊員施放已解析的 SpellDef。target_index：單體時為敵/友索引；AoE 時忽略。
 func party_cast(spell: SpellDef, target_index: int) -> Array:
 	var events: Array = []

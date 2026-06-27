@@ -98,6 +98,8 @@ func _has_combat_spell() -> bool:
 	var actor = combat.current_combatant()
 	if not (actor is Character):
 		return false
+	if StatusRules.prevents_casting(actor.statuses):
+		return false
 	for id in actor.known_spells:
 		var s := SpellBook.get_spell(id)
 		if s != null and s.is_combat_usable():
@@ -272,8 +274,15 @@ func _after_action() -> void:
 	turn_resolved.emit()
 
 func _resolve() -> void:
-	# 怪物回合：隊員受擊閃臉由 Character.damaged 信號驅動（隊伍卡已連），這裡不另算。
-	while not combat.is_over() and not combat.is_party_turn():
+	while not combat.is_over():
+		var skip := combat.try_skip_turn()
+		if not skip.is_empty():
+			skip.append_array(combat.drain_events())
+			for e in skip:
+				_log.push(e)
+			continue
+		if combat.is_party_turn():
+			break
 		var events := combat.monster_act()
 		events.append_array(combat.drain_events())
 		for e in events:
