@@ -56,6 +56,14 @@ func clear() -> void:
 	_sprites.clear()
 	_flash_until.clear()
 
+# 純函式：依動畫態挑該用哪張貼圖；缺該態（null/缺鍵）或不認得的 state → base。
+static func texture_for_state(state: String, textures: Dictionary) -> Texture2D:
+	var key = {"idle": "idle", "attack": "attack", "hit": "hurt"}.get(state, "")
+	var tex = textures.get(key, null)
+	if tex == null:
+		tex = textures.get("base", null)
+	return tex
+
 func _placeholder(color: Color) -> Texture2D:
 	var img := Image.create(64, 96, false, Image.FORMAT_RGBA8)
 	img.fill(color)
