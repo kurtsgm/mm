@@ -1,7 +1,7 @@
 class_name SaveSerializer
 extends Object
 
-const VERSION := 9
+const VERSION := 10
 
 static func to_dict(data: SaveData) -> Dictionary:
 	return {
@@ -106,6 +106,7 @@ static func _char_to_dict(c: Character) -> Dictionary:
 		"luck": c.luck, "condition": c.condition, "experience": c.experience,
 		"equipment": c.equipment.equipped_ids(),
 		"known_spells": c.known_spells.duplicate(),
+		"statuses": _statuses_to_array(c.statuses),
 	}
 
 static func _char_from_dict(d: Dictionary, resolver: Callable) -> Character:
@@ -127,6 +128,7 @@ static func _char_from_dict(d: Dictionary, resolver: Callable) -> Character:
 	c.condition = int(d.get("condition", 0))
 	c.experience = int(d.get("experience", 0))
 	c.known_spells = _to_str_array(d.get("known_spells", []))
+	c.statuses = _statuses_from_array(d.get("statuses", []))
 	_apply_equipment(c, d.get("equipment", {}), resolver)
 	return c
 
@@ -139,6 +141,20 @@ static func _apply_equipment(c: Character, raw, resolver: Callable) -> void:
 		var item: ItemDef = resolver.call(String(raw[slot_key]))
 		if item != null and c.equipment.can_equip(item):
 			c.equipment.equip(item)
+
+static func _statuses_to_array(statuses: Array) -> Array:
+	var out: Array = []
+	for s in statuses:
+		out.append({"kind": s.kind, "remaining": s.remaining, "stat": s.stat, "amount": s.amount, "potency": s.potency})
+	return out
+
+static func _statuses_from_array(arr) -> Array[StatusEffect]:
+	var out: Array[StatusEffect] = []
+	if arr is Array:
+		for d in arr:
+			if typeof(d) == TYPE_DICTIONARY:
+				out.append(StatusCatalog.from_data(int(d.get("kind", 0)), int(d.get("stat", -1)), int(d.get("amount", 0)), int(d.get("potency", 0)), int(d.get("remaining", 0))))
+	return out
 
 static func _inventory_to_array(inv: Inventory) -> Array:
 	if inv == null:

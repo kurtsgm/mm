@@ -42,10 +42,10 @@ func test_tracked_quest_absent_is_empty():
 	raw["state"].erase("tracked_quest")
 	assert_eq(SaveSerializer.from_dict(raw).tracked_quest, "")
 
-func test_version_is_9():
-	assert_eq(SaveSerializer.to_dict(_data())["version"], 9)
+func test_version_is_10():
+	assert_eq(SaveSerializer.to_dict(_data())["version"], 10)
 
 func test_old_version_rejected():
 	var raw := SaveSerializer.to_dict(_data())
-	raw["version"] = 8
-	assert_null(SaveSerializer.from_dict(raw), "舊版不再接受（只收 v9）")
+	raw["version"] = 9
+	assert_null(SaveSerializer.from_dict(raw), "舊版不再接受（只收 v10）")
