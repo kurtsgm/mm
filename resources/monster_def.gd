@@ -16,3 +16,7 @@ extends Resource
 @export var drop_item_id: String = ""
 @export var drop_chance: float = 0.0
 @export var resistances: Dictionary = {}   # Element(int) -> int 百分比（可負）
+@export var inflict_kind: int = -1        # -1 = 不施加；否則 StatusEffect.Kind
+@export var inflict_potency: int = 0
+@export var inflict_duration: int = 0
+@export var inflict_chance: float = 0.0

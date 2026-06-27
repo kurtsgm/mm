@@ -17,6 +17,10 @@ var drop_item_id: String = ""
 var drop_chance: float = 0.0
 var statuses: Array[StatusEffect] = []
 var resistances: Dictionary = {}
+var inflict_kind: int = -1
+var inflict_potency: int = 0
+var inflict_duration: int = 0
+var inflict_chance: float = 0.0
 
 func is_alive() -> bool:
 	return hp > 0
@@ -50,4 +54,8 @@ static func from_def(def: MonsterDef) -> Monster:
 	m.drop_item_id = def.drop_item_id
 	m.drop_chance = def.drop_chance
 	m.resistances = def.resistances.duplicate()
+	m.inflict_kind = def.inflict_kind
+	m.inflict_potency = def.inflict_potency
+	m.inflict_duration = def.inflict_duration
+	m.inflict_chance = def.inflict_chance
 	return m

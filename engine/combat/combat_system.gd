@@ -84,6 +84,9 @@ func monster_act() -> Array:
 		var dmg := CombatFormulas.roll_damage(actor.effective_attack(), target.armor_value(), defending, _rng)
 		target.take_damage(dmg)
 		target.statuses = StatusRules.cleared_on_hit(target.statuses)
+		if actor.inflict_kind >= 0 and _rng.randf() <= actor.inflict_chance:
+			target.statuses.append(StatusCatalog.from_data(actor.inflict_kind, -1, 0, actor.inflict_potency, actor.inflict_duration))
+			events.append("%s 陷入了異常狀態！" % target.name)
 		events.append("%s 攻擊 %s，造成 %d 傷害。" % [actor.name, target.name, dmg])
 		if target.hp <= 0:
 			target.hp = 0
