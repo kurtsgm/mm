@@ -74,3 +74,27 @@ func test_clear_empties_anim_fields():
 	assert_eq(st._base_pos.size(), 0)
 	assert_eq(st._textures.size(), 0)
 	assert_eq(st._anim.size(), 0)
+
+func test_idle_processing_enabled_after_rebuild():
+	var a := _monster("A", 10)
+	var st := _stage_with([a])
+	assert_true(st.is_processing(), "有怪 → idle 呼吸常駐 _process")
+
+func test_idle_keeps_position_within_amplitude():
+	var a := _monster("A", 10)
+	var st := _stage_with([a])
+	var sa: Sprite3D = st._sprites[a]
+	var base_y: float = st._base_pos[sa].y
+	st._process(0.016)   # 直接驅動一幀，不 crash
+	var dy: float = abs(sa.position.y - base_y)
+	assert_true(dy <= st.IDLE_AMP + 0.0001, "idle 位移不超過振幅（sin 有界）")
+
+func test_idle_skips_dead_monster():
+	var a := _monster("A", 10)
+	var st := _stage_with([a])
+	var sa: Sprite3D = st._sprites[a]
+	a.hp = 0
+	st.refresh()
+	var y_before: float = sa.position.y
+	st._process(0.016)
+	assert_eq(sa.position.y, y_before, "死亡怪不參與 idle 呼吸")

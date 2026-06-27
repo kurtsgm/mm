@@ -4,6 +4,8 @@ extends Node3D
 # 戰鬥怪物 3D billboard（placeholder 純色貼圖，真美術另案）。掛在相機前方一排。
 # 名牌/血條/狀態/編號改由 2D EnemyPanel 呈現；本元件只管 billboard 與受擊紅閃。
 const FLASH_MS := 250
+const IDLE_PERIOD := 2.0
+const IDLE_AMP := 0.03
 
 var _camera: Camera3D
 var _sprites: Dictionary = {}     # Monster -> Sprite3D
@@ -51,14 +53,18 @@ func flash(monster) -> void:
 
 func _process(_delta: float) -> void:
 	var now := Time.get_ticks_msec()
-	var any := false
-	for s in _flash_until:
-		if now < _flash_until[s]:
-			any = true
-		elif is_instance_valid(s):
+	var t := now / 1000.0
+	for mon in _sprites:
+		var s: Sprite3D = _sprites[mon]
+		if not is_instance_valid(s):
+			continue
+		# 紅閃 tint 衰減
+		if _flash_until.has(s) and now >= _flash_until[s]:
 			s.modulate = Color(1, 1, 1)
-	if not any:
-		set_process(false)
+			_flash_until.erase(s)
+		# idle 呼吸：僅存活且 idle 態
+		if mon.is_alive() and _anim.get(s, "idle") == "idle":
+			s.position.y = _base_pos[s].y + sin(t * TAU / IDLE_PERIOD) * IDLE_AMP
 
 func clear() -> void:
 	for s in _tween:
