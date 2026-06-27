@@ -29,6 +29,9 @@ godot --headless --path . --import && godot --headless --path . --script res://t
 - 對話的 `accept_quest`/`advance_quest`/`quest_*` require 指向**不存在的任務 id**。
 - 地圖 `questgiver` 指向不存在的對話。
 
+**整任務 flow 自動跑通**
+- 每個 quest 模擬接取→各階段（kill 打掉 target uids、collect 加道具、reach 踏入指定格、talk 對話）→完成,跑不通報 ERROR。flow 失敗代表某階段無法被標準事件滿足。
+
 **WARN(設計疑慮,不一定錯)**
 - 任務**沒有任何對話會 `accept_quest`** → 玩家接不到。
 - 任務有 `talk` 階段但**沒有任何對話 `advance_quest`** → 交不了/回報不了。
@@ -38,6 +41,7 @@ godot --headless --path . --import && godot --headless --path . --script res://t
 
 - **接不到** → WARN「沒有 accept_quest」:該任務的 giver 對話漏了 accept_quest op,或 require 把自己擋掉。
 - **打完目標卻交不了** → 多半不是 bug:任務還有**後續階段**(例 reach 要踏到指定格)。看任務日誌當前階段;reach 是**事件式、需踏到「該圖+該格」**(精確,跨地圖 OK),不是踩附近就算。
+- **flow 跑不通(✗ flow <id>)** → 某階段無法被標準事件滿足:常見 kill 的 `targets` 指錯/不存在的遇抵 uid、reach 的格不可走或 map/pos 寫錯、collect 的 item 名錯。對照上面的 ERROR 行修對應階段。
 - **兩個任務「混在一起」** → 先確認不是共用 id(本驗證器會抓 id 指向錯誤);常見其實是**共用同一張地圖/同種怪**:kill 用全域擊殺計數(絕對追認)、collect 用背包,所以為任務 A 殺的怪/撿的物會被任務 B 追認。要避免就讓不同任務用不同區域/怪/物,或接受「做了就算」的設計。
 
 ## 任務系統重點(寫/改任務內容時)

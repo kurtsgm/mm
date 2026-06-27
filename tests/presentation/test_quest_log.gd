@@ -2,11 +2,10 @@ extends GutTest
 
 # summary_lines 改吃 duck-typed q（kill 顯示由 q.kill_count 來）。FakeQ 模擬查詢介面。
 class FakeQ:
-	var kills: Dictionary = {}
+	var defeated: Dictionary = {}
 	var items: Dictionary = {}
-	func kill_count(id: String) -> int: return int(kills.get(id, 0))
+	func is_defeated(uid: String) -> bool: return defeated.has(uid)
 	func item_count(id: String) -> int: return int(items.get(id, 0))
-	func is_explored(_m: String, _c) -> bool: return false
 
 var _def: QuestDef
 
@@ -17,7 +16,7 @@ func before_each():
 	_def = QuestDef.parse({
 		"id": "q", "title": "哥布林的威脅",
 		"stages": [
-			{"type": "kill", "monster": "goblin", "count": 3, "desc": "擊敗哥布林"},
+			{"type": "kill", "targets": ["u-a", "u-b", "u-c"], "desc": "擊敗哥布林"},
 			{"type": "talk", "desc": "回報"},
 		],
 		"rewards": {"gold": 10, "items": []},
@@ -25,7 +24,7 @@ func before_each():
 
 func test_summary_lists_active_with_progress():
 	var quests := {"q": {"status": "active", "stage": 0}}
-	var q := FakeQ.new(); q.kills["goblin"] = 1
+	var q := FakeQ.new(); q.defeated["u-a"] = true
 	var lines := QuestLog.summary_lines(quests, Callable(self, "_resolve"), q)
 	var joined := "\n".join(lines)
 	assert_true(joined.contains("哥布林的威脅"))
