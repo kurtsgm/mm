@@ -54,10 +54,10 @@ func take_damage(amount: int) -> void:
 	damaged.emit(amount)
 
 func attack_power() -> int:
-	return might + equipment.total_attack() + StatusMods.sum(statuses, StatusEffect.Stat.ATTACK)
+	return might + equipment.total_attack() + StatusRules.stat_total(statuses, StatusEffect.Stat.ATTACK)
 
 func armor_value() -> int:
-	return equipment.total_armor() + StatusMods.sum(statuses, StatusEffect.Stat.ARMOR)
+	return equipment.total_armor() + StatusRules.stat_total(statuses, StatusEffect.Stat.ARMOR)
 
 func effective_accuracy() -> int:
-	return accuracy + StatusMods.sum(statuses, StatusEffect.Stat.ACCURACY)
+	return accuracy + StatusRules.stat_total(statuses, StatusEffect.Stat.ACCURACY)

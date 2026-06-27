@@ -25,13 +25,13 @@ func resist_for(element: int) -> int:
 	return resistances.get(element, 0)
 
 func effective_attack() -> int:
-	return might + StatusMods.sum(statuses, StatusEffect.Stat.ATTACK)
+	return might + StatusRules.stat_total(statuses, StatusEffect.Stat.ATTACK)
 
 func effective_armor() -> int:
-	return armor + StatusMods.sum(statuses, StatusEffect.Stat.ARMOR)
+	return armor + StatusRules.stat_total(statuses, StatusEffect.Stat.ARMOR)
 
 func effective_accuracy() -> int:
-	return accuracy + StatusMods.sum(statuses, StatusEffect.Stat.ACCURACY)
+	return accuracy + StatusRules.stat_total(statuses, StatusEffect.Stat.ACCURACY)
 
 static func from_def(def: MonsterDef) -> Monster:
 	var m := Monster.new()
