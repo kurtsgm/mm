@@ -247,22 +247,10 @@ func _apply_buffs() -> void:
 		_buff_row.add_child(chip)
 
 static func status_text(s: StatusEffect) -> String:
-	var arrow := "↑" if s.amount > 0 else "↓"
-	return arrow + _stat_abbrev(s.stat)
+	return StatusRules.label(s) + str(s.remaining)
 
 static func status_color(s: StatusEffect) -> Color:
-	return Color(0.4, 0.9, 0.4) if s.amount > 0 else Color(0.95, 0.4, 0.4)
-
-static func _stat_abbrev(stat: int) -> String:
-	match stat:
-		StatusEffect.Stat.ATTACK:
-			return "ATK"
-		StatusEffect.Stat.ARMOR:
-			return "DEF"
-		StatusEffect.Stat.ACCURACY:
-			return "ACC"
-		_:
-			return "?"
+	return StatusRules.color(s)
 
 static func _class_color(char_class: String) -> Color:
 	match char_class:

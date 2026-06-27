@@ -69,9 +69,17 @@ func test_flash_hit_overrides_to_hit_visual():
 	assert_eq(card.current_visual(), PartyMemberCard.FaceVisual.HIT)
 
 func test_status_text_buff_and_debuff():
-	assert_eq(PartyMemberCard.status_text(StatusEffect.new(StatusEffect.Stat.ATTACK, 5, 2)), "↑ATK")
-	assert_eq(PartyMemberCard.status_text(StatusEffect.new(StatusEffect.Stat.ARMOR, -3, 2)), "↓DEF")
-	assert_eq(PartyMemberCard.status_text(StatusEffect.new(StatusEffect.Stat.ACCURACY, 4, 2)), "↑ACC")
+	assert_eq(PartyMemberCard.status_text(StatusEffect.new(StatusEffect.Stat.ATTACK, 5, 2)), "↑ATK2")
+	assert_eq(PartyMemberCard.status_text(StatusEffect.new(StatusEffect.Stat.ARMOR, -3, 2)), "↓DEF2")
+	assert_eq(PartyMemberCard.status_text(StatusEffect.new(StatusEffect.Stat.ACCURACY, 4, 2)), "↑ACC2")
+
+func test_status_text_stat_mod_with_remaining():
+	var e := StatusCatalog.stat_mod(StatusEffect.Stat.ATTACK, 2, 3)
+	assert_eq(PartyMemberCard.status_text(e), "↑ATK3")
+
+func test_status_text_ailment_with_remaining():
+	assert_eq(PartyMemberCard.status_text(StatusCatalog.poison(2, 4)), "毒4")
+	assert_eq(PartyMemberCard.status_text(StatusCatalog.sleep(2)), "睡2")
 
 func test_buff_row_renders_one_chip_per_status():
 	var c := _char("Sorcerer")
@@ -79,7 +87,7 @@ func test_buff_row_renders_one_chip_per_status():
 	c.statuses.append(StatusEffect.new(StatusEffect.Stat.ARMOR, -3, 2))
 	var card := _card(c)
 	assert_eq(card._buff_row.get_child_count(), 2)
-	assert_eq((card._buff_row.get_child(0) as Label).text, "↑ATK")
+	assert_eq((card._buff_row.get_child(0) as Label).text, "↑ATK2")
 
 func test_character_accessor_returns_bound_character():
 	var c := _char("Knight")
