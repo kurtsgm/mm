@@ -1,69 +1,110 @@
 class_name CombatLayer
 extends CanvasLayer
 
-# 程式建構的 placeholder 戰鬥畫面（無真美術）：
-# - 怪物 2D billboard（Sprite3D，掛在相機前方，placeholder 純色貼圖）
-# - 行動選單：[1-9] 攻擊對應敵人 / [D] 防禦 / [F] 逃跑
-# - 戰鬥 log（最近數行）
-# 逐回合驅動 CombatSystem；玩家行動後自動結算怪物回合到下個隊員回合或戰鬥結束。
-
+# 戰鬥畫面協調者（版面 A）：建子元件、跑回合迴圈、依模式路由鍵盤+滑鼠。
+# 邏輯在 CombatSystem；本層只呈現與輸入。HUD 顯隱由 main 負責（不在此碰兄弟節點）。
 signal combat_finished(result: int)
 signal turn_resolved
+signal item_consumed(item_id: String)
 
 var combat: CombatSystem
 
 var _camera: Camera3D
-var _sprites: Array[Sprite3D] = []
-var _prompt_label: Label
-var _log_label: Label
-var _log_lines: Array[String] = []
-var _mode: String = "action"           # "action" | "spell" | "target"
-var _spell_list: Array = []            # Array[SpellDef]
+var _stage: CombatStage
+var _enemy: EnemyPanel
+var _action_bar: CombatActionBar
+var _choices: CombatChoiceList
+var _log: CombatLog
+var _party_box: HBoxContainer       # 底部隊伍 strip 容器
+var _party_cards: Array = []        # Array[PartyMemberCard]
+
+var _mode: String = "action"        # action | target | spell | item | item_target
+var _spell_list: Array = []         # Array[SpellDef]
+var _item_list: Array = []          # Array[ItemDef]
 var _pending_spell: SpellDef = null
+var _pending_item: ItemDef = null
 
 func begin(cs: CombatSystem, camera: Camera3D) -> void:
 	combat = cs
-	_mode = "action"
 	_camera = camera
-	_build_ui()
-	_spawn_billboards()
-	_log_lines.clear()
-	_push_log("戰鬥開始！")
+	_mode = "action"
+	_build()
+	_build_party_strip()
+	_stage.setup(_camera)
+	_stage.rebuild(combat.monsters)
+	_log.clear()
+	_log.push("戰鬥開始！")
 	set_process_unhandled_input(true)
-	_resolve()  # 怪物若較快先動
-	turn_resolved.emit()  # 怪物開場回合也要刷新 HUD（_resolve 不會 emit）
+	_resolve()                       # 怪物若較快先動
+	_refresh_all()
+	turn_resolved.emit()
 
-func _build_ui() -> void:
-	if _prompt_label == null:
-		_prompt_label = Label.new()
-		_prompt_label.position = Vector2(40, 40)
-		_prompt_label.add_theme_font_size_override("font_size", 20)
-		add_child(_prompt_label)
-	if _log_label == null:
-		_log_label = Label.new()
-		_log_label.position = Vector2(40, 100)
-		_log_label.add_theme_font_size_override("font_size", 16)
-		add_child(_log_label)
-	_prompt_label.text = ""
-	_log_label.text = ""
+func _build() -> void:
+	layer = 10
+	if _stage == null:
+		_stage = CombatStage.new(); add_child(_stage)
+		_enemy = EnemyPanel.new(); add_child(_enemy)
+		_log = CombatLog.new(); add_child(_log)
+		_action_bar = CombatActionBar.new(); add_child(_action_bar)
+		_action_bar.action_selected.connect(_on_action_selected)
+		_choices = CombatChoiceList.new(); add_child(_choices)
+		_choices.chosen.connect(_on_choice_chosen)
+		_choices.cancelled.connect(_on_choice_cancelled)
 
-func _spawn_billboards() -> void:
-	var living := combat.living_monsters()
-	var n := living.size()
-	for i in n:
-		var s := Sprite3D.new()
-		s.texture = _placeholder_texture(Color(0.8, 0.3, 0.3))
-		s.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-		s.pixel_size = 0.02
-		_camera.add_child(s)
-		var spread := (i - (n - 1) / 2.0) * 1.6
-		s.position = Vector3(spread, 0.0, -4.0)
-		_sprites.append(s)
+# ---- 刷新 ----
 
-func _placeholder_texture(color: Color) -> Texture2D:
-	var img := Image.create(64, 96, false, Image.FORMAT_RGBA8)
-	img.fill(color)
-	return ImageTexture.create_from_image(img)
+func _build_party_strip() -> void:
+	for c in _party_cards:
+		if is_instance_valid(c):
+			c.queue_free()
+	_party_cards.clear()
+	if _party_box == null:
+		_party_box = HBoxContainer.new()
+		_party_box.anchor_left = 0.15; _party_box.anchor_right = 0.85
+		_party_box.anchor_top = 0.90; _party_box.anchor_bottom = 1.0
+		_party_box.offset_bottom = -8
+		_party_box.add_theme_constant_override("separation", 8)
+		add_child(_party_box)
+	for m in combat.party.members:
+		var card := PartyMemberCard.new()
+		_party_box.add_child(card)
+		card.setup(m)
+		m.damaged.connect(card._on_self_damaged)
+		_party_cards.append(card)
+
+func _refresh_party() -> void:
+	var actor = combat.current_combatant() if combat != null else null
+	for card in _party_cards:
+		card.refresh()
+		card.set_active(card.character() == actor)
+		card.set_defending(combat != null and combat.is_defending(card.character()))
+
+func _refresh_all() -> void:
+	_stage.refresh()
+	var sel := -1   # target 模式可加鎖定高亮；此處先不預選
+	_enemy.refresh(combat.living_monsters(), sel)
+	_refresh_party()
+	if _mode == "action" and combat != null and combat.is_party_turn():
+		_action_bar.show_actions(CombatActions.available(_has_combat_spell(), _has_usable_item()))
+		_action_bar.set_prompt("%s 的回合" % combat.current_combatant().name)
+
+func _has_combat_spell() -> bool:
+	var actor = combat.current_combatant()
+	if not (actor is Character):
+		return false
+	for id in actor.known_spells:
+		var s := SpellBook.get_spell(id)
+		if s != null and s.is_combat_usable():
+			return true
+	return false
+
+func _usable_items() -> Array:
+	return CombatItems.usable(GameState.inventory, combat.party, Callable(ItemCatalog, "get_item"))
+
+func _has_usable_item() -> bool:
+	return not _usable_items().is_empty()
+
+# ---- 輸入路由 ----
 
 func _unhandled_input(event: InputEvent) -> void:
 	if combat == null or not combat.is_party_turn():
@@ -73,21 +114,80 @@ func _unhandled_input(event: InputEvent) -> void:
 	var key: int = event.keycode
 	match _mode:
 		"action": _action_input(key)
-		"spell": _spell_input(key)
 		"target": _target_input(key)
+		"spell", "item": _choices.handle_key(key)
+		"item_target": _item_target_input(key)
 
 func _action_input(key: int) -> void:
 	var living := combat.living_monsters()
-	if key >= KEY_1 and key <= KEY_9:
-		var idx := key - KEY_1
-		if idx < living.size():
-			_apply(combat.party_attack(idx))
+	if key >= KEY_1 and key <= KEY_9 and (key - KEY_1) < living.size():
+		_attack(key - KEY_1)
 	elif key == KEY_D:
-		_apply(combat.party_defend())
+		_defend()
 	elif key == KEY_F:
-		_apply(combat.party_run())
-	elif key == KEY_C:
+		_run()
+	elif key == KEY_C and _has_combat_spell():
 		_open_spell_menu()
+	elif key == KEY_I and _has_usable_item():
+		_open_item_menu()
+
+func _target_input(key: int) -> void:
+	if key == KEY_ESCAPE:
+		_mode = "action"; _refresh_all(); return
+	var living := combat.living_monsters()
+	if key >= KEY_1 and key <= KEY_9 and (key - KEY_1) < living.size():
+		if _pending_spell != null:
+			_cast_pending(key - KEY_1)
+		else:
+			_attack(key - KEY_1)
+
+func _item_target_input(key: int) -> void:
+	if key == KEY_ESCAPE:
+		_mode = "action"; _refresh_all(); return
+	if key >= KEY_1 and key <= KEY_9 and (key - KEY_1) < combat.party.members.size():
+		_use_pending_item(key - KEY_1)
+
+# ---- 滑鼠（行動列/子選單）----
+
+func _on_action_selected(id: String) -> void:
+	match id:
+		"attack":
+			_mode = "target"
+			_action_bar.set_prompt("選擇目標：數字鍵 / [Esc]")
+		"defend": _defend()
+		"run": _run()
+		"spell":
+			if _has_combat_spell(): _open_spell_menu()
+		"item":
+			if _has_usable_item(): _open_item_menu()
+
+func _on_choice_chosen(index: int) -> void:
+	if _mode == "spell":
+		_pending_spell = _spell_list[index]
+		_choices.close()
+		var t: int = _pending_spell.target
+		if t == SpellDef.Target.ALL_ENEMIES or t == SpellDef.Target.ALL_ALLIES:
+			_cast_pending(0)
+		elif t == SpellDef.Target.SINGLE_ALLY:
+			_mode = "item_target"   # 沿用隊友選取流程（數字鍵選隊友）
+			_pending_item = null
+			_action_bar.set_prompt("選擇隊友：數字鍵 / [Esc]")
+		else:
+			_mode = "target"
+			_action_bar.set_prompt("選擇目標：數字鍵 / [Esc]")
+	elif _mode == "item":
+		_pending_item = _item_list[index]
+		_choices.close()
+		_mode = "item_target"
+		_action_bar.set_prompt("對誰使用：數字鍵選隊友 / [Esc]")
+
+func _on_choice_cancelled() -> void:
+	_pending_spell = null
+	_pending_item = null
+	_mode = "action"
+	_refresh_all()
+
+# ---- 行動 ----
 
 func _open_spell_menu() -> void:
 	var actor = combat.current_combatant()
@@ -96,96 +196,92 @@ func _open_spell_menu() -> void:
 		var s := SpellBook.get_spell(id)
 		if s != null and s.is_combat_usable():
 			_spell_list.append(s)
-	if _spell_list.is_empty():
-		_push_log("%s 沒有可在戰鬥中施放的法術。" % actor.name)
-		return
+	var rows: Array = []
+	for s in _spell_list:
+		rows.append("%s  SP%d" % [s.display_name, s.sp_cost])
 	_mode = "spell"
-	_refresh_spell_prompt()
+	_choices.open("%s 施法" % actor.name, rows)
 
-func _spell_input(key: int) -> void:
-	if key == KEY_ESCAPE:
-		_mode = "action"; _refresh_prompt(); return
-	if key >= KEY_1 and key <= KEY_9:
-		var idx := key - KEY_1
-		if idx < _spell_list.size():
-			_pending_spell = _spell_list[idx]
-			var t: int = _pending_spell.target
-			if t == SpellDef.Target.ALL_ENEMIES or t == SpellDef.Target.ALL_ALLIES:
-				_cast_pending(0)
-			else:
-				_mode = "target"; _refresh_target_prompt()
+func _open_item_menu() -> void:
+	_item_list = _usable_items()
+	var rows: Array = []
+	for it in _item_list:
+		rows.append("%s  ×%d" % [it.display_name, GameState.inventory.count_of(it.id)])
+	_mode = "item"
+	_choices.open("使用道具", rows)
 
-func _target_input(key: int) -> void:
-	if key == KEY_ESCAPE:
-		_mode = "spell"; _refresh_spell_prompt(); return
-	if key >= KEY_1 and key <= KEY_9:
-		var idx := key - KEY_1
-		var count := combat.party.members.size() if _pending_spell.target == SpellDef.Target.SINGLE_ALLY else combat.living_monsters().size()
-		if idx < count:
-			_cast_pending(idx)
+func _attack(monster_index: int) -> void:
+	_apply(func(): return combat.party_attack(monster_index))
+
+func _defend() -> void:
+	# _apply → _after_action → _refresh_all 會刷新隊伍卡的 🛡（set_defending），不需額外 emit。
+	_apply(func(): return combat.party_defend())
+
+func _run() -> void:
+	_apply(func(): return combat.party_run())
 
 func _cast_pending(target_index: int) -> void:
-	var events := combat.party_cast(_pending_spell, target_index)
+	var spell := _pending_spell
 	_pending_spell = null
-	_mode = "action"
-	_apply(events)
+	_apply(func(): return combat.party_cast(spell, target_index))
 
-func _apply(events: Array) -> void:
+func _use_pending_item(target_index: int) -> void:
+	# 若 _pending_spell 仍存在表示這是「單體治癒法術」的隊友選取；否則是道具。
+	if _pending_spell != null:
+		_cast_pending(target_index)
+		return
+	var item := _pending_item
+	_pending_item = null
+	var before := _snapshot_monster_hp()
+	var events := combat.party_use_item(item, target_index)
 	for e in events:
-		_push_log(e)
+		_log.push(e)
+	if not events.is_empty():
+		item_consumed.emit(item.id)
+	_animate_from(before)
+	_after_action()
+
+# ---- 套用與結算 ----
+
+func _apply(action: Callable) -> void:
+	var before := _snapshot_monster_hp()
+	var events: Array = action.call()
+	for e in events:
+		_log.push(e)
+	_animate_from(before)
+	_after_action()
+
+func _after_action() -> void:
+	_mode = "action"
 	_resolve()
+	_refresh_all()
 	turn_resolved.emit()
 
-# 自動結算怪物回合，直到輪到隊員或戰鬥結束
 func _resolve() -> void:
+	# 怪物回合：隊員受擊閃臉由 Character.damaged 信號驅動（隊伍卡已連），這裡不另算。
 	while not combat.is_over() and not combat.is_party_turn():
-		for e in combat.monster_act():
-			_push_log(e)
+		var events := combat.monster_act()
+		for e in events:
+			_log.push(e)
 	if combat.is_over():
 		_finish()
-	else:
-		_refresh_prompt()
 
-func _refresh_prompt() -> void:
-	var actor = combat.current_combatant()
-	var text := "%s 的回合 — [1-9] 攻擊 / [C] 施法 / [D] 防禦 / [F] 逃跑\n敵人：" % actor.name
-	var living := combat.living_monsters()
-	for i in living.size():
-		text += "  %d.%s(HP %d)" % [i + 1, living[i].name, maxi(living[i].hp, 0)]
-	_prompt_label.text = text
+func _snapshot_monster_hp() -> Dictionary:
+	var snap := {}
+	for m in combat.monsters:
+		snap[m] = m.hp
+	return snap
 
-func _refresh_spell_prompt() -> void:
-	var actor = combat.current_combatant()
-	var text := "%s 施法 — 數字鍵選法術 / [Esc] 返回\n" % actor.name
-	for i in _spell_list.size():
-		var s: SpellDef = _spell_list[i]
-		text += "  %d.%s(SP%d)" % [i + 1, s.display_name, s.sp_cost]
-	_prompt_label.text = text
-
-func _refresh_target_prompt() -> void:
-	var text := "選擇目標 — 數字鍵 / [Esc] 返回\n"
-	if _pending_spell.target == SpellDef.Target.SINGLE_ALLY:
-		var ms := combat.party.members
-		for i in ms.size():
-			text += "  %d.%s(HP %d/%d)" % [i + 1, ms[i].name, maxi(ms[i].hp, 0), ms[i].hp_max]
-	else:
-		var living := combat.living_monsters()
-		for i in living.size():
-			text += "  %d.%s(HP %d)" % [i + 1, living[i].name, maxi(living[i].hp, 0)]
-	_prompt_label.text = text
-
-func _push_log(text: String) -> void:
-	_log_lines.append(text)
-	while _log_lines.size() > 8:
-		_log_lines.remove_at(0)
-	_log_label.text = "\n".join(_log_lines)
+func _animate_from(before: Dictionary) -> void:
+	for mon in before:
+		var delta: int = before[mon] - mon.hp
+		if delta > 0:
+			_stage.flash(mon)
+			_enemy.flash_damage(mon, delta)
 
 func _finish() -> void:
 	var result := combat.result()
-	_prompt_label.text = ""
-	for s in _sprites:
-		s.queue_free()
-	_sprites.clear()
-	combat = null
+	_stage.clear()
 	set_process_unhandled_input(false)
+	combat = null
 	combat_finished.emit(result)

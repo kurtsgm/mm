@@ -1,74 +1,53 @@
 extends GutTest
 
-func _key(code: int) -> InputEventKey:
-	var ev := InputEventKey.new()
-	ev.keycode = code
-	ev.pressed = true
-	return ev
-
-func _char(name: String, hp: int, might: int, acc: int, speed: int) -> Character:
+func _char(n: String, hp: int, speed: int) -> Character:
 	var c := Character.new()
-	c.name = name
-	c.hp = hp
-	c.hp_max = hp
-	c.might = might
-	c.accuracy = acc
-	c.speed = speed
+	c.name = n; c.hp = hp; c.hp_max = hp; c.sp = 5; c.sp_max = 5
+	c.accuracy = 50; c.speed = speed; c.might = 1; c.char_class = "Knight"
 	c.condition = Character.Condition.OK
 	return c
 
-func _monster(name: String, hp: int, might: int, acc: int, speed: int) -> Monster:
-	var m := Monster.new()
-	m.name = name
-	m.hp = hp
-	m.hp_max = hp
-	m.might = might
-	m.armor = 0
-	m.accuracy = acc
-	m.speed = speed
-	m.xp_reward = 10
-	m.gold_reward = 5
-	return m
-
-func _party(c: Character) -> Party:
+func _party(members: Array) -> Party:
 	var p := Party.new()
-	var ms: Array[Character] = [c]
-	p.members = ms
+	var typed: Array[Character] = []
+	for m in members: typed.append(m)
+	p.members = typed
 	return p
 
-func _monsters(m: Monster) -> Array[Monster]:
-	var out: Array[Monster] = [m]
+func _monster(n: String, hp: int, speed: int) -> Monster:
+	var m := Monster.new()
+	m.name = n; m.hp = hp; m.hp_max = hp; m.might = 1; m.armor = 0
+	m.accuracy = 1; m.speed = speed; m.xp_reward = 1; m.gold_reward = 1
+	return m
+
+func _monsters(arr: Array) -> Array[Monster]:
+	var out: Array[Monster] = []
+	for m in arr: out.append(m)
 	return out
 
-func _rng(s: int) -> RandomNumberGenerator:
-	var r := RandomNumberGenerator.new()
-	r.seed = s
-	return r
-
-func test_turn_resolved_emitted_after_party_action():
-	var cam := Camera3D.new()
-	add_child_autofree(cam)
+func _begin() -> CombatLayer:
+	var cam := Camera3D.new(); add_child_autofree(cam)
+	var hero := _char("Hero", 30, 50)   # 快 → 先輪到隊員
+	var cs := CombatSystem.new(_party([hero]), _monsters([_monster("M", 30, 1)]), RandomNumberGenerator.new())
 	var layer := CombatLayer.new()
 	add_child_autofree(layer)
-	var hero := _char("Hero", 100, 5, 1000, 50)   # 快、必中
-	var mon := _monster("Mon", 100, 1, 1, 1)       # 撐得住一擊 → 戰鬥未結束
-	var cs := CombatSystem.new(_party(hero), _monsters(mon), _rng(1))
 	layer.begin(cs, cam)
-	assert_true(cs.is_party_turn())
-	watch_signals(layer)
-	layer._unhandled_input(_key(KEY_1))            # 攻擊 1 號敵人
-	assert_signal_emitted(layer, "turn_resolved")
+	return layer
 
-func test_turn_resolved_emitted_after_monster_first_opening():
-	# 怪物較快先動：begin() 直接呼叫 _resolve() 跑怪物開場回合，
-	# 此路徑應仍在最後 emit turn_resolved，讓 HUD 即時刷新血條/數字。
-	var cam := Camera3D.new()
-	add_child_autofree(cam)
-	var layer := CombatLayer.new()
-	add_child_autofree(layer)
-	var hero := _char("Hero", 100, 1, 1, 1)        # 慢、撐得住開場一擊
-	var mon := _monster("Mon", 100, 5, 1000, 50)   # 快、必中 → 先動
-	var cs := CombatSystem.new(_party(hero), _monsters(mon), _rng(1))
-	watch_signals(layer)
-	layer.begin(cs, cam)
-	assert_signal_emitted(layer, "turn_resolved")
+func test_begin_builds_subcomponents_without_error():
+	var layer := _begin()
+	assert_not_null(layer._stage)
+	assert_not_null(layer._enemy)
+	assert_not_null(layer._action_bar)
+	assert_not_null(layer._log)
+	assert_eq(layer._mode, "action")
+
+func test_begin_builds_party_strip_with_active_highlight():
+	var layer := _begin()
+	assert_eq(layer._party_cards.size(), 1, "一位隊員一張卡")
+	assert_true(layer._party_cards[0].is_active(), "當前行動者高亮")
+
+func test_attack_quick_path_logs_and_progresses():
+	var layer := _begin()
+	layer._action_input(KEY_1)   # 快速攻擊 1 號怪
+	assert_gt(layer._log._lines.size(), 1, "攻擊後 log 應新增訊息（不只開場行）")

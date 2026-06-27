@@ -282,6 +282,9 @@ func set_active(on: bool) -> void:
 	_active = on
 	if _active_border != null:
 		_active_border.visible = on
+	# _active_border 是 VBox 的子列（非真正疊框），單靠它在版面上不會浮在卡片上方；
+	# 額外用整卡 modulate 染暖金高亮，確保「當前行動者」視覺上看得出來。
+	modulate = Color(1.25, 1.15, 0.6) if on else Color(1, 1, 1)
 
 func is_active() -> bool:
 	return _active
