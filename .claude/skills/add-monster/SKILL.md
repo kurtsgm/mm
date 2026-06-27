@@ -128,6 +128,22 @@ Commit the `.tres`, the bestiary edit, the map JSON, and the tests. (A `.tres`/J
 | `drop_item_id` = a filename | `revive` not `revive_herb`, `leather` not `leather_armor`. `drop_chance` is 0–1. |
 | Listed several species in one group | Bestiary group is one type × count; mixed packs need an engine change (out of scope). |
 
+## (Optional) 怪物姿勢圖（戰鬥動畫升級）
+
+怪物在戰鬥中是相機前方的 2D `Sprite3D` billboard，預設套一套**程序化**三態動畫（idle 呼吸 / attack 前撲 / hit 抖動），零美術即生效，全怪 fallback 到純色 placeholder。
+
+要讓某隻怪換成真姿勢圖，把三態 PNG（同一畫風、無內建文字/邊框，見 `docs/art-style-guide.md`）放到 `content/monsters/sprites/`，再到 `presentation/combat/monster_sprite_catalog.gd` 的 `_SPRITES` 對照表填一筆（鍵=怪的 `id`，與 `.tres`/encounter 用的同一個）：
+
+```gdscript
+const _SPRITES := {
+    "fire_imp": {"idle": "res://content/monsters/sprites/fire_imp_idle.png",
+                 "attack": "res://content/monsters/sprites/fire_imp_attack.png",
+                 "hurt": "res://content/monsters/sprites/fire_imp_hurt.png"},
+}
+```
+
+三項可缺（缺的那態回退到 placeholder），不需改 `MonsterDef`/`.tres`。填完 `--import` 一次讓 PNG 進匯入快取。動畫程式不變、自動套用。
+
 ## Reference
 
 Data model: `resources/monster_def.gd`, `engine/combat/monster.gd` (`from_def` carries `inflict_*`/`resistances`), `presentation/combat/bestiary.gd`, `engine/combat/encounter_system.gd`. Status kinds: `engine/combat/status_effect.gd` (`Kind`), inflict applied in `engine/combat/combat_system.gd::monster_act`. Elements: `resources/spell_def.gd` (`Element`). Encounter trigger + clear: `presentation/world/main.gd`. UUID tool: `tools/assign_encounter_uuids.gd`. Status system spec: `docs/superpowers/specs/2026-06-27-status-ailments-design.md`.
