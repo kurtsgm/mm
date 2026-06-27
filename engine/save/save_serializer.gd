@@ -1,7 +1,7 @@
 class_name SaveSerializer
 extends Object
 
-const VERSION := 7
+const VERSION := 8
 
 static func to_dict(data: SaveData) -> Dictionary:
 	return {
@@ -20,7 +20,7 @@ static func to_dict(data: SaveData) -> Dictionary:
 			"flags": data.flags.keys(),
 			"triggered_scenes": _opened_to_dict(data.triggered_scenes),
 			"quests": _quests_to_dict(data.quests),
-			"kill_counts": _kill_counts_to_dict(data.kill_counts),
+			"defeated_encounters": data.defeated_encounters.keys(),
 		},
 	}
 
@@ -49,7 +49,7 @@ static func from_dict(raw: Dictionary, resolver := Callable()) -> SaveData:
 	data.flags = _flags_from_array(s.get("flags", []))
 	data.triggered_scenes = _opened_from_dict(s.get("triggered_scenes", {}))
 	data.quests = _quests_from_dict(s.get("quests", {}))
-	data.kill_counts = _kill_counts_from_dict(s.get("kill_counts", {}))
+	data.defeated_encounters = _flags_from_array(s.get("defeated_encounters", []))
 	return data
 
 # --- internal ---
@@ -238,18 +238,4 @@ static func _quests_from_dict(raw) -> Dictionary:
 			"status": String(q.get("status", "active")),
 			"stage": int(q.get("stage", 0)),
 		}
-	return out
-
-static func _kill_counts_to_dict(kc: Dictionary) -> Dictionary:
-	var out: Dictionary = {}
-	for id in kc:
-		out[String(id)] = int(kc[id])
-	return out
-
-static func _kill_counts_from_dict(raw) -> Dictionary:
-	var out: Dictionary = {}
-	if typeof(raw) != TYPE_DICTIONARY:
-		return out
-	for id in raw:
-		out[String(id)] = int(raw[id])
 	return out

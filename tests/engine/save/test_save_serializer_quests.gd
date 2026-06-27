@@ -5,7 +5,7 @@ func _data() -> SaveData:
 	d.party = Party.new()
 	d.inventory = Inventory.new()
 	d.quests = {"q": {"status": "active", "stage": 1}}
-	d.kill_counts = {"goblin": 5, "ogre": 1}
+	d.defeated_encounters = {"u-a": true, "u-b": true}
 	return d
 
 func test_quests_round_trip():
@@ -21,22 +21,21 @@ func test_quests_absent_is_empty():
 	var back := SaveSerializer.from_dict(raw)
 	assert_eq(back.quests, {})
 
-func test_kill_counts_round_trip():
+func test_defeated_encounters_round_trip():
 	var raw := SaveSerializer.to_dict(_data())
 	var back := SaveSerializer.from_dict(raw)
-	assert_eq(int(back.kill_counts["goblin"]), 5)
-	assert_eq(int(back.kill_counts["ogre"]), 1)
+	assert_true(back.defeated_encounters.has("u-a"))
+	assert_true(back.defeated_encounters.has("u-b"))
 
-func test_kill_counts_absent_is_empty():
+func test_defeated_encounters_absent_is_empty():
 	var raw := SaveSerializer.to_dict(_data())
-	raw["state"].erase("kill_counts")
-	var back := SaveSerializer.from_dict(raw)
-	assert_eq(back.kill_counts, {})
+	raw["state"].erase("defeated_encounters")
+	assert_eq(SaveSerializer.from_dict(raw).defeated_encounters, {})
 
-func test_version_is_7():
-	assert_eq(SaveSerializer.to_dict(_data())["version"], 7)
+func test_version_is_8():
+	assert_eq(SaveSerializer.to_dict(_data())["version"], 8)
 
 func test_old_version_rejected():
 	var raw := SaveSerializer.to_dict(_data())
-	raw["version"] = 6
-	assert_null(SaveSerializer.from_dict(raw), "舊版不再接受（只收 v7）")
+	raw["version"] = 7
+	assert_null(SaveSerializer.from_dict(raw), "舊版不再接受（只收 v8）")

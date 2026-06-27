@@ -69,7 +69,7 @@ func capture_from(gs) -> SaveData:
 	data.flags = gs.flags
 	data.triggered_scenes = gs.triggered_scenes
 	data.quests = gs.quests
-	data.kill_counts = gs.kill_counts
+	data.defeated_encounters = gs.defeated_encounters
 	return data
 
 func apply_to(data: SaveData, gs, mm) -> void:
@@ -85,7 +85,7 @@ func apply_to(data: SaveData, gs, mm) -> void:
 	gs.flags = data.flags
 	gs.triggered_scenes = data.triggered_scenes
 	gs.quests = data.quests
-	gs.kill_counts = data.kill_counts
+	gs.defeated_encounters = data.defeated_encounters
 	mm.enter_map(data.map_id, gs.cleared_for(data.map_id))
 
 func capture() -> SaveData:
