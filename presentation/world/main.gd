@@ -31,6 +31,8 @@ var _chest_pos: Vector2i
 var _dialogue_overlay: DialogueOverlay
 var _vendor_overlay: VendorOverlay
 var _quest_log: QuestLog
+var _quest_toast: QuestToast
+var _quest_tracker: QuestTracker
 var _scene_pos: Vector2i
 var _scene_once: bool = false
 var _menus: Array = []
@@ -95,6 +97,11 @@ func _ready() -> void:
 	_quest_log.closed.connect(_on_menu_closed)
 	GameState.quest_resolver = Callable(QuestCatalog, "load_quest")
 	GameState.quests_changed.connect(_on_quests_changed)
+	_quest_toast = QuestToast.new()
+	add_child(_quest_toast)
+	GameState.quest_event.connect(_quest_toast.show_notice)
+	_quest_tracker = QuestTracker.new()
+	add_child(_quest_tracker)
 
 	_menus = [_save_menu, _inventory_menu, _spell_menu, _quest_log]
 
@@ -419,6 +426,7 @@ func _on_menu_closed() -> void:
 	_hud.refresh()
 
 func _on_quests_changed() -> void:
+	_quest_tracker.refresh()
 	if _quest_log.is_open():
 		_quest_log.refresh()
 
@@ -449,5 +457,7 @@ func _on_loaded() -> void:
 	_player.setup(MapManager.current_grid, GameState.player_pos, GameState.player_facing)
 	GameState.mark_explored(GameState.current_map_id, GameState.player_pos, MapManager.current_map.width, MapManager.current_map.height)
 	_mini_map.refresh()
+	GameState.retrack()
+	_quest_tracker.refresh()
 	_hud.refresh()
 	GameState.message_log.push("讀檔完成。")
