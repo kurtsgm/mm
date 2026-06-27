@@ -37,8 +37,9 @@ func begin(cs: CombatSystem, camera: Camera3D) -> void:
 	_log.push("戰鬥開始！")
 	set_process_unhandled_input(true)
 	_resolve()                       # 怪物若較快先動
-	for e in combat.drain_events():  # 入場首輪 DoT
-		_log.push(e)
+	if combat != null:
+		for e in combat.drain_events():  # 入場首輪 DoT
+			_log.push(e)
 	_refresh_all()
 	turn_resolved.emit()
 
