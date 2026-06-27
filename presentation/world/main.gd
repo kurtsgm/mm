@@ -232,8 +232,7 @@ func _on_combat_finished(result: int) -> void:
 	if result == CombatSystem.Result.VICTORY:
 		_grant_rewards()
 		_grant_drops()
-		for m in _combat.monsters:
-			GameState.notify_kill(m.monster_id)
+		GameState.notify_encounter_defeated(MapManager.current_map.get_encounter_uid(_combat_pos))
 		GameState.refresh_collect()
 		MapManager.current_map.clear_encounter(_combat_pos)
 		GameState.mark_encounter_cleared(MapManager.current_map.map_id, _combat_pos)
