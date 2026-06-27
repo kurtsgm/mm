@@ -8,6 +8,13 @@ func test_goblin_menace_loads():
 	assert_eq(d.stage(1)["type"], "collect")
 	assert_eq(d.stage(2)["type"], "reach")
 	assert_eq(d.stage(3)["type"], "talk")
+	# kill 目標＝野外遇抵 uid，且非城鎮遇抵 uid（不會被城鎮哥布林滿足）
+	var ne := MapImporter.parse(FileAccess.get_file_as_string("res://content/maps/wild_ne.json"))
+	var oak := MapImporter.parse(FileAccess.get_file_as_string("res://content/maps/town_oak.json"))
+	var wild_uid := ne.get_encounter_uid(Vector2i(1, 1))
+	assert_eq(d.stage(0)["targets"], [wild_uid])
+	assert_ne(wild_uid, oak.get_encounter_uid(Vector2i(3, 1)))
+	assert_ne(wild_uid, "")
 
 func test_qg_oak_guard_dialogue_loads():
 	assert_not_null(DialogueCatalog.load_dialogue("qg_oak_guard"))
