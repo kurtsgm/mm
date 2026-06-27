@@ -10,6 +10,8 @@ const LUNGE_DIST := 0.5
 const LUNGE_OUT := 0.18
 const LUNGE_BACK := 0.22
 const ATTACK_SCALE := 1.15
+const HIT_MS := 220
+const HIT_AMP := 0.06
 
 var _camera: Camera3D
 var _sprites: Dictionary = {}     # Monster -> Sprite3D
@@ -54,6 +56,19 @@ func flash(monster) -> void:
 	s.modulate = Color(1.6, 0.6, 0.6)
 	_flash_until[s] = Time.get_ticks_msec() + FLASH_MS
 	set_process(true)
+	# 受擊抖動（hit 優先，打斷 attack）
+	_kill_tween(s)
+	_anim[s] = "hit"
+	s.texture = texture_for_state("hit", _textures[s])
+	var base: Vector3 = _base_pos[s]
+	var step := (HIT_MS / 1000.0) / 4.0
+	var tw := create_tween()
+	tw.tween_property(s, "position", base + Vector3(HIT_AMP, 0.0, 0.0), step)
+	tw.tween_property(s, "position", base - Vector3(HIT_AMP, 0.0, 0.0), step)
+	tw.tween_property(s, "position", base + Vector3(HIT_AMP * 0.5, 0.0, 0.0), step)
+	tw.tween_property(s, "position", base, step)
+	tw.tween_callback(Callable(self, "_end_anim").bind(s))
+	_tween[s] = tw
 
 func play_attack(monster) -> void:
 	if not _sprites.has(monster):

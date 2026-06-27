@@ -121,3 +121,26 @@ func test_play_attack_reentry_no_crash():
 	st.play_attack(a)
 	st.play_attack(a)   # 重入應 kill 舊 tween 不 crash
 	assert_eq(st._anim[st._sprites[a]], "attack")
+
+func test_flash_enters_hit_state_and_hurt_texture():
+	var a := _monster("A", 10)
+	var st := _stage_with([a])
+	st.flash(a)
+	var sa: Sprite3D = st._sprites[a]
+	assert_eq(st._anim[sa], "hit", "受擊進入 hit 態")
+	assert_eq(sa.texture, st._textures[sa]["base"], "空 catalog → hurt 回退 base")
+	assert_gt(sa.modulate.r, 1.0, "仍保留紅閃")
+
+func test_flash_overrides_attack():
+	var a := _monster("A", 10)
+	var st := _stage_with([a])
+	st.play_attack(a)
+	st.flash(a)   # 受擊打斷前撲
+	assert_eq(st._anim[st._sprites[a]], "hit")
+
+func test_flash_missing_monster_no_crash():
+	var a := _monster("A", 10)
+	var st := _stage_with([a])
+	var ghost := _monster("Ghost", 10)
+	st.flash(ghost)   # 不存在 → 安靜 return
+	assert_eq(st._anim.size(), 1)
