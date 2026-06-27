@@ -6,6 +6,10 @@ extends Node3D
 const FLASH_MS := 250
 const IDLE_PERIOD := 2.0
 const IDLE_AMP := 0.03
+const LUNGE_DIST := 0.5
+const LUNGE_OUT := 0.18
+const LUNGE_BACK := 0.22
+const ATTACK_SCALE := 1.15
 
 var _camera: Camera3D
 var _sprites: Dictionary = {}     # Monster -> Sprite3D
@@ -50,6 +54,37 @@ func flash(monster) -> void:
 	s.modulate = Color(1.6, 0.6, 0.6)
 	_flash_until[s] = Time.get_ticks_msec() + FLASH_MS
 	set_process(true)
+
+func play_attack(monster) -> void:
+	if not _sprites.has(monster):
+		return
+	var s: Sprite3D = _sprites[monster]
+	_kill_tween(s)
+	_anim[s] = "attack"
+	s.texture = texture_for_state("attack", _textures[s])
+	var base: Vector3 = _base_pos[s]
+	var lunged := base + Vector3(0.0, 0.0, LUNGE_DIST)   # local +Z 朝隊伍前撲
+	var tw := create_tween()
+	tw.tween_property(s, "position", lunged, LUNGE_OUT).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.parallel().tween_property(s, "scale", Vector3.ONE * ATTACK_SCALE, LUNGE_OUT)
+	tw.tween_property(s, "position", base, LUNGE_BACK).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tw.parallel().tween_property(s, "scale", Vector3.ONE, LUNGE_BACK)
+	tw.tween_callback(Callable(self, "_end_anim").bind(s))
+	_tween[s] = tw
+
+func _end_anim(s) -> void:
+	if not is_instance_valid(s):
+		return
+	_anim[s] = "idle"
+	s.position = _base_pos[s]
+	s.scale = Vector3.ONE
+	s.texture = texture_for_state("idle", _textures[s])
+	_tween.erase(s)
+
+func _kill_tween(s) -> void:
+	if _tween.has(s) and _tween[s] != null and _tween[s].is_valid():
+		_tween[s].kill()
+	_tween.erase(s)
 
 func _process(_delta: float) -> void:
 	var now := Time.get_ticks_msec()

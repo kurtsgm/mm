@@ -98,3 +98,26 @@ func test_idle_skips_dead_monster():
 	var y_before: float = sa.position.y
 	st._process(0.016)
 	assert_eq(sa.position.y, y_before, "死亡怪不參與 idle 呼吸")
+
+func test_play_attack_sets_attack_state_and_texture():
+	var a := _monster("A", 10)
+	var st := _stage_with([a])
+	st.play_attack(a)
+	var sa: Sprite3D = st._sprites[a]
+	assert_eq(st._anim[sa], "attack", "進入 attack 態")
+	# 空 catalog → attack 貼圖回退 base
+	assert_eq(sa.texture, st._textures[sa]["base"])
+
+func test_play_attack_missing_monster_no_crash():
+	var a := _monster("A", 10)
+	var st := _stage_with([a])
+	var ghost := _monster("Ghost", 10)   # 不在 stage 內
+	st.play_attack(ghost)                 # 應安靜 return
+	assert_eq(st._anim.size(), 1, "未替不存在的怪建立狀態")
+
+func test_play_attack_reentry_no_crash():
+	var a := _monster("A", 10)
+	var st := _stage_with([a])
+	st.play_attack(a)
+	st.play_attack(a)   # 重入應 kill 舊 tween 不 crash
+	assert_eq(st._anim[st._sprites[a]], "attack")
