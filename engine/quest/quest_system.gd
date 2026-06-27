@@ -3,7 +3,7 @@ extends Object
 # 任務階段推進——「狀態式」純函式：目標是否達成由對持久玩家狀態查詢決定，
 # 與事件順序無關、天生可追認（接取前就做完的也算）。所有函式回傳「新 state」、不變更輸入。
 # state 形狀：{ "status": "active"|"done", "stage": int }
-# q（duck-typed 查詢）：q.kill_count(id)->int、q.item_count(id)->int。
+# q（duck-typed 查詢）：q.is_defeated(uid)->bool、q.item_count(id)->int。
 # reach 不走 q（不是狀態式）——改事件式：踏入「該圖+該格」當下由 advance_reach 推進（精確、跨地圖）。
 
 static func initial_state() -> Dictionary:
@@ -16,7 +16,10 @@ static func is_complete(state) -> bool:
 static func is_stage_satisfied(stage: Dictionary, q) -> bool:
 	match String(stage.get("type", "")):
 		"kill":
-			return int(q.kill_count(String(stage.get("monster", "")))) >= int(stage.get("count", 1))
+			for t in stage.get("targets", []):
+				if not q.is_defeated(String(t)):
+					return false
+			return true
 		"collect":
 			return int(q.item_count(String(stage.get("item", "")))) >= int(stage.get("count", 1))
 		_:  # reach（事件式）/ talk（對話）：不自動滿足
