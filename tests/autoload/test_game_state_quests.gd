@@ -119,3 +119,41 @@ func test_xp_reward_granted_to_conscious_member_on_turn_in():
 	gs.advance_quest("q")                        # 回報 → done → 發獎
 	assert_true(gs.is_quest_done("q"))
 	assert_eq(c.experience, 30)                  # 30 < xp_for_level(1)=100 → 不升級
+
+func test_accept_sets_tracked_and_emits_event():
+	var gs = _gs()
+	watch_signals(gs)
+	gs.accept_quest("q")
+	assert_eq(gs.tracked_quest, "q")
+	assert_signal_emitted_with_parameters(gs, "quest_event", ["接下任務：哥布林的威脅"])
+
+func test_advance_emits_quest_event():
+	var gs = _gs()
+	gs.accept_quest("q")
+	watch_signals(gs)
+	gs.notify_encounter_defeated("u-wild")   # kill 滿足 → 推進到 collect
+	assert_signal_emitted(gs, "quest_event")
+
+func test_set_tracked_quest_active_only():
+	var gs = _gs()
+	gs.accept_quest("q")
+	gs.set_tracked_quest("nope")     # 非進行中 → 不變
+	assert_eq(gs.tracked_quest, "q")
+
+func test_retrack_to_next_active_on_complete():
+	var gs = _gs()
+	gs.accept_quest("q")             # tracked = q
+	# 完成 q：殺→撿→到→回報
+	gs.notify_encounter_defeated("u-wild")
+	gs.inventory.add("lucky_charm", 1); gs.refresh_collect()
+	gs.notify_enter("wild_ne", Vector2i(3, 3))
+	gs.advance_quest("q")
+	assert_true(gs.is_quest_done("q"))
+	assert_eq(gs.tracked_quest, "")  # 無其他進行中 → 清空
+
+func test_retrack_picks_first_active():
+	var gs = _gs()
+	gs.tracked_quest = "ghost"       # 失效 id
+	gs.quests["q"] = QuestSystem.initial_state()  # 直接塞一個進行中
+	gs.retrack()
+	assert_eq(gs.tracked_quest, "q")

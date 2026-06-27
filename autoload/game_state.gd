@@ -19,7 +19,9 @@ var triggered_scenes: Dictionary = {}  # String map_id -> Array[Vector2i]（once
 var quests: Dictionary = {}        # String id -> { "status", "stage" }
 var defeated_encounters: Dictionary = {}   # uid -> true（持久；擊敗的遇抵實例）
 var quest_resolver: Callable = Callable()  # 注入 func(id)->QuestDef（鏡射 SaveSystem.item_resolver）
+var tracked_quest: String = ""     # 追蹤中任務 id（持久；"" = 無）
 signal quests_changed
+signal quest_event(text: String)   # 接取/推進/完成的瞬間提示文字（給 popup）
 
 func _ready() -> void:
 	if party == null:
@@ -115,7 +117,10 @@ func accept_quest(id: String) -> void:
 	if def == null:
 		return
 	quests[id] = QuestSystem.initial_state()
-	message_log.push(QuestProgress.accepted_message(def))
+	tracked_quest = id
+	var msg := QuestProgress.accepted_message(def)
+	message_log.push(msg)
+	quest_event.emit(msg)
 	quests_changed.emit()
 	_run_quest(id, "recheck")   # 接取追認：已完成的階段（殺過/撿過/到過）立即跳過、不卡死
 
@@ -151,6 +156,21 @@ func quest_stage(id: String) -> int:
 		return int(quests[id]["stage"])
 	return -1
 
+func set_tracked_quest(id: String) -> void:
+	if is_quest_active(id):
+		tracked_quest = id
+		quests_changed.emit()
+
+# 追蹤中任務若已非進行中 → 改追第一個進行中任務（無則清空）。
+func retrack() -> void:
+	if is_quest_active(tracked_quest):
+		return
+	tracked_quest = ""
+	for id in quests.keys():
+		if is_quest_active(id):
+			tracked_quest = id
+			return
+
 func _quest_def(id: String):
 	if not quest_resolver.is_valid():
 		return null
@@ -179,11 +199,16 @@ func _commit_quest(id: String, def, before: Dictionary, after: Dictionary) -> vo
 	if not changed:
 		return
 	quests[id] = after
+	var text: String
 	if String(after["status"]) == "done":
 		_grant_quest_rewards(def)
-		message_log.push(QuestProgress.completed_message(def))
+		text = QuestProgress.completed_message(def)
+		if tracked_quest == id:
+			retrack()
 	else:
-		message_log.push("任務更新：" + QuestProgress.stage_line(def, after, self))
+		text = "任務更新：" + QuestProgress.stage_line(def, after, self)
+	message_log.push(text)
+	quest_event.emit(text)
 	quests_changed.emit()
 
 func _grant_quest_rewards(def) -> void:
