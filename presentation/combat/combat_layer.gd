@@ -157,6 +157,8 @@ func _item_target_input(key: int) -> void:
 # ---- 滑鼠（行動列/子選單）----
 
 func _on_action_selected(id: String) -> void:
+	if _mode != "action":
+		return
 	match id:
 		"attack":
 			_mode = "target"

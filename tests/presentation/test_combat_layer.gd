@@ -53,3 +53,11 @@ func test_attack_quick_path_logs_and_progresses():
 	layer._action_input(KEY_1)   # 快速攻擊 1 號怪
 	assert_gt(layer._log._lines.size(), 1, "攻擊後 log 應新增訊息（不只開場行）")
 	assert_signal_emitted(layer, "turn_resolved")
+
+func test_action_bar_ignored_when_not_in_action_mode():
+	var layer := _begin()
+	layer._mode = "spell"          # 模擬子選單開啟中
+	var log_before := layer._log._lines.size()
+	layer._on_action_selected("defend")
+	assert_eq(layer._mode, "spell", "行動列在非 action 模式應被忽略")
+	assert_eq(layer._log._lines.size(), log_before, "未執行防禦行動")
