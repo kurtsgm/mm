@@ -129,3 +129,15 @@ func test_buy_service_no_gold():
 	var offer := {"name": "住宿", "cost": 20, "effect": "rest", "target": "party"}
 	var res := VendorTransaction.buy_service(ctx, offer, [_char("Knight")])
 	assert_eq(res["reason"], "no_gold")
+
+func test_buy_service_rest_clears_ailments():
+	var ctx := Ctx.new()
+	ctx.gold = 50
+	var c := _char("Knight")
+	c.condition = Character.Condition.OK
+	c.hp = 5
+	c.statuses.append(StatusCatalog.poison(3, 4))   # 帶毒
+	var offer := {"name": "住宿", "cost": 20, "effect": "rest", "target": "party"}
+	var res := VendorTransaction.buy_service(ctx, offer, [c])
+	assert_true(res["ok"])
+	assert_eq(c.statuses.size(), 0)                 # 休息後狀態異常清空

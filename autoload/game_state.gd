@@ -20,6 +20,9 @@ var quests: Dictionary = {}        # String id -> { "status", "stage" }
 var defeated_encounters: Dictionary = {}   # uid -> true（持久；擊敗的遇抵實例）
 var quest_resolver: Callable = Callable()  # 注入 func(id)->QuestDef（鏡射 SaveSystem.item_resolver）
 var tracked_quest: String = ""     # 追蹤中任務 id（持久；"" = 無）
+
+const STEP_PER_TICK := 5           # 地表中毒外滲：每 N 步 tick 一次
+var _poison_steps := 0             # 步數累計（非持久；轉場抵達也算一步）
 signal quests_changed
 signal quest_event(text: String)   # 接取/推進/完成的瞬間提示文字（給 popup）
 
@@ -137,6 +140,12 @@ func notify_encounter_defeated(uid: String) -> void:
 func notify_enter(map_id: String, pos: Vector2i) -> void:
 	for id in quests.keys():
 		_run_quest(id, "enter", map_id, pos)
+	_poison_steps += 1
+	if _poison_steps >= STEP_PER_TICK:
+		_poison_steps = 0
+		if party != null:
+			for line in OverworldAilments.tick_poison(party.members):
+				message_log.push(line)
 
 func refresh_collect() -> void:
 	for id in quests.keys():

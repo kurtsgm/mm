@@ -57,6 +57,7 @@ static func _apply_effect(effect: String, targets: Array) -> Array:
 					t.hp = t.hp_max
 					if t.condition == Character.Condition.UNCONSCIOUS:
 						t.condition = Character.Condition.OK
+					t.statuses.clear()   # 全補一併清除狀態異常
 					events.append("%s 回復滿血。" % t.name)
 			"rest":
 				if t.condition != Character.Condition.DEAD:
@@ -64,5 +65,6 @@ static func _apply_effect(effect: String, targets: Array) -> Array:
 					t.sp = t.sp_max
 					if t.condition == Character.Condition.UNCONSCIOUS:
 						t.condition = Character.Condition.OK
+					t.statuses.clear()   # 休息一併清除狀態異常
 					events.append("%s 休息完畢。" % t.name)
 	return events
