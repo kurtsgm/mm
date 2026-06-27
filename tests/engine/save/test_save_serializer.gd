@@ -75,8 +75,8 @@ func test_from_dict_rejects_version_mismatch():
 func test_from_dict_rejects_missing_state():
 	assert_null(SaveSerializer.from_dict({"version": SaveSerializer.VERSION}))
 
-func test_to_dict_version_is_8():
-	assert_eq(SaveSerializer.to_dict(_sample())["version"], 8)
+func test_to_dict_version_is_9():
+	assert_eq(SaveSerializer.to_dict(_sample())["version"], 9)
 
 func test_roundtrip_explored_multi_map():
 	var d := _sample()

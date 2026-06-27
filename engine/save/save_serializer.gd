@@ -1,7 +1,7 @@
 class_name SaveSerializer
 extends Object
 
-const VERSION := 8
+const VERSION := 9
 
 static func to_dict(data: SaveData) -> Dictionary:
 	return {
@@ -20,6 +20,7 @@ static func to_dict(data: SaveData) -> Dictionary:
 			"flags": data.flags.keys(),
 			"triggered_scenes": _opened_to_dict(data.triggered_scenes),
 			"quests": _quests_to_dict(data.quests),
+			"tracked_quest": data.tracked_quest,
 			"defeated_encounters": data.defeated_encounters.keys(),
 		},
 	}
@@ -49,6 +50,7 @@ static func from_dict(raw: Dictionary, resolver := Callable()) -> SaveData:
 	data.flags = _flags_from_array(s.get("flags", []))
 	data.triggered_scenes = _opened_from_dict(s.get("triggered_scenes", {}))
 	data.quests = _quests_from_dict(s.get("quests", {}))
+	data.tracked_quest = String(s.get("tracked_quest", ""))
 	data.defeated_encounters = _flags_from_array(s.get("defeated_encounters", []))
 	return data
 

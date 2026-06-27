@@ -6,6 +6,7 @@ func _data() -> SaveData:
 	d.inventory = Inventory.new()
 	d.quests = {"q": {"status": "active", "stage": 1}}
 	d.defeated_encounters = {"u-a": true, "u-b": true}
+	d.tracked_quest = "q"
 	return d
 
 func test_quests_round_trip():
@@ -32,10 +33,19 @@ func test_defeated_encounters_absent_is_empty():
 	raw["state"].erase("defeated_encounters")
 	assert_eq(SaveSerializer.from_dict(raw).defeated_encounters, {})
 
-func test_version_is_8():
-	assert_eq(SaveSerializer.to_dict(_data())["version"], 8)
+func test_tracked_quest_round_trip():
+	var back := SaveSerializer.from_dict(SaveSerializer.to_dict(_data()))
+	assert_eq(back.tracked_quest, "q")
+
+func test_tracked_quest_absent_is_empty():
+	var raw := SaveSerializer.to_dict(_data())
+	raw["state"].erase("tracked_quest")
+	assert_eq(SaveSerializer.from_dict(raw).tracked_quest, "")
+
+func test_version_is_9():
+	assert_eq(SaveSerializer.to_dict(_data())["version"], 9)
 
 func test_old_version_rejected():
 	var raw := SaveSerializer.to_dict(_data())
-	raw["version"] = 7
-	assert_null(SaveSerializer.from_dict(raw), "舊版不再接受（只收 v8）")
+	raw["version"] = 8
+	assert_null(SaveSerializer.from_dict(raw), "舊版不再接受（只收 v9）")
