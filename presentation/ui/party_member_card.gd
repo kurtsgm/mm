@@ -49,6 +49,10 @@ var _hp_label: Label
 var _mp_fill: ColorRect
 var _mp_label: Label
 var _buff_row: HBoxContainer
+var _active: bool = false
+var _defending: bool = false
+var _active_border: Panel        # 當前行動者高亮邊框（疊在卡片上）
+var _defend_badge: Label         # 防禦中 🛡 標記
 
 func setup(character: Character) -> void:
 	_character = character
@@ -97,6 +101,17 @@ func _build() -> void:
 	_buff_row = HBoxContainer.new()
 	_buff_row.add_theme_constant_override("separation", 3)
 	add_child(_buff_row)
+	_active_border = Panel.new()
+	_active_border.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_active_border.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_active_border.modulate = Color(1.0, 0.9, 0.4)   # 暖金高亮
+	_active_border.visible = false
+	add_child(_active_border)
+	_defend_badge = Label.new()
+	_defend_badge.text = "🛡"
+	_defend_badge.add_theme_font_size_override("font_size", 16)
+	_defend_badge.visible = false
+	add_child(_defend_badge)
 
 func _make_bar(fill_color: Color) -> ColorRect:
 	var bg := ColorRect.new()
@@ -262,3 +277,19 @@ static func _class_color(char_class: String) -> Color:
 			return Color(0.4, 0.4, 0.45)
 		_:
 			return Color(0.5, 0.5, 0.5)
+
+func set_active(on: bool) -> void:
+	_active = on
+	if _active_border != null:
+		_active_border.visible = on
+
+func is_active() -> bool:
+	return _active
+
+func set_defending(on: bool) -> void:
+	_defending = on
+	if _defend_badge != null:
+		_defend_badge.visible = on
+
+func is_defending() -> bool:
+	return _defending
