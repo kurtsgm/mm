@@ -56,6 +56,7 @@ func party_attack(monster_index: int) -> Array:
 	if CombatFormulas.roll_hit(actor.effective_accuracy(), target.speed, _rng):
 		var dmg := CombatFormulas.roll_damage(actor.attack_power(), target.effective_armor(), false, _rng)
 		target.hp -= dmg
+		target.statuses = StatusRules.cleared_on_hit(target.statuses)
 		events.append("%s 攻擊 %s，造成 %d 傷害。" % [actor.name, target.name, dmg])
 		if not target.is_alive():
 			events.append("%s 被擊倒了！" % target.name)
@@ -82,6 +83,7 @@ func monster_act() -> Array:
 	if CombatFormulas.roll_hit(actor.effective_accuracy(), target.speed, _rng):
 		var dmg := CombatFormulas.roll_damage(actor.effective_attack(), target.armor_value(), defending, _rng)
 		target.take_damage(dmg)
+		target.statuses = StatusRules.cleared_on_hit(target.statuses)
 		events.append("%s 攻擊 %s，造成 %d 傷害。" % [actor.name, target.name, dmg])
 		if target.hp <= 0:
 			target.hp = 0
@@ -178,6 +180,7 @@ func _cast_damage(spell: SpellDef, caster: Character, target_index: int) -> Arra
 		var rolled := CombatFormulas.roll_spell_damage(base, _rng)
 		var dmg := Resistance.apply(rolled, t.resist_for(spell.element))
 		t.hp -= dmg
+		t.statuses = StatusRules.cleared_on_hit(t.statuses)
 		events.append("%s 對 %s 施放 %s，造成 %d 傷害。" % [caster.name, t.name, spell.display_name, dmg])
 		if not t.is_alive():
 			events.append("%s 被擊倒了！" % t.name)
