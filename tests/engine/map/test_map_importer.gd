@@ -83,6 +83,17 @@ func test_monster_entity_becomes_encounter():
 	assert_true(m.has_encounter(Vector2i(2, 0)))
 	assert_eq(m.get_encounter(Vector2i(2, 0)), "g")
 
+func test_monster_id_to_encounter_uid():
+	var json := '{"grid":["@."],"entities":[{"type":"monster","pos":[1,0],"encounter":"g","id":"u-1"}]}'
+	var map := MapImporter.parse(json)
+	assert_eq(map.get_encounter(Vector2i(1, 0)), "g")
+	assert_eq(map.get_encounter_uid(Vector2i(1, 0)), "u-1")
+
+func test_monster_without_id_uid_empty():
+	var json := '{"grid":["@."],"entities":[{"type":"monster","pos":[1,0],"encounter":"g"}]}'
+	var map := MapImporter.parse(json)
+	assert_eq(map.get_encounter_uid(Vector2i(1, 0)), "")
+
 func test_multiple_monsters():
 	var m := _p({"grid": ["@..", "..."], "entities": [
 		{"type": "monster", "pos": [1, 0], "encounter": "g"},

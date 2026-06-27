@@ -38,6 +38,7 @@ static func parse(json_text: String) -> MapData:
 	map.entries = entries
 
 	map.encounters = entities["encounters"]
+	map.encounter_uids = entities["encounter_uids"]
 	map.links = entities["links"]
 	map.decorations = entities["decorations"]
 	map.objects = entities["objects"]
@@ -85,6 +86,7 @@ static func _parse_entities(arr, width: int, height: int):
 	if typeof(arr) != TYPE_ARRAY:
 		return null
 	var encounters := {}
+	var encounter_uids := {}
 	var links := {}
 	var decorations := []
 	var objects := []
@@ -106,6 +108,7 @@ static func _parse_entities(arr, width: int, height: int):
 				if not e.has("encounter"):
 					return null
 				encounters[pos] = String(e["encounter"])
+				encounter_uids[pos] = String(e.get("id", ""))
 			"portal":
 				if not e.has("to"):
 					return null
@@ -160,7 +163,7 @@ static func _parse_entities(arr, width: int, height: int):
 				quest_givers.append({"pos": pos, "dialogue": String(e["dialogue"])})
 			_:
 				return null
-	return {"encounters": encounters, "links": links, "decorations": decorations, "objects": objects, "scenes": scenes, "vendors": vendors, "quest_givers": quest_givers}
+	return {"encounters": encounters, "encounter_uids": encounter_uids, "links": links, "decorations": decorations, "objects": objects, "scenes": scenes, "vendors": vendors, "quest_givers": quest_givers}
 
 # [x, y] -> Vector2i；違規 → null。JSON 數字可能是 float，需 int() 轉。
 static func _parse_pos(v):

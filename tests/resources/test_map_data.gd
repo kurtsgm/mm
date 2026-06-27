@@ -35,6 +35,12 @@ func test_encounters_accessors():
 	map.clear_encounter(Vector2i(2, 1))
 	assert_false(map.has_encounter(Vector2i(2, 1)))
 
+func test_encounter_uid_accessor():
+	var m := MapData.new()
+	m.encounter_uids = {Vector2i(1, 1): "u-abc"}
+	assert_eq(m.get_encounter_uid(Vector2i(1, 1)), "u-abc")
+	assert_eq(m.get_encounter_uid(Vector2i(0, 0)), "")
+
 func test_theme_id_defaults_to_default():
 	var map := MapData.new()
 	assert_eq(map.theme_id, "default")

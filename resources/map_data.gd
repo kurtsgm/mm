@@ -10,6 +10,7 @@ enum TileType { FLOOR = 0, WALL = 1, DOOR = 2, STAIRS_UP = 3, STAIRS_DOWN = 4 }
 @export var start_pos: Vector2i
 @export var start_facing: int  # GridDirection.Dir；0 = NORTH
 @export var encounters: Dictionary = {}  # Vector2i -> String（遭遇 id）
+@export var encounter_uids: Dictionary = {}  # Vector2i -> String uid
 @export var theme_id: String = "default"  # 對應 ThemeCatalog 的主題 id
 @export var display_name: String = ""             # 顯示名（切換訊息用），空 → 退回 map_id
 @export var neighbors: Dictionary = {}            # int(GridDirection.Dir) -> String(map_id)
@@ -34,6 +35,9 @@ func get_encounter(pos: Vector2i) -> String:
 
 func clear_encounter(pos: Vector2i) -> void:
 	encounters.erase(pos)
+
+func get_encounter_uid(pos: Vector2i) -> String:
+	return encounter_uids.get(pos, "")
 
 func has_neighbor(dir: int) -> bool:
 	return neighbors.has(dir)
