@@ -61,6 +61,7 @@ func _ready() -> void:
 	add_child(_combat_layer)
 	_combat_layer.combat_finished.connect(_on_combat_finished)
 	_combat_layer.turn_resolved.connect(_hud.refresh)
+	_combat_layer.item_consumed.connect(_on_combat_item_consumed)
 
 	_save_menu = SaveMenu.new()
 	add_child(_save_menu)
@@ -233,9 +234,21 @@ func _start_combat(pos: Vector2i) -> void:
 	_combat_pos = pos
 	_player.set_enabled(false)
 	GameState.message_log.push("遭遇怪物！")
+	_set_overworld_hud_visible(false)
 	_combat_layer.begin(_combat, _camera)
 
+func _set_overworld_hud_visible(on: bool) -> void:
+	_hud.visible = on
+	if _mini_map != null:
+		_mini_map.visible = on
+	if _quest_tracker != null:
+		_quest_tracker.visible = on
+
+func _on_combat_item_consumed(item_id: String) -> void:
+	GameState.inventory.remove(item_id, 1)
+
 func _on_combat_finished(result: int) -> void:
+	_set_overworld_hud_visible(true)
 	if result == CombatSystem.Result.VICTORY:
 		_grant_rewards()
 		_grant_drops()
