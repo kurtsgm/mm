@@ -16,7 +16,7 @@ func test_flame_wave_is_aoe():
 
 func test_weaken_is_armor_debuff():
 	var s: SpellDef = load("res://content/spells/weaken.tres")
-	assert_eq(s.effect, SpellDef.Effect.BUFF)
+	assert_eq(s.effect, SpellDef.Effect.STATUS)
 	assert_eq(s.target, SpellDef.Target.SINGLE_ENEMY)
 	assert_eq(s.status_stat, StatusEffect.Stat.ARMOR)
 	assert_eq(s.status_amount, -2)

@@ -152,8 +152,8 @@ func party_cast(spell: SpellDef, target_index: int) -> Array:
 			events.append_array(_cast_damage(spell, actor, target_index))
 		SpellDef.Effect.HEAL, SpellDef.Effect.REVIVE:
 			events.append_array(_cast_support(spell, actor, target_index))
-		SpellDef.Effect.BUFF:
-			events.append_array(_cast_buff(spell, target_index))
+		SpellDef.Effect.STATUS:
+			events.append_array(_cast_status(spell, target_index))
 	_advance()
 	return events
 
@@ -192,13 +192,16 @@ func _cast_support(spell: SpellDef, caster: Character, target_index: int) -> Arr
 		events.append_array(SpellEffects.apply(spell, caster, t))
 	return events
 
-func _cast_buff(spell: SpellDef, target_index: int) -> Array:
+func _cast_status(spell: SpellDef, target_index: int) -> Array:
 	var events: Array = []
 	var to_allies := spell.target == SpellDef.Target.SINGLE_ALLY or spell.target == SpellDef.Target.ALL_ALLIES
 	var targets: Array = _ally_targets(spell, target_index) if to_allies else _enemy_targets(spell, target_index)
 	for t in targets:
-		t.statuses.append(StatusEffect.new(spell.status_stat, spell.status_amount, spell.status_duration))
-		events.append("%s 受到了 %s 的效果。" % [t.name, spell.display_name])
+		if _rng.randf() <= spell.status_chance:
+			t.statuses.append(StatusCatalog.from_data(spell.status_kind, spell.status_stat, spell.status_amount, spell.status_potency, spell.status_duration))
+			events.append("%s 受到了 %s 的效果。" % [t.name, spell.display_name])
+		else:
+			events.append("%s 抵抗了 %s。" % [t.name, spell.display_name])
 	return events
 
 func is_defending(c) -> bool:

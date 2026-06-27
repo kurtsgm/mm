@@ -73,7 +73,7 @@ func test_buff_applies_status_and_changes_accuracy():
 	mage.known_spells = ["bless"]
 	var cs := CombatSystem.new(_party([mage]), _monsters([_monster("M", 100, 1)]), _rng(1))
 	var bless := SpellDef.new()
-	bless.id = "bless"; bless.effect = SpellDef.Effect.BUFF
+	bless.id = "bless"; bless.effect = SpellDef.Effect.STATUS
 	bless.target = SpellDef.Target.ALL_ALLIES
 	bless.status_stat = StatusEffect.Stat.ACCURACY
 	bless.status_amount = 3; bless.status_duration = 3; bless.sp_cost = 2

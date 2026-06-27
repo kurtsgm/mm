@@ -6,6 +6,8 @@ const _SPELLS := {
 	"spark": "res://content/spells/spark.tres",
 	"flame_wave": "res://content/spells/flame_wave.tres",
 	"weaken": "res://content/spells/weaken.tres",
+	"sleep": "res://content/spells/sleep.tres",
+	"poison": "res://content/spells/poison.tres",
 	"heal": "res://content/spells/heal.tres",
 	"revive": "res://content/spells/revive.tres",
 	"bless": "res://content/spells/bless.tres",

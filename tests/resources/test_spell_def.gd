@@ -31,7 +31,7 @@ func test_heal_is_dual_context():
 	assert_true(s.is_field_usable())
 
 func test_buff_is_combat_only():
-	var s := SpellDef.new(); s.effect = SpellDef.Effect.BUFF
+	var s := SpellDef.new(); s.effect = SpellDef.Effect.STATUS
 	assert_true(s.is_combat_usable())
 	assert_false(s.is_field_usable())
 

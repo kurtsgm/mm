@@ -14,4 +14,4 @@ func test_all_ids_covers_content():
 	var ids := SpellBook.all_ids()
 	assert_true(ids.has("heal"))
 	assert_true(ids.has("town_portal"))
-	assert_eq(ids.size(), 8)
+	assert_eq(ids.size(), 10)
