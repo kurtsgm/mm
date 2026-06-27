@@ -1,6 +1,6 @@
 class_name QuestLint
 extends Object
-# 任務內容靜態驗證器：交叉檢查 content/quests、content/dialogues、content/maps、content/monsters。
+# 任務內容靜態驗證器：交叉檢查 content/quests、content/dialogues、content/maps。
 # run() -> { "errors": Array[String], "warnings": Array[String] }
 # 供 /check-quest 的 CLI（tools/quest_lint_cli.gd）與迴歸測試（tests/content/test_quest_lint.gd）共用。
 # 只依賴 class_name 全域（QuestCatalog/DialogueCatalog/MapImporter/ItemCatalog/MapData），不需 autoload。
@@ -8,7 +8,6 @@ extends Object
 const QUESTS_DIR := "res://content/quests"
 const DIALOGUES_DIR := "res://content/dialogues"
 const MAPS_DIR := "res://content/maps"
-const MONSTERS_DIR := "res://content/monsters"
 
 static func run() -> Dictionary:
 	var errors: Array = []
@@ -20,8 +19,8 @@ static func run() -> Dictionary:
 			errors.append("[quest] %s.json 無法解析（stages/rewards 違規）" % qid)
 		else:
 			quests[qid] = d
-	var monsters := _monster_ids()
-	_check_stages(quests, monsters, errors)
+	var uids := _encounter_uids(errors)
+	_check_stages(quests, uids, errors)
 	var refs := _scan_dialogues(quests, errors)   # { accept:{qid:true}, advance:{qid:true} }
 	_check_completable(quests, refs, warnings)
 	_check_maps(errors, warnings)
@@ -39,27 +38,36 @@ static func _json_ids(dir: String) -> Array:
 			out.append(f.get_basename())
 	return out
 
-static func _monster_ids() -> Dictionary:
-	var out := {}
-	var da := DirAccess.open(MONSTERS_DIR)
-	if da == null:
-		return out
-	for f in da.get_files():
-		if f.ends_with(".tres"):
-			var m = load(MONSTERS_DIR + "/" + f)
-			if m != null and String(m.id) != "":
-				out[String(m.id)] = true
-	return out
+static func _encounter_uids(errors: Array) -> Dictionary:
+	var seen := {}   # uid -> "map:pos"
+	for mid in _json_ids(MAPS_DIR):
+		var map = MapImporter.parse(FileAccess.get_file_as_string("%s/%s.json" % [MAPS_DIR, mid]))
+		if map == null:
+			continue
+		for pos in map.encounter_uids:
+			var uid := String(map.encounter_uids[pos])
+			if uid == "":
+				errors.append("[map] %s 遇抵@%s 缺 id（跑 assign_encounter_uuids）" % [mid, pos])
+				continue
+			if seen.has(uid):
+				errors.append("[map] 遇抵 uid 重複：%s（%s 與 %s:%s）" % [uid, seen[uid], mid, pos])
+			seen[uid] = "%s:%s" % [mid, pos]
+	return seen
 
-static func _check_stages(quests: Dictionary, monsters: Dictionary, errors: Array) -> void:
+static func _check_stages(quests: Dictionary, uids: Dictionary, errors: Array) -> void:
 	for qid in quests:
 		var d = quests[qid]
 		for i in d.stage_count():
 			var st: Dictionary = d.stage(i)
 			match String(st.get("type", "")):
 				"kill":
-					if not monsters.has(String(st.get("monster", ""))):
-						errors.append("[quest] %s 階段%d kill 的 monster '%s' 在 content/monsters 找不到對應 id" % [qid, i, st.get("monster", "")])
+					var targets = st.get("targets", [])
+					if typeof(targets) != TYPE_ARRAY or targets.is_empty():
+						errors.append("[quest] %s 階段%d kill 缺 targets" % [qid, i])
+					else:
+						for t in targets:
+							if not uids.has(String(t)):
+								errors.append("[quest] %s 階段%d kill target '%s' 找不到對應遇抵 uid" % [qid, i, t])
 				"collect":
 					if not ItemCatalog.has_item(String(st.get("item", ""))):
 						errors.append("[quest] %s 階段%d collect 的 item '%s' 不在 ItemCatalog" % [qid, i, st.get("item", "")])
