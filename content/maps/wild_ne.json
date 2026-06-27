@@ -1,12 +1,53 @@
 {
-  "name": "東北野",
-  "theme": "grassland",
-  "grid": ["..@..", ".....", ".....", ".....", "....."],
-  "entities": [
-    { "type": "vendor", "pos": [2, 2], "id": "wandering_merchant" },
-    { "type": "monster", "pos": [1, 1], "encounter": "g" },
-    { "type": "chest", "pos": [3, 1], "items": ["lucky_charm"], "gold": 0 },
-    { "type": "questgiver", "pos": [1, 3], "dialogue": "qg_ne_scout" }
-  ],
-  "neighbors": { "west": "wild_nw", "south": "wild_se" }
+	"entities": [
+		{
+			"id": "wandering_merchant",
+			"pos": [
+				2.0,
+				2.0
+			],
+			"type": "vendor"
+		},
+		{
+			"encounter": "g",
+			"id": "019f076a-1c33-702d-89f4-2bdafcf85336",
+			"pos": [
+				1.0,
+				1.0
+			],
+			"type": "monster"
+		},
+		{
+			"gold": 0.0,
+			"items": [
+				"lucky_charm"
+			],
+			"pos": [
+				3.0,
+				1.0
+			],
+			"type": "chest"
+		},
+		{
+			"dialogue": "qg_ne_scout",
+			"pos": [
+				1.0,
+				3.0
+			],
+			"type": "questgiver"
+		}
+	],
+	"grid": [
+		"..@..",
+		".....",
+		".....",
+		".....",
+		"....."
+	],
+	"name": "東北野",
+	"neighbors": {
+		"south": "wild_se",
+		"west": "wild_nw"
+	},
+	"theme": "grassland"
 }

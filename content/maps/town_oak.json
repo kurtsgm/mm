@@ -1,17 +1,103 @@
 {
-  "name": "橡鎮",
-  "theme": "town",
-  "grid": ["#####", "#...#", "#.@.#", "#...#", "#####"],
-  "entities": [
-    { "type": "portal", "pos": [2, 3], "to": "wild_nw", "entry": "from_town" },
-    { "type": "chest", "pos": [1, 1], "items": ["potion"], "gold": 50 },
-    { "type": "chest", "pos": [3, 1], "items": ["short_sword"], "gold": 30 },
-    { "type": "monster", "pos": [3, 1], "encounter": "g" },
-    { "type": "scene", "pos": [1, 3], "dialogue": "demo_event", "once": false },
-    { "type": "questgiver", "pos": [2, 1], "dialogue": "qg_oak_guard" },
-    { "type": "vendor", "pos": [1, 2], "id": "oak_general_store" },
-    { "type": "vendor", "pos": [3, 2], "id": "oak_mage" },
-    { "type": "vendor", "pos": [3, 3], "id": "oak_temple" }
-  ],
-  "entries": { "gate": { "pos": [2, 1], "facing": "S" } }
+	"entities": [
+		{
+			"entry": "from_town",
+			"pos": [
+				2.0,
+				3.0
+			],
+			"to": "wild_nw",
+			"type": "portal"
+		},
+		{
+			"gold": 50.0,
+			"items": [
+				"potion"
+			],
+			"pos": [
+				1.0,
+				1.0
+			],
+			"type": "chest"
+		},
+		{
+			"gold": 30.0,
+			"items": [
+				"short_sword"
+			],
+			"pos": [
+				3.0,
+				1.0
+			],
+			"type": "chest"
+		},
+		{
+			"encounter": "g",
+			"id": "019f076a-1c32-7c88-9806-5b85b28e811d",
+			"pos": [
+				3.0,
+				1.0
+			],
+			"type": "monster"
+		},
+		{
+			"dialogue": "demo_event",
+			"once": false,
+			"pos": [
+				1.0,
+				3.0
+			],
+			"type": "scene"
+		},
+		{
+			"dialogue": "qg_oak_guard",
+			"pos": [
+				2.0,
+				1.0
+			],
+			"type": "questgiver"
+		},
+		{
+			"id": "oak_general_store",
+			"pos": [
+				1.0,
+				2.0
+			],
+			"type": "vendor"
+		},
+		{
+			"id": "oak_mage",
+			"pos": [
+				3.0,
+				2.0
+			],
+			"type": "vendor"
+		},
+		{
+			"id": "oak_temple",
+			"pos": [
+				3.0,
+				3.0
+			],
+			"type": "vendor"
+		}
+	],
+	"entries": {
+		"gate": {
+			"facing": "S",
+			"pos": [
+				2.0,
+				1.0
+			]
+		}
+	},
+	"grid": [
+		"#####",
+		"#...#",
+		"#.@.#",
+		"#...#",
+		"#####"
+	],
+	"name": "橡鎮",
+	"theme": "town"
 }
