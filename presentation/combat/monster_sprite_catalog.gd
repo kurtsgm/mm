@@ -2,12 +2,12 @@ class_name MonsterSpriteCatalog
 extends Object
 
 # monster_id → 三態貼圖路徑（idle/attack/hurt）。鏡射 PortraitCatalog/DecorationCatalog 的
-# 「id→資源路徑對照表」慣例。骨架期空表（無真美術，全怪 fallback 到 placeholder）；
-# 之後逐怪填入，例如：
-#   "fire_imp": {"idle": "res://content/monsters/sprites/fire_imp_idle.png",
-#                "attack": "res://content/monsters/sprites/fire_imp_attack.png",
-#                "hurt": "res://content/monsters/sprites/fire_imp_hurt.png"},
+# 「id→資源路徑對照表」慣例。未註冊的怪 fallback 到 placeholder；三態可缺（缺的回退 base/idle）。
+# 之後逐怪填入；貼圖為去背 alpha PNG（同畫風、同框同比例，見 docs/art-style-guide.md）。
 const _SPRITES := {
+	"goblin": {"idle": "res://content/monsters/sprites/goblin_idle.png",
+		"attack": "res://content/monsters/sprites/goblin_attack.png",
+		"hurt": "res://content/monsters/sprites/goblin_hurt.png"},
 }
 
 # 回 {idle,attack,hurt}，每項為 Texture2D 或 null（缺項/未註冊 → null，由呼叫端 fallback base）。

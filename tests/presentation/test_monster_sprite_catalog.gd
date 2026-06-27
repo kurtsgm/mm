@@ -9,12 +9,19 @@ func test_unknown_id_returns_three_nulls():
 	assert_null(out["attack"])
 	assert_null(out["hurt"])
 
-func test_empty_table_any_id_all_null():
-	# 骨架期 _SPRITES 為空表 → 任何 id 三項皆 null
+func test_unregistered_id_all_null():
+	# 未註冊的 id（fire_imp 尚未進表）→ 三項皆 null
 	var out := MonsterSpriteCatalog.textures_for("fire_imp")
 	assert_null(out["idle"])
 	assert_null(out["attack"])
 	assert_null(out["hurt"])
+
+func test_goblin_registered_with_three_states():
+	var out := MonsterSpriteCatalog.textures_for("goblin")
+	assert_not_null(out["idle"], "goblin idle 貼圖已註冊且存在")
+	assert_not_null(out["attack"], "goblin attack 貼圖已註冊且存在")
+	assert_not_null(out["hurt"], "goblin hurt 貼圖已註冊且存在")
+	assert_true(out["idle"] is Texture2D)
 
 func test_resolve_spec_loads_existing_and_nulls_missing():
 	var out := MonsterSpriteCatalog._resolve_spec({"idle": REAL})

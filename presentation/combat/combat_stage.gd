@@ -12,6 +12,7 @@ const LUNGE_BACK := 0.22
 const ATTACK_SCALE := 1.15
 const HIT_MS := 220
 const HIT_AMP := 0.06
+const DISPLAY_HEIGHT := 2.0   # billboard 目標世界高度（unit）；pixel_size 依貼圖實際高度正規化到此
 const _STATE_TEXTURE_KEY := {"idle": "idle", "attack": "attack", "hit": "hurt"}
 
 var _camera: Camera3D
@@ -30,12 +31,13 @@ func rebuild(monsters: Array) -> void:
 	var n := monsters.size()
 	for i in n:
 		var s := Sprite3D.new()
-		var base_tex := _placeholder(Color(0.8, 0.3, 0.3))
 		var t := MonsterSpriteCatalog.textures_for(monsters[i].monster_id)
+		# base = idle 真圖優先，否則純色 placeholder（缺 attack/hurt 時回退到 idle 而非紅塊）
+		var base_tex := base_texture(t["idle"], _placeholder(Color(0.8, 0.3, 0.3)))
 		var textures := {"idle": t["idle"], "attack": t["attack"], "hurt": t["hurt"], "base": base_tex}
 		s.texture = texture_for_state("idle", textures)
 		s.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-		s.pixel_size = 0.02
+		s.pixel_size = pixel_size_for(s.texture, DISPLAY_HEIGHT)   # 解析度無關：依貼圖高度正規化顯示大小
 		_camera.add_child(s)
 		var spread := (i - (n - 1) / 2.0) * 1.6
 		s.position = Vector3(spread, 0.0, -4.0)
@@ -140,6 +142,15 @@ static func texture_for_state(state: String, textures: Dictionary) -> Texture2D:
 	if tex == null:
 		tex = textures.get("base", null)
 	return tex
+
+# 純函式：base 貼圖 = 有 idle 真圖就用 idle，否則用 placeholder（讓缺態回退到真圖而非純色塊）。
+static func base_texture(idle_tex, placeholder: Texture2D) -> Texture2D:
+	return idle_tex if idle_tex != null else placeholder
+
+# 純函式：解析度無關的 pixel_size——讓任何高度的貼圖都顯示成 display_height 個世界單位高。
+static func pixel_size_for(tex: Texture2D, display_height: float) -> float:
+	var h := tex.get_height() if tex != null else 0
+	return display_height / max(1.0, float(h))
 
 func _placeholder(color: Color) -> Texture2D:
 	var img := Image.create(64, 96, false, Image.FORMAT_RGBA8)
