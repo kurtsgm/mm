@@ -114,7 +114,7 @@ func test_encounter_uid_accessor():
 func test_monster_id_to_encounter_uid():
 	var json := '{"grid":["@."],"entities":[{"type":"monster","pos":[1,0],"encounter":"g","id":"u-1"}]}'
 	var map := MapImporter.parse(json)
-	assert_eq(map.get_encounter("u-pos") if false else map.get_encounter(Vector2i(1,0)), "g")
+	assert_eq(map.get_encounter(Vector2i(1, 0)), "g")
 	assert_eq(map.get_encounter_uid(Vector2i(1, 0)), "u-1")
 
 func test_monster_without_id_uid_empty():
