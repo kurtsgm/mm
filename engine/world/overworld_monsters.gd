@@ -7,7 +7,7 @@ const AGGRO_RANGE := 4   # Chebyshev：玩家進此範圍 → IDLE→CHASING
 const LEASH_RANGE := 8   # Chebyshev：CHASING 離 home 超過此距離 → RETURNING（放棄）
 enum State { IDLE, CHASING, RETURNING }
 
-var _list: Array = []   # 每隻 { uid:String, group:String, home:Vector2i, cell:Vector2i, state:int }
+var _list: Array = []   # 每隻 { uid:String, group:String, origin_map:String, origin_off:Vector2i, home:Vector2i, cell:Vector2i, state:int }（home/cell 為全域格）
 
 # Chebyshev 距離（八方等距）：max(|dx|, |dy|)。
 static func cheb(a: Vector2i, b: Vector2i) -> int:
@@ -50,19 +50,33 @@ static func _as_set(occupied) -> Dictionary:
 			out[c] = true
 	return out
 
-# 從地圖 encounter 建立怪清單；已擊敗（is_defeated 注入）者跳過。每隻起始 home=cell=encounter 格、IDLE。
+# 從地圖 encounter 建怪清單（單圖特例：放在全域原點）。
 func init_from_map(map: MapData, is_defeated: Callable) -> void:
 	_list.clear()
+	_add_map(map, Vector2i.ZERO, is_defeated, {})
+
+# 把一張圖的 encounters 投影成全域 entry 加入 _list。
+# offset=該圖在當前框架的全域偏移；saved（該圖 { uid:{cell:原生相對 local, state} }）相符 uid 覆寫 cell(+offset)/state。
+func _add_map(map: MapData, offset: Vector2i, is_defeated: Callable, saved: Dictionary) -> void:
 	for cell in map.encounters:
 		var uid := map.get_encounter_uid(cell)
 		if is_defeated.is_valid() and is_defeated.call(uid):
 			continue
+		var home_global: Vector2i = cell + offset
+		var cur := home_global
+		var st := State.IDLE
+		if saved.has(uid):
+			var rec: Dictionary = saved[uid]
+			cur = Vector2i(rec["cell"]) + offset
+			st = int(rec["state"])
 		_list.append({
 			"uid": uid,
 			"group": map.get_encounter(cell),
-			"home": cell,
-			"cell": cell,
-			"state": State.IDLE,
+			"origin_map": map.map_id,
+			"origin_off": offset,
+			"home": home_global,
+			"cell": cur,
+			"state": st,
 		})
 
 # 給呈現層用的快照（不含 home/內部欄位）。
@@ -138,12 +152,22 @@ func _occupied_set() -> Dictionary:
 		out[m["cell"]] = true
 	return out
 
-# 回 { uid: {"cell": Vector2i, "state": int} }（給 GameState.monster_state[map_id]）。
+# 回 { origin_map: { uid: {"cell": Vector2i(原生相對 local), "state": int} } }。
 func to_save() -> Dictionary:
 	var out: Dictionary = {}
 	for m in _list:
-		out[m["uid"]] = {"cell": m["cell"], "state": m["state"]}
+		var mid: String = m["origin_map"]
+		if not out.has(mid):
+			out[mid] = {}
+		out[mid][m["uid"]] = {"cell": m["cell"] - m["origin_off"], "state": m["state"]}
 	return out
+
+# 戰鬥身分：回 { group, origin_map, home_local }（home_local = 全域 home - origin_off = 原生圖上的 home 格）。
+func combat_info(uid: String) -> Dictionary:
+	for m in _list:
+		if m["uid"] == uid:
+			return {"group": m["group"], "origin_map": m["origin_map"], "home_local": m["home"] - m["origin_off"]}
+	return {}
 
 # saved 形如 { uid: {"cell": Vector2i, "state": int} }；對相符 uid 覆寫 cell/state（home 不動）。
 func apply_saved(saved: Dictionary) -> void:

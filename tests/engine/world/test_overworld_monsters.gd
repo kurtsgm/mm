@@ -5,7 +5,7 @@ func _open(_c: Vector2i) -> bool:
 	return true
 
 func _mk(uid: String, home: Vector2i, cell: Vector2i, state: int) -> Dictionary:
-	return {"uid": uid, "group": "g", "home": home, "cell": cell, "state": state}
+	return {"uid": uid, "group": "g", "origin_map": "m", "origin_off": Vector2i.ZERO, "home": home, "cell": cell, "state": state}
 
 func _om(entries: Array) -> OverworldMonsters:
 	var om := OverworldMonsters.new()
@@ -184,12 +184,19 @@ func test_step_two_monsters_never_overlap():
 	assert_ne(rows[0]["cell"], rows[1]["cell"], "兩怪不重疊")
 
 # ---- to_save / apply_saved ----
-func test_to_save_format():
+func test_to_save_groups_by_origin_map():
 	var om := _om([_mk("a", Vector2i(0, 0), Vector2i(3, 4), OverworldMonsters.State.CHASING)])
 	var saved := om.to_save()
-	assert_true(saved.has("a"))
-	assert_eq(saved["a"]["cell"], Vector2i(3, 4))
-	assert_eq(saved["a"]["state"], OverworldMonsters.State.CHASING)
+	assert_true(saved.has("m"), "以 origin_map 分組")
+	assert_eq(saved["m"]["a"]["cell"], Vector2i(3, 4), "origin_off=0 → 原生相對 == 全域")
+	assert_eq(saved["m"]["a"]["state"], OverworldMonsters.State.CHASING)
+
+func test_to_save_projects_global_back_to_origin_relative():
+	# 東鄰 origin_off=(5,0)、全域 cell=(6,2) → 原生相對 = (1,2)
+	var e := _mk("a", Vector2i(5, 0), Vector2i(6, 2), OverworldMonsters.State.IDLE)
+	e["origin_off"] = Vector2i(5, 0)
+	var om := _om([e])
+	assert_eq(om.to_save()["m"]["a"]["cell"], Vector2i(1, 2), "全域 - origin_off = 原生相對 local")
 
 func test_apply_saved_overwrites_cell_and_state_keeps_home():
 	var om := _om([_mk("a", Vector2i(0, 0), Vector2i(0, 0), OverworldMonsters.State.IDLE)])
@@ -206,17 +213,26 @@ func test_apply_saved_leaves_unlisted_at_defaults():
 	assert_eq(m["cell"], Vector2i(0, 0), "未在 saved 的怪維持預設")
 	assert_eq(m["state"], OverworldMonsters.State.IDLE)
 
-func test_save_roundtrip():
-	var om := _om([
-		_mk("a", Vector2i(0, 0), Vector2i(3, 1), OverworldMonsters.State.CHASING),
-		_mk("b", Vector2i(4, 4), Vector2i(4, 4), OverworldMonsters.State.IDLE),
-	])
+# ---- combat_info / init_from_map origin ----
+func test_combat_info_returns_group_origin_home_local():
+	var e := _mk("a", Vector2i(7, 2), Vector2i(9, 2), OverworldMonsters.State.CHASING)
+	e["origin_map"] = "north"
+	e["origin_off"] = Vector2i(5, 0)
+	var om := _om([e])
+	var info := om.combat_info("a")
+	assert_eq(info["group"], "g")
+	assert_eq(info["origin_map"], "north")
+	assert_eq(info["home_local"], Vector2i(2, 2), "home(7,2) - origin_off(5,0) = (2,2)")
+
+func test_combat_info_unknown_returns_empty():
+	assert_eq(_om([]).combat_info("nope"), {})
+
+func test_init_from_map_sets_origin_fields():
+	var map := _map_with_encounters()
+	map.map_id = "home"
+	var om := OverworldMonsters.new()
+	om.init_from_map(map, Callable(self, "_none_defeated"))
 	var saved := om.to_save()
-	var om2 := _om([
-		_mk("a", Vector2i(0, 0), Vector2i(0, 0), OverworldMonsters.State.IDLE),
-		_mk("b", Vector2i(4, 4), Vector2i(4, 4), OverworldMonsters.State.IDLE),
-	])
-	om2.apply_saved(saved)
-	var a: Dictionary = om2.live()[0]
-	assert_eq(a["cell"], Vector2i(3, 1))
-	assert_eq(a["state"], OverworldMonsters.State.CHASING)
+	assert_true(saved.has("home"), "init_from_map 設好 origin_map")
+	assert_true(saved["home"].has("u-g"))
+	assert_eq(saved["home"]["u-g"]["cell"], Vector2i(2, 2), "origin_off=0 → 原生相對 == local")
