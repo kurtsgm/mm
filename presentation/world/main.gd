@@ -21,7 +21,6 @@ var _world_grid: WorldGrid
 
 var _overworld_monsters: OverworldMonsters
 var _monster_layer: MonsterLayer
-var _neighbor_monster_layer: MonsterLayer
 var _combat_uid: String = ""
 
 var _hud: Hud
@@ -52,8 +51,6 @@ func _ready() -> void:
 	_build_world_grid()
 	_monster_layer = MonsterLayer.new()
 	add_child(_monster_layer)
-	_neighbor_monster_layer = MonsterLayer.new()
-	add_child(_neighbor_monster_layer)
 	_rebuild_monsters_for_current_map()
 	_setup_environment()
 	_setup_fade()
@@ -165,7 +162,7 @@ func _on_entered_cell(global: Vector2i) -> void:
 		return
 	var res := _overworld_monsters.step(local, Callable(self, "_is_passable"))
 	_monster_layer.apply_moves(_overworld_monsters.live())
-	GameState.monster_state[GameState.current_map_id] = _overworld_monsters.to_save()
+	_write_monster_state(_overworld_monsters.to_save())
 	if res["contact"] != "":
 		_start_combat_for_uid(res["contact"])
 		return
@@ -264,24 +261,20 @@ func _build_world_grid() -> void:
 	_world_grid = WorldGrid.new(MapManager.current_map, Callable(MapManager, "peek_map"))
 
 func _rebuild_monsters_for_current_map() -> void:
-	var map := MapManager.current_map
 	_overworld_monsters = OverworldMonsters.new()
-	_overworld_monsters.init_from_map(map, Callable(GameState, "is_defeated"))
-	_overworld_monsters.apply_saved(GameState.monster_state.get(map.map_id, {}))
+	_overworld_monsters.init_from_regions(_world_grid.regions(), Callable(GameState, "is_defeated"), Callable(self, "_saved_monster_state"))
 	_monster_layer.rebuild(_overworld_monsters.live())
-	var neighbors := NeighborMonsters.collect(map, Callable(MapManager, "peek_map"), Callable(GameState, "is_defeated"), Callable(self, "_saved_monster_state"))
-	_neighbor_monster_layer.rebuild(neighbors)
 
 func _saved_monster_state(map_id) -> Dictionary:
 	return GameState.monster_state.get(map_id, {})
 
+# to_save 現為 { origin_map: {uid:{cell,state}} }；逐 origin_map 寫回（怪可被引離原生圖，故非只當前圖）。
+func _write_monster_state(saved: Dictionary) -> void:
+	for mid in saved:
+		GameState.monster_state[mid] = saved[mid]
+
 func _is_passable(cell: Vector2i) -> bool:
-	# Phase 1：怪物 passability 侷限焦點圖（鄰圖格留待 Phase 2 全怪上統一 grid）。
-	# 焦點圖在統一 grid 原點 → local==global；超出焦點圖寬高即牆，等價於舊 current_grid.is_walkable。
-	var m := MapManager.current_map
-	if cell.x < 0 or cell.x >= m.width or cell.y < 0 or cell.y >= m.height:
-		return false
-	return _world_grid.is_walkable(cell)
+	return _world_grid.is_walkable(cell)   # Phase 2：怪可跨界走（統一 grid；外緣無鄰 = 牆）
 
 func _start_combat_for_uid(uid: String) -> void:
 	_combat_uid = uid
@@ -301,7 +294,7 @@ func _on_combat_finished(result: int) -> void:
 		GameState.mark_encounter_cleared(MapManager.current_map.map_id, _combat_pos)
 		_overworld_monsters.remove(_combat_uid)
 		_monster_layer.rebuild(_overworld_monsters.live())
-		GameState.monster_state[MapManager.current_map.map_id] = _overworld_monsters.to_save()
+		_write_monster_state(_overworld_monsters.to_save())
 		GameState.message_log.push("戰鬥勝利！")
 		# 怪會走動：戰鬥錨在 home 格，但若怪是被引離 home 才打死，玩家此刻不在 home，
 		# 不該遠端開該格的寶箱（遭遇已清除，玩家日後踏到該格時由 _on_entered_cell 正常提示）。
