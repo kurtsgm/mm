@@ -79,6 +79,20 @@ func _add_map(map: MapData, offset: Vector2i, is_defeated: Callable, saved: Dict
 			"state": st,
 		})
 
+# 從 WorldGrid.regions()（[{map, ox, oy}]）建統一全域怪集（含當前圖 + 鄰圖）。
+# is_defeated 注入；saved_provider(map_id) 回該圖 { uid:{cell:原生相對 local, state} }（非 Dictionary 當空）。
+func init_from_regions(regions: Array, is_defeated: Callable, saved_provider: Callable) -> void:
+	_list.clear()
+	for region in regions:
+		var map: MapData = region["map"]
+		if map == null:
+			continue
+		var offset := Vector2i(int(region["ox"]), int(region["oy"]))
+		var saved = saved_provider.call(map.map_id)
+		if typeof(saved) != TYPE_DICTIONARY:
+			saved = {}
+		_add_map(map, offset, is_defeated, saved)
+
 # 給呈現層用的快照（不含 home/內部欄位）。
 func live() -> Array:
 	var out: Array = []

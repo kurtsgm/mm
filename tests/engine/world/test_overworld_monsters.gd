@@ -236,3 +236,74 @@ func test_init_from_map_sets_origin_fields():
 	assert_true(saved.has("home"), "init_from_map 設好 origin_map")
 	assert_true(saved["home"].has("u-g"))
 	assert_eq(saved["home"]["u-g"]["cell"], Vector2i(2, 2), "origin_off=0 → 原生相對 == local")
+
+func _enc_map(id: String, w: int, h: int, encs: Dictionary, uids: Dictionary) -> MapData:
+	var m := MapData.new()
+	m.map_id = id
+	m.width = w
+	m.height = h
+	m.encounters = encs
+	m.encounter_uids = uids
+	return m
+
+func _region(map: MapData, ox: int, oy: int) -> Dictionary:
+	return {"map": map, "ox": ox, "oy": oy}
+
+func _no_saved(_map_id: String) -> Dictionary:
+	return {}
+
+func test_init_from_regions_projects_current_and_neighbor_to_global():
+	var a := _enc_map("a", 5, 5, {Vector2i(0, 0): "g"}, {Vector2i(0, 0): "u-a"})
+	var e := _enc_map("e", 5, 5, {Vector2i(1, 2): "g"}, {Vector2i(1, 2): "u-e"})
+	var om := OverworldMonsters.new()
+	om.init_from_regions([_region(a, 0, 0), _region(e, 5, 0)], Callable(self, "_none_defeated"), Callable(self, "_no_saved"))
+	var rows := om.live()
+	assert_eq(rows.size(), 2, "含當前圖 + 鄰圖（統一 live 集）")
+	var by_uid := {}
+	for r in rows:
+		by_uid[r["uid"]] = r
+	assert_eq(by_uid["u-a"]["cell"], Vector2i(0, 0), "當前圖在原點")
+	assert_eq(by_uid["u-e"]["cell"], Vector2i(6, 2), "鄰圖怪投影到全域 (1+5, 2)")
+
+func test_init_from_regions_excludes_defeated():
+	var e := _enc_map("e", 5, 5, {Vector2i(1, 1): "g"}, {Vector2i(1, 1): "u-e"})
+	var is_def := func(uid: String) -> bool: return uid == "u-e"
+	var om := OverworldMonsters.new()
+	om.init_from_regions([_region(e, 0, 0)], is_def, Callable(self, "_no_saved"))
+	assert_eq(om.live().size(), 0)
+
+func test_init_from_regions_applies_saved_with_offset():
+	var e := _enc_map("e", 5, 5, {Vector2i(1, 1): "g"}, {Vector2i(1, 1): "u-e"})
+	var saved := func(mid: String) -> Dictionary:
+		if mid == "e":
+			return {"u-e": {"cell": Vector2i(3, 3), "state": OverworldMonsters.State.CHASING}}
+		return {}
+	var om := OverworldMonsters.new()
+	om.init_from_regions([_region(e, 5, 0)], Callable(self, "_none_defeated"), saved)
+	var m: Dictionary = om.live()[0]
+	assert_eq(m["cell"], Vector2i(8, 3), "原生相對(3,3) + offset(5,0) = 全域(8,3)")
+	assert_eq(m["state"], OverworldMonsters.State.CHASING)
+
+func test_init_from_regions_handles_non_dictionary_saved():
+	var e := _enc_map("e", 5, 5, {Vector2i(0, 0): "g"}, {Vector2i(0, 0): "u-e"})
+	var bad := func(_mid: String): return null
+	var om := OverworldMonsters.new()
+	om.init_from_regions([_region(e, 5, 0)], Callable(self, "_none_defeated"), bad)
+	assert_eq(om.live()[0]["cell"], Vector2i(5, 0), "non-dict saved → 當空、用 home(全域)")
+
+func test_init_from_regions_roundtrip_with_wandered_monster():
+	# 怪被引離原生圖：e 為東鄰(ox=5)，存檔越界原生相對 (-1,2) → 全域 (4,2)（已踏進西側當前圖）
+	var e := _enc_map("e", 5, 5, {Vector2i(1, 1): "g"}, {Vector2i(1, 1): "u-e"})
+	var saved := func(mid: String) -> Dictionary:
+		if mid == "e":
+			return {"u-e": {"cell": Vector2i(-1, 2), "state": OverworldMonsters.State.CHASING}}
+		return {}
+	var om := OverworldMonsters.new()
+	om.init_from_regions([_region(e, 5, 0)], Callable(self, "_none_defeated"), saved)
+	assert_eq(om.live()[0]["cell"], Vector2i(4, 2), "越界原生相對也能投影（怪已跨界）")
+	assert_eq(om.to_save()["e"]["u-e"]["cell"], Vector2i(-1, 2), "to_save 投影回越界原生相對（round-trip）")
+
+func test_init_from_regions_skips_null_map():
+	var om := OverworldMonsters.new()
+	om.init_from_regions([{"map": null, "ox": 0, "oy": 0}], Callable(self, "_none_defeated"), Callable(self, "_no_saved"))
+	assert_eq(om.live().size(), 0, "region map 為 null → 略過、不崩")
