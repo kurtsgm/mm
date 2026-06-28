@@ -15,7 +15,7 @@ func _initialize() -> void:
 	quit(0)
 
 func _parse_args() -> Dictionary:
-	var d := {"target": 10, "seed": 12345, "trials": 12, "threshold": 70, "out": "docs/balance/progression"}
+	var d := {"target": 100, "seed": 12345, "trials": 12, "threshold": 70, "out": "docs/balance/progression"}
 	var args := OS.get_cmdline_user_args()
 	var i := 0
 	while i < args.size() - 1:

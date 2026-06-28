@@ -20,7 +20,7 @@ func _initialize() -> void:
 	quit(0)
 
 func _parse_args() -> Dictionary:
-	var d := {"n": 500, "lmin": 2, "lmax": 10, "seed": 12345, "out": "docs/balance/combat-matrix"}
+	var d := {"n": 80, "lmin": 1, "lmax": 100, "seed": 12345, "out": "docs/balance/combat-matrix"}
 	var args := OS.get_cmdline_user_args()
 	var i := 0
 	while i < args.size() - 1:
