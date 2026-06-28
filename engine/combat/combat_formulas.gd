@@ -8,6 +8,11 @@ const HIT_PER_POINT := 2
 const HIT_MIN := 5
 const HIT_MAX := 95
 
+const DEF_PER_ENDURANCE := 4
+
+static func defense_from_endurance(endurance: int) -> int:
+	return endurance / DEF_PER_ENDURANCE
+
 static func hit_chance(accuracy: int, target_speed: int) -> int:
 	return clampi(HIT_BASE + (accuracy - target_speed) * HIT_PER_POINT, HIT_MIN, HIT_MAX)
 

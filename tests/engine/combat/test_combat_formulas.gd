@@ -58,3 +58,9 @@ func test_roll_spell_damage_within_range():
 func test_roll_spell_damage_min_base():
 	var rng := RandomNumberGenerator.new(); rng.seed = 2
 	assert_true(CombatFormulas.roll_spell_damage(0, rng) >= 1)
+
+func test_defense_from_endurance_integer_divide():
+	assert_eq(CombatFormulas.defense_from_endurance(18), 4)   # 18/4 = 4
+	assert_eq(CombatFormulas.defense_from_endurance(8), 2)    # 8/4 = 2
+	assert_eq(CombatFormulas.defense_from_endurance(0), 0)
+	assert_eq(CombatFormulas.defense_from_endurance(3), 0)    # below one tier
