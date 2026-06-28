@@ -65,3 +65,90 @@ static func clone_party(party: Party) -> Party:
 		c.statuses = []
 		p.members.append(c)
 	return p
+
+static func _monsters_for(encounter_id: String) -> Array:
+	var mons := []
+	for d in Bestiary.group_defs_for(encounter_id):
+		mons.append(Monster.from_def(d))
+	return mons
+
+static func _xp_total(encounter_id: String) -> int:
+	var total := 0
+	for d in Bestiary.group_defs_for(encounter_id):
+		total += d.xp_reward
+	return total
+
+static func estimate_encounter(party: Party, encounter_id: String, trials: int, base_seed: int) -> Dictionary:
+	var wins := 0
+	var rounds_sum := 0.0
+	for t in trials:
+		var clone := clone_party(party)
+		var mons: Array[Monster] = []
+		for d in Bestiary.group_defs_for(encounter_id):
+			mons.append(Monster.from_def(d))
+		var rng := RandomNumberGenerator.new()
+		rng.seed = base_seed + hash(encounter_id) * 1000003 + t
+		var out := BattleRunner.run(clone, mons, rng)
+		if out["result"] == CombatSystem.Result.VICTORY:
+			wins += 1
+			rounds_sum += float(out["rounds"])
+	var win_rate := float(wins) / float(trials) if trials > 0 else 0.0
+	var avg_rounds := rounds_sum / float(wins) if wins > 0 else 0.0
+	var xp_total := _xp_total(encounter_id)
+	var efficiency := (float(xp_total) / avg_rounds) if avg_rounds > 0.0 else 0.0
+	return {"win_rate": win_rate, "avg_rounds": avg_rounds, "xp_total": xp_total, "efficiency": efficiency}
+
+static func run(target_level: int, base_seed: int, trials := 12, win_threshold := 0.7, max_fights := 500) -> Dictionary:
+	var party := Party.create_default()
+	full_rest(party)
+	var fights: Array = []
+	var levels_before: Array = []
+	var reached := false
+	var fight_seed := base_seed
+	while fights.size() < max_fights:
+		if party_min_level(party) >= target_level:
+			reached = true
+			break
+		# 選「可贏（win_rate ≥ 門檻）中 XP 效率最高」的遭遇
+		var best_id := ""
+		var best_eff := 0.0
+		var best_xp := 0
+		for enc in Bestiary.all_ids():
+			var est := estimate_encounter(party, String(enc), trials, fight_seed)
+			if est["win_rate"] >= win_threshold and est["efficiency"] > best_eff:
+				best_eff = est["efficiency"]
+				best_id = String(enc)
+				best_xp = int(est["xp_total"])
+		if best_id == "":
+			break   # 無可贏遭遇 → 卡住
+		var lvl_before := party_min_level(party)
+		# 真打一場
+		var mons: Array[Monster] = []
+		for d in Bestiary.group_defs_for(best_id):
+			mons.append(Monster.from_def(d))
+		var rng := RandomNumberGenerator.new()
+		rng.seed = fight_seed
+		fight_seed += 1
+		var out := BattleRunner.run(party, mons, rng)
+		var victory: bool = out["result"] == CombatSystem.Result.VICTORY
+		if victory:
+			grant_fight_xp(party, best_xp)
+		full_rest(party)   # 場間全休（聚焦 XP 節奏，非連戰耗損）
+		levels_before.append(lvl_before)
+		fights.append({
+			"index": fights.size(),
+			"encounter": best_id,
+			"party_level": lvl_before,
+			"xp_total": best_xp,
+			"victory": victory,
+			"avg_level": party_avg_level(party),
+		})
+	return {
+		"fights": fights,
+		"fights_per_level": fights_per_level(levels_before),
+		"reached_target": reached,
+		"final_min_level": party_min_level(party),
+		"final_avg_level": party_avg_level(party),
+		"target_level": target_level,
+		"win_threshold": win_threshold,
+	}

@@ -57,3 +57,31 @@ func test_clone_party_is_independent_and_full():
 	assert_eq(ca.condition, Character.Condition.OK)
 	ca.might = 1                              # 改複本不影響原本
 	assert_eq(a.might, 18)
+
+func test_estimate_encounter_schema_and_determinism():
+	var p := SimPartyBuilder.build(3)
+	var a := ProgressionSim.estimate_encounter(p, "g", 6, 99)
+	for key in ["win_rate", "avg_rounds", "xp_total", "efficiency"]:
+		assert_true(a.has(key), "缺 key %s" % key)
+	assert_true(a["win_rate"] >= 0.0 and a["win_rate"] <= 1.0)
+	assert_gt(a["xp_total"], 0)                       # goblin 組總 xp
+	var b := ProgressionSim.estimate_encounter(p, "g", 6, 99)
+	assert_eq(a["win_rate"], b["win_rate"])           # 同 seed 可複現
+
+func test_run_reaches_target_and_records():
+	var rep := ProgressionSim.run(4, 12345, 8)        # 目標 L4，trials 小求快
+	assert_true(rep["reached_target"], "應能練到 L4")
+	assert_true(rep["final_min_level"] >= 4)
+	assert_gt(rep["fights"].size(), 0)
+	# fights_per_level 的總場數 = fights 數
+	var sum := 0
+	for k in rep["fights_per_level"]:
+		sum += int(rep["fights_per_level"][k])
+	assert_eq(sum, rep["fights"].size())
+
+func test_run_level_curve_non_decreasing():
+	var rep := ProgressionSim.run(4, 222, 8)
+	var prev := 0.0
+	for f in rep["fights"]:
+		assert_true(f["avg_level"] >= prev, "平均等級不應下降")
+		prev = f["avg_level"]
