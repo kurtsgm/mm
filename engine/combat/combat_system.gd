@@ -55,10 +55,11 @@ func party_attack(monster_index: int) -> Array:
 		return events
 	var target: Monster = living[monster_index]
 	if CombatFormulas.roll_hit(actor.effective_accuracy(), target.speed, _rng):
-		var dmg := CombatFormulas.roll_damage(actor.attack_power(), target.effective_armor(), false, false, _rng)
+		var crit := CombatFormulas.roll_crit(actor.luck, _rng)
+		var dmg := CombatFormulas.roll_damage(actor.attack_power(), target.effective_armor(), false, crit, _rng)
 		target.hp -= dmg
 		target.statuses = StatusRules.cleared_on_hit(target.statuses)
-		events.append("%s 攻擊 %s，造成 %d 傷害。" % [actor.name, target.name, dmg])
+		events.append("%s 攻擊 %s，造成 %d 傷害%s。" % [actor.name, target.name, dmg, "（爆擊！）" if crit else ""])
 		if not target.is_alive():
 			events.append("%s 被擊倒了！" % target.name)
 	else:
@@ -82,13 +83,14 @@ func monster_act() -> Array:
 	var target: Character = targets[_rng.randi_range(0, targets.size() - 1)]
 	var defending := _defending.has(target)
 	if CombatFormulas.roll_hit(actor.effective_accuracy(), target.speed, _rng):
-		var dmg := CombatFormulas.roll_damage(actor.effective_attack(), target.armor_value(), defending, false, _rng)
+		var crit := CombatFormulas.roll_crit(actor.luck, _rng)
+		var dmg := CombatFormulas.roll_damage(actor.effective_attack(), target.armor_value(), defending, crit, _rng)
 		target.take_damage(dmg)
 		target.statuses = StatusRules.cleared_on_hit(target.statuses)
 		if actor.inflict_kind >= 0 and _rng.randf() <= actor.inflict_chance:
 			target.statuses.append(StatusCatalog.from_data(actor.inflict_kind, -1, 0, actor.inflict_potency, actor.inflict_duration))
 			events.append("%s 陷入了異常狀態！" % target.name)
-		events.append("%s 攻擊 %s，造成 %d 傷害。" % [actor.name, target.name, dmg])
+		events.append("%s 攻擊 %s，造成 %d 傷害%s。" % [actor.name, target.name, dmg, "（爆擊！）" if crit else ""])
 		if target.hp <= 0:
 			target.hp = 0
 			target.condition = Character.Condition.UNCONSCIOUS

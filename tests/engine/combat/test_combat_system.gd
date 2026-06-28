@@ -209,3 +209,22 @@ func test_monster_act_kos_member_at_zero_hp():
 	cs.monster_act()
 	assert_eq(hero.hp, 0)
 	assert_eq(hero.condition, Character.Condition.UNCONSCIOUS)
+
+func test_party_attack_marks_crit_over_many_seeds():
+	# luck=50 → ~50% crit; across many fresh seeds at least one party_attack crits.
+	var saw_crit := false
+	for s in range(1, 60):
+		var hero := Character.new()
+		hero.name = "Lucky"
+		hero.condition = Character.Condition.OK
+		hero.hp = 100; hero.hp_max = 100
+		hero.might = 20; hero.luck = 50; hero.accuracy = 1000  # always hits
+		hero.speed = 50
+		var mon := _monster("Dummy", 9999, 1, 0, 1)   # huge HP, won't die
+		var cs := CombatSystem.new(_party([hero]), _monsters([mon]), _rng(s))
+		if not cs.is_party_turn():
+			continue
+		for e in cs.party_attack(0):
+			if String(e).find("爆擊") != -1:
+				saw_crit = true
+	assert_true(saw_crit, "luck=50 多種子下應至少出現一次爆擊訊息")
