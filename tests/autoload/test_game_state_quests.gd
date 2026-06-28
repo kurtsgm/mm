@@ -118,7 +118,7 @@ func test_xp_reward_granted_to_conscious_member_on_turn_in():
 	gs.notify_enter("wild_ne", Vector2i(3, 3))   # reach → talk
 	gs.advance_quest("q")                        # 回報 → done → 發獎
 	assert_true(gs.is_quest_done("q"))
-	assert_eq(c.experience, 30)                  # 30 < xp_for_level(1)=100 → 不升級
+	assert_eq(c.experience, 30)                  # 30 < xp_for_level(1)=40 → 不升級
 
 func test_accept_sets_tracked_and_emits_event():
 	var gs = _gs()
