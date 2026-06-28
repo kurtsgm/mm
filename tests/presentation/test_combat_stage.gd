@@ -190,3 +190,26 @@ func test_apply_texture_recomputes_pixel_size_on_swap():
 	st._apply_texture(s, tall)   # 換到不同高度的貼圖
 	assert_eq(s.texture, tall)
 	assert_almost_eq(s.pixel_size, CombatStage.pixel_size_for(tall, CombatStage.DISPLAY_HEIGHT), 0.0001, "換圖時 pixel_size 跟著貼圖高度重算（不會大小跳動）")
+
+# ---- 腳貼地（修漂浮）----
+func test_feet_offset_pure():
+	assert_almost_eq(CombatStage.feet_offset(1.2, 2.0), -0.2, 0.0001, "眼高 1.2、顯示高 2.0 → 腳偏移 -0.2")
+
+func test_feet_offset_zero_eye_height():
+	assert_almost_eq(CombatStage.feet_offset(0.0, 2.0), 1.0, 0.0001, "眼高 0 → 中心抬到地板上方 1.0")
+
+func test_setup_records_feet_y_from_camera():
+	var cam := Camera3D.new()
+	add_child_autofree(cam)
+	cam.position.y = 1.2
+	var st := CombatStage.new()
+	add_child_autofree(st)
+	st.setup(cam)
+	assert_almost_eq(st._feet_y, -0.2, 0.0001, "眼高 1.2 → _feet_y = -0.2")
+
+func test_rebuild_places_sprite_at_feet_y():
+	var a := _monster("A", 10)
+	var st := _stage_with([a])   # 此 helper 相機在原點，_feet_y = 1.0
+	var s: Sprite3D = st._sprites[a]
+	assert_almost_eq(s.position.y, st._feet_y, 0.0001, "billboard 不再寫死 y=0.0（漂浮），改用 _feet_y")
+	assert_almost_eq(st._base_pos[s].y, st._feet_y, 0.0001, "base_pos 以 _feet_y 為基準（idle/attack/hit 都對）")
