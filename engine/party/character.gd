@@ -57,7 +57,7 @@ func attack_power() -> int:
 	return might + equipment.total_attack() + StatusRules.stat_total(statuses, StatusEffect.Stat.ATTACK)
 
 func armor_value() -> int:
-	return equipment.total_armor() + StatusRules.stat_total(statuses, StatusEffect.Stat.ARMOR)
+	return equipment.total_armor() + StatusRules.stat_total(statuses, StatusEffect.Stat.ARMOR) + CombatFormulas.defense_from_endurance(endurance)
 
 func effective_accuracy() -> int:
 	return accuracy + StatusRules.stat_total(statuses, StatusEffect.Stat.ACCURACY)
