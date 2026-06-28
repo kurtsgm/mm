@@ -5,11 +5,12 @@ extends Object
 # 皆落在現有 Monster 戰鬥模型內（近戰 + inflict_* 異常）。
 
 # 每 archetype 的縮放表：base/step 對應 hp_max/might/armor/speed/accuracy/luck/xp。
+# xp 每隻按 count 設，使各 archetype「整群」總 xp 相當（T1≈600、T10≈27600），隨 tier 陡升以配合 XP 曲線。
 const _A := {
-	"brute":      {"hp": [40, 45], "might": [12, 11], "armor": [2, 2], "speed": [6, 1],  "acc": [9, 2],  "luck": [2, 1], "xp": [30, 40], "count": 1},
-	"skirmisher": {"hp": [22, 28], "might": [9, 8],   "armor": [1, 1], "speed": [12, 3], "acc": [13, 3], "luck": [4, 2], "xp": [18, 26], "count": 2},
-	"swarm":      {"hp": [10, 12], "might": [6, 6],   "armor": [0, 1], "speed": [9, 2],  "acc": [8, 2],  "luck": [2, 1], "xp": [8, 12],  "count": 4},
-	"ailment":    {"hp": [14, 18], "might": [5, 6],   "armor": [0, 1], "speed": [9, 2],  "acc": [9, 2],  "luck": [3, 1], "xp": [14, 20], "count": 2},
+	"brute":      {"hp": [40, 45], "might": [12, 11], "armor": [2, 2], "speed": [6, 1],  "acc": [9, 2],  "luck": [2, 1], "xp": [600, 3000], "count": 1},
+	"skirmisher": {"hp": [22, 28], "might": [9, 8],   "armor": [1, 1], "speed": [12, 3], "acc": [13, 3], "luck": [4, 2], "xp": [300, 1500], "count": 2},
+	"swarm":      {"hp": [10, 12], "might": [6, 6],   "armor": [0, 1], "speed": [9, 2],  "acc": [8, 2],  "luck": [2, 1], "xp": [150, 750],  "count": 4},
+	"ailment":    {"hp": [14, 18], "might": [5, 6],   "armor": [0, 1], "speed": [9, 2],  "acc": [9, 2],  "luck": [3, 1], "xp": [300, 1500], "count": 2},
 }
 # ailment 中毒縮放
 const _POISON_POTENCY := [2, 2]   # base, step
