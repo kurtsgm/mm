@@ -9,7 +9,7 @@ func test_bestiary_all_ids_lists_encounters():
 	assert_eq(ids.size(), 4)
 
 func test_run_cell_returns_row_schema():
-	var cell := SimMatrix.run_cell("g", 8, 5, 42, 5, 2)   # 小 n 求快
+	var cell := SimMatrix.run_cell("g", 8, 5, 42)   # 小 n 求快
 	assert_eq(cell["encounter"], "g")
 	assert_eq(cell["level"], 8)
 	assert_eq(cell["n"], 5)
@@ -18,10 +18,10 @@ func test_run_cell_returns_row_schema():
 		assert_true(cell.has(key), "缺 key: %s" % key)
 
 func test_run_cell_is_deterministic_for_same_seed():
-	var a := SimMatrix.run_cell("dw", 5, 4, 7, 5, 2)
-	var b := SimMatrix.run_cell("dw", 5, 4, 7, 5, 2)
+	var a := SimMatrix.run_cell("dw", 5, 4, 7)
+	var b := SimMatrix.run_cell("dw", 5, 4, 7)
 	assert_eq(a["win_rate"], b["win_rate"])   # 同 seed → 可複現
 
 func test_run_all_covers_grid():
-	var rows := SimMatrix.run_all([2, 3], 2, 1, 5, 2)
+	var rows := SimMatrix.run_all([2, 3], 2, 1)
 	assert_eq(rows.size(), 8)   # 4 遭遇 × 2 等級

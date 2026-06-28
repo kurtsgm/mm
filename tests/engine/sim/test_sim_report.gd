@@ -9,13 +9,14 @@ func test_csv_has_header_and_row():
 	assert_string_contains(csv, "g,3,0.800")
 
 func test_markdown_has_encounter_and_winrate():
-	var md := SimReport.to_markdown([_row()], {"n": 500, "seed": 1, "hp_per_level": 5, "sp_per_level": 2})
+	var md := SimReport.to_markdown([_row()], {"n": 500, "seed": 1})
 	assert_string_contains(md, "遭遇 `g`")
 	assert_string_contains(md, "80%")
 	assert_string_contains(md, "N：500")
+	assert_string_contains(md, "per-class")
 
 func test_markdown_groups_by_encounter():
 	var rows := [_row(), {"encounter": "o", "level": 3, "win_rate": 0.2, "avg_rounds": 8.0, "avg_deaths": 3.0, "avg_hp_pct_on_win": 0.1, "timeouts": 0, "n": 500}]
-	var md := SimReport.to_markdown(rows, {"n": 500, "seed": 1, "hp_per_level": 5, "sp_per_level": 2})
+	var md := SimReport.to_markdown(rows, {"n": 500, "seed": 1})
 	assert_string_contains(md, "遭遇 `g`")
 	assert_string_contains(md, "遭遇 `o`")

@@ -2,7 +2,7 @@ class_name SimMatrix
 extends Object
 # 掃描「遭遇 × 等級」，每格跑 N 場蒙地卡羅，彙整成難度表 rows。
 
-static func run_cell(encounter_id: String, level: int, n: int, base_seed: int, hp_per_level: int, sp_per_level: int) -> Dictionary:
+static func run_cell(encounter_id: String, level: int, n: int, base_seed: int, catalog = ClassCatalog) -> Dictionary:
 	var defs := Bestiary.group_defs_for(encounter_id)
 	var wins := 0
 	var rounds_sum := 0.0
@@ -10,7 +10,7 @@ static func run_cell(encounter_id: String, level: int, n: int, base_seed: int, h
 	var hp_pct_win_sum := 0.0
 	var timeouts := 0
 	for run_index in n:
-		var party := SimPartyBuilder.build(level, hp_per_level, sp_per_level)
+		var party := SimPartyBuilder.build(level, catalog)
 		var mons: Array[Monster] = []
 		for d in defs:
 			mons.append(Monster.from_def(d))
@@ -35,11 +35,11 @@ static func run_cell(encounter_id: String, level: int, n: int, base_seed: int, h
 		"n": n,
 	}
 
-static func run_all(levels: Array, n: int, base_seed: int, hp_per_level: int, sp_per_level: int) -> Array:
+static func run_all(levels: Array, n: int, base_seed: int, catalog = ClassCatalog) -> Array:
 	var rows: Array = []
 	for enc in Bestiary.all_ids():
 		for lvl in levels:
-			rows.append(run_cell(String(enc), int(lvl), n, base_seed, hp_per_level, sp_per_level))
+			rows.append(run_cell(String(enc), int(lvl), n, base_seed, catalog))
 	return rows
 
 static func _cell_seed(base: int, encounter_id: String, level: int, run_index: int) -> int:
