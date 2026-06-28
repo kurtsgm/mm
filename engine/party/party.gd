@@ -21,36 +21,38 @@ func is_wiped() -> bool:
 			return false
 	return true
 
-# 過渡骨架隊伍（M3 不平衡）：6 人、含 1 名 KO、HP/SP 涵蓋滿／半／空以驗證 HUD 渲染。
-# 真正的角色創建與存檔屬後續／M5。
+# 過渡骨架隊伍：6 人、含 1 名 KO（Marcus）。職業/名字/起始等級固定；
+# 所有屬性與 hp_max/sp_max 由 ClassCatalog 衍生（職業差異化的唯一來源）。
 static func create_default() -> Party:
-	var p := Party.new()
-	p.members = [
-		_make("Gerard",   "Knight",   3, 28, 28, 0,  0,  Character.Condition.OK),
-		_make("Cordelia", "Paladin",  3, 18, 26, 4,  8,  Character.Condition.OK),
-		_make("Sira",     "Archer",   2, 14, 20, 6,  10, Character.Condition.OK),
-		_make("Marcus",   "Cleric",   3, 0,  22, 9,  14, Character.Condition.UNCONSCIOUS),
-		_make("Cassia",   "Sorcerer", 2, 12, 16, 12, 12, Character.Condition.OK),
-		_make("Dunkan",   "Robber",   2, 16, 18, 0,  0,  Character.Condition.OK),
+	var roster := [
+		{"name": "Gerard", "class": "Knight", "level": 3, "condition": Character.Condition.OK},
+		{"name": "Cordelia", "class": "Paladin", "level": 3, "condition": Character.Condition.OK},
+		{"name": "Sira", "class": "Archer", "level": 2, "condition": Character.Condition.OK},
+		{"name": "Marcus", "class": "Cleric", "level": 3, "condition": Character.Condition.UNCONSCIOUS},
+		{"name": "Cassia", "class": "Sorcerer", "level": 2, "condition": Character.Condition.OK},
+		{"name": "Dunkan", "class": "Robber", "level": 2, "condition": Character.Condition.OK},
 	]
+	var p := Party.new()
+	for r in roster:
+		p.members.append(_make(r["name"], r["class"], r["level"], r["condition"]))
 	return p
 
-static func _make(name: String, char_class: String, level: int, hp: int, hp_max: int, sp: int, sp_max: int, condition: int) -> Character:
+static func _make(name: String, char_class: String, level: int, condition: int) -> Character:
 	var c := Character.new()
 	c.name = name
 	c.char_class = char_class
 	c.level = level
-	c.hp = hp
-	c.hp_max = hp_max
-	c.sp = sp
-	c.sp_max = sp_max
+	var s := ClassCatalog.stats_at_level(char_class, level)
+	c.might = s["might"]
+	c.intellect = s["intellect"]
+	c.personality = s["personality"]
+	c.endurance = s["endurance"]
+	c.speed = s["speed"]
+	c.accuracy = s["accuracy"]
+	c.luck = s["luck"]
+	c.hp_max = s["hp_max"]
+	c.sp_max = s["sp_max"]
+	c.sp = c.sp_max
 	c.condition = condition
-	# 骨架圍值（固定即可；平衡與差異化屬內容期）
-	c.might = 15
-	c.intellect = 12
-	c.personality = 12
-	c.endurance = 14
-	c.speed = 13
-	c.accuracy = 13
-	c.luck = 11
+	c.hp = 0 if condition == Character.Condition.UNCONSCIOUS else c.hp_max
 	return c

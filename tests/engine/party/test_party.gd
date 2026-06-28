@@ -42,3 +42,21 @@ func test_create_default_six_members_exactly_one_ko():
 		if m.condition == Character.Condition.UNCONSCIOUS:
 			ko += 1
 	assert_eq(ko, 1, "預設隊伍恰好 1 名 UNCONSCIOUS")
+
+func _by_name(p: Party, n: String) -> Character:
+	for m in p.members:
+		if m.name == n:
+			return m
+	return null
+
+func test_create_default_stats_from_catalog():
+	var p := Party.create_default()
+	var gerard := _by_name(p, "Gerard")     # Knight L3
+	assert_eq(gerard.hp_max, 42)            # 30 + 2*6
+	assert_eq(gerard.endurance, 20)         # 18 + 2
+	var cassia := _by_name(p, "Cassia")     # Sorcerer L2
+	assert_gt(cassia.intellect, gerard.intellect)   # 法師 int > 騎士
+	assert_gt(gerard.endurance, cassia.endurance)   # 騎士 end > 法師
+	var marcus := _by_name(p, "Marcus")     # Cleric L3, KO
+	assert_eq(marcus.hp, 0)                 # 昏迷
+	assert_gt(marcus.hp_max, 0)
