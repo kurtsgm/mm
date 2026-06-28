@@ -28,8 +28,12 @@ static func build(level: int, catalog = ClassCatalog) -> Party:
 		m.sp = m.sp_max
 		m.condition = Character.Condition.OK
 		m.statuses = []
-		m.known_spells = _spells_for(m.char_class)
+	seed_class_spells(p)
 	return p
+
+static func seed_class_spells(party: Party) -> void:
+	for m in party.members:
+		m.known_spells = _spells_for(m.char_class)
 
 static func _spells_for(char_class: String) -> Array[String]:
 	var out: Array[String] = []

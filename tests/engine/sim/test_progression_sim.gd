@@ -86,6 +86,15 @@ func test_run_level_curve_non_decreasing():
 		assert_true(f["avg_level"] >= prev, "平均等級不應下降")
 		prev = f["avg_level"]
 
+func test_seed_class_spells_equips_casters():
+	var p := Party.create_default()
+	SimPartyBuilder.seed_class_spells(p)
+	for m in p.members:
+		if m.char_class == "Sorcerer":
+			assert_true(m.known_spells.has("spark"), "Sorcerer 應會 spark")
+		if m.char_class == "Cleric":
+			assert_true(m.known_spells.has("heal"), "Cleric 應會 heal")
+
 func test_estimate_encounter_uses_bestiary_override():
 	# 傳 TierBestiary → 用 tier 遭遇（xp_total = swarm 群 t1 的總 xp，> 0）
 	var p := SimPartyBuilder.build(3)

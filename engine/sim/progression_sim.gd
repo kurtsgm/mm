@@ -99,6 +99,7 @@ static func estimate_encounter(party: Party, encounter_id: String, trials: int, 
 static func run(target_level: int, base_seed: int, trials := 12, win_threshold := 0.7, max_fights := 500, bestiary = TierBestiary) -> Dictionary:
 	var party := Party.create_default()
 	full_rest(party)
+	SimPartyBuilder.seed_class_spells(party)
 	var fights: Array = []
 	var levels_before: Array = []
 	var reached := false
