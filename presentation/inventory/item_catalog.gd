@@ -10,6 +10,7 @@ const _ITEMS := {
 	"ether": "res://content/items/ether.tres",
 	"revive": "res://content/items/revive_herb.tres",
 	"antidote": "res://content/items/antidote.tres",
+	"swamp_herb": "res://content/items/swamp_herb.tres",
 }
 
 static func has_item(id: String) -> bool:

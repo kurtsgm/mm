@@ -2,5 +2,12 @@
   "name": "東南野",
   "theme": "grassland",
   "grid": [".....", ".....", "..@..", ".....", "....."],
-  "neighbors": { "north": "wild_ne", "west": "wild_sw" }
+  "neighbors": { "north": "wild_ne", "west": "wild_sw" },
+  "entities": [
+    { "type": "chest", "pos": [1, 1], "gold": 0, "items": ["swamp_herb"] },
+    { "type": "chest", "pos": [3, 1], "gold": 0, "items": ["swamp_herb"] },
+    { "type": "chest", "pos": [2, 4], "gold": 0, "items": ["swamp_herb"] },
+    { "type": "monster", "pos": [1, 3], "encounter": "ps", "id": "019f0900-0000-7000-8000-0000000000a1" },
+    { "type": "monster", "pos": [3, 3], "encounter": "ps", "id": "019f0900-0000-7000-8000-0000000000a2" }
+  ]
 }

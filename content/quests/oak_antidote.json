@@ -1,0 +1,9 @@
+{
+  "id": "oak_antidote",
+  "title": "毒澤的解藥",
+  "stages": [
+    { "type": "collect", "item": "swamp_herb", "count": 3, "desc": "在東南野毒澤採澤蘭草（3 株）" },
+    { "type": "talk", "desc": "回橡鎮把澤蘭草交給瑪歌" }
+  ],
+  "rewards": { "gold": 30, "xp": 40, "items": ["antidote", "antidote"] }
+}
