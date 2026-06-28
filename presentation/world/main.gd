@@ -26,7 +26,8 @@ var _combat_uid: String = ""
 var _hud: Hud
 var _combat_layer: CombatLayer
 var _combat: CombatSystem
-var _combat_pos: Vector2i
+var _combat_origin_map: String = ""
+var _combat_home_local: Vector2i
 var _save_menu: SaveMenu
 var _inventory_menu: InventoryMenu
 var _spell_menu: SpellMenu
@@ -235,16 +236,14 @@ func _enter_via_link(map_id: String, entry_name: String) -> void:
 	_transitioning = false
 	_player.set_enabled(true)
 
-func _start_combat(pos: Vector2i) -> void:
-	var id := MapManager.current_map.get_encounter(pos)
-	var defs := Bestiary.group_defs_for(id)
+func _start_combat_with_group(group: String) -> void:
+	var defs := Bestiary.group_defs_for(group)
 	if defs.is_empty():
 		return
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
-	var group := EncounterSystem.build_group(defs)
-	_combat = CombatSystem.new(GameState.party, group, rng)
-	_combat_pos = pos
+	var grp := EncounterSystem.build_group(defs)
+	_combat = CombatSystem.new(GameState.party, grp, rng)
 	_player.set_enabled(false)
 	GameState.message_log.push("遭遇怪物！")
 	_set_overworld_hud_visible(false)
@@ -277,8 +276,13 @@ func _is_passable(cell: Vector2i) -> bool:
 	return _world_grid.is_walkable(cell)   # Phase 2：怪可跨界走（統一 grid；外緣無鄰 = 牆）
 
 func _start_combat_for_uid(uid: String) -> void:
+	var info := _overworld_monsters.combat_info(uid)
+	if info.is_empty():
+		return
 	_combat_uid = uid
-	_start_combat(_overworld_monsters.home_of(uid))   # 戰鬥身分錨在 home 格（MapData 仍持有 group/uid）
+	_combat_origin_map = info["origin_map"]      # 戰鬥身分錨在原生 (map, home_local)，可跨界
+	_combat_home_local = info["home_local"]
+	_start_combat_with_group(info["group"])
 
 func _on_combat_item_consumed(item_id: String) -> void:
 	GameState.inventory.remove(item_id, 1)
@@ -288,18 +292,17 @@ func _on_combat_finished(result: int) -> void:
 	if result == CombatSystem.Result.VICTORY:
 		_grant_rewards()
 		_grant_drops()
-		GameState.notify_encounter_defeated(MapManager.current_map.get_encounter_uid(_combat_pos))
+		GameState.notify_encounter_defeated(_combat_uid)
 		GameState.refresh_collect()
-		MapManager.current_map.clear_encounter(_combat_pos)
-		GameState.mark_encounter_cleared(MapManager.current_map.map_id, _combat_pos)
+		GameState.mark_encounter_cleared(_combat_origin_map, _combat_home_local)   # 持久層；origin_map 可非 current_map
 		_overworld_monsters.remove(_combat_uid)
 		_monster_layer.rebuild(_overworld_monsters.live())
 		_write_monster_state(_overworld_monsters.to_save())
 		GameState.message_log.push("戰鬥勝利！")
-		# 怪會走動：戰鬥錨在 home 格，但若怪是被引離 home 才打死，玩家此刻不在 home，
-		# 不該遠端開該格的寶箱（遭遇已清除，玩家日後踏到該格時由 _on_entered_cell 正常提示）。
-		if _combat_pos == GameState.player_pos and _has_unopened_chest(_combat_pos):
-			_prompt_chest(_combat_pos)
+		# 戰鬥身分錨在原生 (origin_map, home_local)；怪可能從鄰圖被引來、或在別圖被打死。
+		# 只有「原生圖＝玩家所在圖 且 home_local＝玩家格」才在當下提示開箱（引離/跨界擊殺不遠端開箱）。
+		if _combat_origin_map == GameState.current_map_id and _combat_home_local == GameState.player_pos and _has_unopened_chest(_combat_home_local):
+			_prompt_chest(_combat_home_local)
 		else:
 			_player.set_enabled(true)
 	elif result == CombatSystem.Result.FLED:
@@ -311,6 +314,7 @@ func _on_combat_finished(result: int) -> void:
 	_hud.refresh()
 	_combat = null
 	_combat_uid = ""
+	_combat_origin_map = ""
 
 func _has_unopened_chest(pos: Vector2i) -> bool:
 	var map := MapManager.current_map
