@@ -9,6 +9,9 @@ const _GROUPS := {
 	"dw": {"path": "res://content/monsters/dream_wisp.tres", "count": 2},
 }
 
+static func all_ids() -> Array:
+	return _GROUPS.keys()
+
 static func group_defs_for(encounter_id: String) -> Array[MonsterDef]:
 	var out: Array[MonsterDef] = []
 	if not _GROUPS.has(encounter_id):
