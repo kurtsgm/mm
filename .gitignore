@@ -29,3 +29,6 @@ mono_crash.*.json
 # Superpowers SDD scratch
 .superpowers/
 .claude/worktrees/
+
+# 產出報表的 Godot import 旁生檔（非遊戲資產）
+docs/balance/*.import
