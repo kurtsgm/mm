@@ -97,9 +97,53 @@ func test_rebuild_empty_disables_processing():
 
 func test_process_applies_bounded_horizontal_only_sway():
 	var l := _layer()
-	l.rebuild([_live("u1", Vector2i(0, 0))])
+	l.rebuild([{"uid": "u1", "group": "no_such_group", "cell": Vector2i(0, 0), "state": 0}])  # 無 idle2 → 晃動 fallback
 	l._process(0.016)
 	var s: Sprite3D = l._sprites["u1"]
 	var max_px: float = MonsterLayer.SWAY_WORLD / s.pixel_size
 	assert_lt(absf(s.offset.x), max_px + 0.0001, "晃動 offset 不超過世界振幅換算")
 	assert_almost_eq(s.offset.y, 0.0, 0.0001, "只左右、不上下")
+
+# ---- idle 兩幀假動畫（有 idle2 的怪）----
+func test_frame_index_swaps_each_period():
+	assert_eq(MonsterLayer.frame_index(0.0, 0.0, 0.4), 0, "t=0 → 第 0 幀")
+	assert_eq(MonsterLayer.frame_index(0.4, 0.0, 0.4), 1, "t=period → 第 1 幀")
+	assert_eq(MonsterLayer.frame_index(0.8, 0.0, 0.4), 0, "t=2·period → 回第 0 幀")
+
+func test_frame_index_phase_offsets_beat():
+	assert_eq(MonsterLayer.frame_index(0.0, 1.0, 0.4), 1, "beat_offset=1 → 提前一拍，t=0 即第 1 幀")
+
+func test_frame_index_guards_zero_period():
+	var idx := MonsterLayer.frame_index(0.5, 0.0, 0.0)
+	assert_true(idx == 0 or idx == 1, "period=0 → max guard，不崩")
+
+func test_rebuild_stores_frame_a_and_b():
+	var l := _layer()
+	l.rebuild([_live("u1", Vector2i(0, 0))])   # group "g" → goblin
+	assert_true(l._frames.has("u1"))
+	assert_not_null(l._frames["u1"]["a"], "frame A（idle 真圖或 placeholder）非 null")
+	assert_true(l._frames["u1"].has("b"), "frame B 鍵存在（值可為 null，goblin_idle_b 未放入時）")
+
+func test_update_frame_swaps_texture_when_second_frame_present():
+	var l := _layer()
+	l.rebuild([_live("u1", Vector2i(0, 0))])
+	var s: Sprite3D = l._sprites["u1"]
+	var tex_a = l._frames["u1"]["a"]
+	var tex_b := ImageTexture.create_from_image(Image.create(32, 48, false, Image.FORMAT_RGBA8))
+	l._frames["u1"]["b"] = tex_b
+	l._cur_frame["u1"] = 0
+	l._phase["u1"] = 0.0
+	l._update_frame("u1", 0.4)   # idx=1 → 切到 b
+	assert_eq(s.texture, tex_b, "有第二幀 → t=period 切到 frame B")
+	l._update_frame("u1", 0.8)   # idx=0 → 切回 a
+	assert_eq(s.texture, tex_a, "回 frame A")
+
+func test_update_frame_falls_back_to_sway_without_second_frame():
+	var l := _layer()
+	l.rebuild([{"uid": "x1", "group": "no_such_group", "cell": Vector2i(0, 0), "state": 0}])  # placeholder, b=null
+	var s: Sprite3D = l._sprites["x1"]
+	l._phase["x1"] = 0.0
+	l._update_frame("x1", 0.45)
+	assert_almost_eq(s.offset.y, 0.0, 0.0001, "fallback 晃動只左右")
+	var max_px: float = MonsterLayer.SWAY_WORLD / s.pixel_size
+	assert_lt(absf(s.offset.x), max_px + 0.0001)

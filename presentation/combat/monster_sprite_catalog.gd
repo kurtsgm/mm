@@ -6,19 +6,21 @@ extends Object
 # 之後逐怪填入；貼圖為去背 alpha PNG（同畫風、同框同比例，見 docs/art-style-guide.md）。
 const _SPRITES := {
 	"goblin": {"idle": "res://content/monsters/sprites/goblin_idle.png",
+		"idle2": "res://content/monsters/sprites/goblin_idle_b.png",
 		"attack": "res://content/monsters/sprites/goblin_attack.png",
 		"hurt": "res://content/monsters/sprites/goblin_hurt.png"},
 }
 
-# 回 {idle,attack,hurt}，每項為 Texture2D 或 null（缺項/未註冊 → null，由呼叫端 fallback base）。
+# 回 {idle,idle2,attack,hurt}，每項為 Texture2D 或 null（缺項/未註冊 → null，由呼叫端 fallback base）。
+# idle2＝大地圖兩幀假動畫的第二幀；缺則 MonsterLayer 退回微幅晃動。
 static func textures_for(monster_id: String) -> Dictionary:
 	if not _SPRITES.has(monster_id):
-		return {"idle": null, "attack": null, "hurt": null}
+		return {"idle": null, "idle2": null, "attack": null, "hurt": null}
 	return _resolve_spec(_SPRITES[monster_id])
 
 # 純路徑解析：路徑非空且存在則 load，否則 null。
 static func _resolve_spec(spec: Dictionary) -> Dictionary:
-	var out := {"idle": null, "attack": null, "hurt": null}
+	var out := {"idle": null, "idle2": null, "attack": null, "hurt": null}
 	for key in out:
 		var path := String(spec.get(key, ""))
 		if path != "" and ResourceLoader.exists(path):
