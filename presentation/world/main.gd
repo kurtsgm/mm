@@ -149,13 +149,16 @@ func _on_entered_cell(global: Vector2i) -> void:
 		return   # 理論上 walkable 格必可反查；防呆
 	var map_id: String = r["map_id"]
 	var local: Vector2i = r["local"]
-	if map_id != GameState.current_map_id:
+	var crossed := map_id != GameState.current_map_id
+	if crossed:
 		_recenter_to(map_id, local, global)
 	# recenter 後 MapManager.current_map ＝玩家所在圖、local ＝該圖 cell：沿用既有內容觸發（pos → local）。
 	GameState.player_pos = local
 	GameState.mark_explored(GameState.current_map_id, local, MapManager.current_map.width, MapManager.current_map.height)
 	GameState.notify_enter(GameState.current_map_id, local)
 	GameState.refresh_collect()
+	if crossed:
+		_mini_map.refresh()
 	var link := MapTransitions.resolve_link(MapManager.current_map, local)
 	if not link.is_empty():
 		_enter_via_link(link["map"], link["entry"])
@@ -273,7 +276,12 @@ func _saved_monster_state(map_id) -> Dictionary:
 	return GameState.monster_state.get(map_id, {})
 
 func _is_passable(cell: Vector2i) -> bool:
-	return _world_grid.is_walkable(cell)   # 統一 grid（外緣無鄰 = 牆）
+	# Phase 1：怪物 passability 侷限焦點圖（鄰圖格留待 Phase 2 全怪上統一 grid）。
+	# 焦點圖在統一 grid 原點 → local==global；超出焦點圖寬高即牆，等價於舊 current_grid.is_walkable。
+	var m := MapManager.current_map
+	if cell.x < 0 or cell.x >= m.width or cell.y < 0 or cell.y >= m.height:
+		return false
+	return _world_grid.is_walkable(cell)
 
 func _start_combat_for_uid(uid: String) -> void:
 	_combat_uid = uid

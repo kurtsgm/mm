@@ -29,6 +29,8 @@ func rebase(delta: Vector2i, new_grid: WorldGrid) -> void:
 	_world_grid = new_grid
 	_pos += delta
 	position += GridGeometry.cell_to_world(delta)
+	# 防呆：目前 entered_cell 在新 tween 建立前同步觸發 recenter，故此分支實務上不會進入
+	# （滑動由 emit 後新建的 tween 保留）；保留以防未來有 mid-tween 的直接 rebase 呼叫端。
 	if _move_tween != null and _move_tween.is_valid() and _move_tween.is_running():
 		_move_tween.kill()
 		_is_busy = true
