@@ -18,6 +18,10 @@ const SKY_PANORAMA := "res://content/sky/citrus_orchard_road_puresky_2k.exr"
 
 var _world_renderer: WorldStitchRenderer
 
+var _overworld_monsters: OverworldMonsters
+var _monster_layer: MonsterLayer
+var _combat_uid: String = ""
+
 var _hud: Hud
 var _combat_layer: CombatLayer
 var _combat: CombatSystem
@@ -43,6 +47,9 @@ func _ready() -> void:
 	_world_renderer = WorldStitchRenderer.new()
 	add_child(_world_renderer)
 	_world_renderer.rebuild(MapManager.current_map)
+	_monster_layer = MonsterLayer.new()
+	add_child(_monster_layer)
+	_rebuild_monsters_for_current_map()
 	_setup_environment()
 	_setup_fade()
 
@@ -141,8 +148,11 @@ func _on_entered_cell(pos: Vector2i) -> void:
 	if not link.is_empty():
 		_enter_via_link(link["map"], link["entry"])
 		return
-	if MapManager.current_map.has_encounter(pos):
-		_start_combat(pos)
+	var res := _overworld_monsters.step(pos, Callable(self, "_is_passable"))
+	_monster_layer.apply_moves(_overworld_monsters.live())
+	GameState.monster_state[GameState.current_map_id] = _overworld_monsters.to_save()   # 每步回寫（S/L 正確）
+	if res["contact"] != "":
+		_start_combat_for_uid(res["contact"])
 		return
 	if _has_unopened_chest(pos):
 		_prompt_chest(pos)
@@ -187,6 +197,7 @@ func _enter_via_link(map_id: String, entry_name: String) -> void:
 	var pos: Vector2i = e.get("pos", dest.start_pos)
 	var facing: int = e.get("facing", GridDirection.Dir.NORTH)
 	_world_renderer.rebuild(MapManager.current_map)
+	_rebuild_monsters_for_current_map()
 	_player.setup(MapManager.current_grid, pos, facing)
 	GameState.current_map_id = map_id
 	GameState.player_pos = pos
@@ -214,6 +225,7 @@ func _on_edge_exit_attempted(move_dir: int) -> void:
 		MapManager.enter_map(GameState.current_map_id, GameState.cleared_for(GameState.current_map_id))
 		return
 	_world_renderer.rebuild(MapManager.current_map)
+	_rebuild_monsters_for_current_map()
 	_player.setup(MapManager.current_grid, cell, GameState.player_facing)
 	GameState.current_map_id = neighbor_id
 	GameState.player_pos = cell
@@ -244,6 +256,20 @@ func _set_overworld_hud_visible(on: bool) -> void:
 	if _quest_tracker != null:
 		_quest_tracker.visible = on
 
+func _rebuild_monsters_for_current_map() -> void:
+	var map := MapManager.current_map
+	_overworld_monsters = OverworldMonsters.new()
+	_overworld_monsters.init_from_map(map, Callable(GameState, "is_defeated"))
+	_overworld_monsters.apply_saved(GameState.monster_state.get(map.map_id, {}))
+	_monster_layer.rebuild(_overworld_monsters.live())
+
+func _is_passable(cell: Vector2i) -> bool:
+	return MapManager.current_grid.is_walkable(cell)   # is_walkable 已含 in_bounds
+
+func _start_combat_for_uid(uid: String) -> void:
+	_combat_uid = uid
+	_start_combat(_overworld_monsters.home_of(uid))   # 戰鬥身分錨在 home 格（MapData 仍持有 group/uid）
+
 func _on_combat_item_consumed(item_id: String) -> void:
 	GameState.inventory.remove(item_id, 1)
 
@@ -256,6 +282,9 @@ func _on_combat_finished(result: int) -> void:
 		GameState.refresh_collect()
 		MapManager.current_map.clear_encounter(_combat_pos)
 		GameState.mark_encounter_cleared(MapManager.current_map.map_id, _combat_pos)
+		_overworld_monsters.remove(_combat_uid)
+		_monster_layer.rebuild(_overworld_monsters.live())
+		GameState.monster_state[MapManager.current_map.map_id] = _overworld_monsters.to_save()
 		GameState.message_log.push("戰鬥勝利！")
 		if _has_unopened_chest(_combat_pos):
 			_prompt_chest(_combat_pos)
@@ -467,6 +496,7 @@ func _on_loaded() -> void:
 	# 需單區重繪寶箱層讓開/關視覺對齊讀入的 opened_objects。
 	# （未來若 edge-stitch 的 wild_* 也放寶箱，須改為重繪所有區的寶箱層。）
 	_world_renderer.refresh_objects(MapManager.current_map)
+	_rebuild_monsters_for_current_map()
 	_player.setup(MapManager.current_grid, GameState.player_pos, GameState.player_facing)
 	GameState.mark_explored(GameState.current_map_id, GameState.player_pos, MapManager.current_map.width, MapManager.current_map.height)
 	_mini_map.refresh()
