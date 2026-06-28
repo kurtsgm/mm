@@ -2,7 +2,7 @@ class_name Leveling
 extends Object
 
 const XP_A := 40
-const XP_B_PCT := 160   # 指數 1.6（整數百分比表示）
+const XP_B_PCT := 140   # 指數 1.4（climb-to-100 初值；Task 7 調定）
 
 # 從 level 升到 level+1 所需經驗
 static func xp_for_level(level: int) -> int:
