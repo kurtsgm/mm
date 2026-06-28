@@ -49,3 +49,36 @@ static func _as_set(occupied) -> Dictionary:
 		for c in occupied:
 			out[c] = true
 	return out
+
+# 從地圖 encounter 建立怪清單；已擊敗（is_defeated 注入）者跳過。每隻起始 home=cell=encounter 格、IDLE。
+func init_from_map(map: MapData, is_defeated: Callable) -> void:
+	_list.clear()
+	for cell in map.encounters:
+		var uid := map.get_encounter_uid(cell)
+		if is_defeated.is_valid() and is_defeated.call(uid):
+			continue
+		_list.append({
+			"uid": uid,
+			"group": map.get_encounter(cell),
+			"home": cell,
+			"cell": cell,
+			"state": State.IDLE,
+		})
+
+# 給呈現層用的快照（不含 home/內部欄位）。
+func live() -> Array:
+	var out: Array = []
+	for m in _list:
+		out.append({"uid": m["uid"], "group": m["group"], "cell": m["cell"], "state": m["state"]})
+	return out
+
+func home_of(uid: String) -> Vector2i:
+	for m in _list:
+		if m["uid"] == uid:
+			return m["home"]
+	return Vector2i(-1, -1)
+
+func remove(uid: String) -> void:
+	for i in range(_list.size() - 1, -1, -1):
+		if _list[i]["uid"] == uid:
+			_list.remove_at(i)

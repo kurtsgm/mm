@@ -62,3 +62,56 @@ func test_next_step_avoids_occupied():
 func test_next_step_occupied_as_array():
 	var step := OverworldMonsters.next_step(Vector2i(0, 0), Vector2i(2, 0), Callable(self, "_open"), [Vector2i(1, 0)])
 	assert_ne(step, Vector2i(1, 0), "occupied 可為 Array")
+
+# ---- lifecycle ----
+func _map_with_encounters() -> MapData:
+	var map := MapData.new()
+	map.encounters = {Vector2i(2, 2): "g", Vector2i(5, 1): "o"}
+	map.encounter_uids = {Vector2i(2, 2): "u-g", Vector2i(5, 1): "u-o"}
+	return map
+
+func _none_defeated(_uid: String) -> bool:
+	return false
+
+func test_init_from_map_brings_group_home_cell_idle():
+	var om := OverworldMonsters.new()
+	om.init_from_map(_map_with_encounters(), Callable(self, "_none_defeated"))
+	var rows := om.live()
+	assert_eq(rows.size(), 2)
+	# 找出 u-g 那筆
+	var g: Dictionary = {}
+	for r in rows:
+		if r["uid"] == "u-g":
+			g = r
+	assert_eq(g["group"], "g")
+	assert_eq(g["cell"], Vector2i(2, 2))
+	assert_eq(g["state"], OverworldMonsters.State.IDLE)
+	assert_eq(om.home_of("u-g"), Vector2i(2, 2))
+
+func test_init_from_map_excludes_defeated():
+	var om := OverworldMonsters.new()
+	var is_def := func(uid: String) -> bool: return uid == "u-o"
+	om.init_from_map(_map_with_encounters(), is_def)
+	var rows := om.live()
+	assert_eq(rows.size(), 1)
+	assert_eq(rows[0]["uid"], "u-g")
+
+func test_live_has_no_home_key():
+	var om := _om([_mk("a", Vector2i(0, 0), Vector2i(1, 1), OverworldMonsters.State.IDLE)])
+	var rows := om.live()
+	assert_false(rows[0].has("home"), "live() 不外洩 home（呈現層不需要）")
+	assert_true(rows[0].has("cell"))
+
+func test_home_of_unknown_returns_sentinel():
+	var om := _om([])
+	assert_eq(om.home_of("nope"), Vector2i(-1, -1))
+
+func test_remove_drops_monster():
+	var om := _om([
+		_mk("a", Vector2i(0, 0), Vector2i(0, 0), OverworldMonsters.State.IDLE),
+		_mk("b", Vector2i(1, 0), Vector2i(1, 0), OverworldMonsters.State.IDLE),
+	])
+	om.remove("a")
+	var rows := om.live()
+	assert_eq(rows.size(), 1)
+	assert_eq(rows[0]["uid"], "b")
