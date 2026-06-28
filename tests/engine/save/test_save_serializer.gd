@@ -75,8 +75,8 @@ func test_from_dict_rejects_version_mismatch():
 func test_from_dict_rejects_missing_state():
 	assert_null(SaveSerializer.from_dict({"version": SaveSerializer.VERSION}))
 
-func test_to_dict_version_is_10():
-	assert_eq(SaveSerializer.to_dict(_sample())["version"], 10)
+func test_to_dict_version_is_11():
+	assert_eq(SaveSerializer.to_dict(_sample())["version"], 11)
 
 func test_roundtrip_explored_multi_map():
 	var d := _sample()
@@ -124,3 +124,31 @@ func test_opened_objects_absent_is_empty():
 	var back := SaveSerializer.from_dict(raw)
 	assert_not_null(back)
 	assert_eq(back.opened_objects, {})
+
+func test_roundtrip_monster_state():
+	var d := SaveData.new()
+	d.monster_state = {
+		"wild_ne": {
+			"u1": {"cell": Vector2i(3, 4), "state": 1},
+			"u2": {"cell": Vector2i(0, 0), "state": 0},
+		},
+	}
+	var back := SaveSerializer.from_dict(SaveSerializer.to_dict(d))
+	assert_not_null(back)
+	assert_eq(back.monster_state["wild_ne"]["u1"]["cell"], Vector2i(3, 4))
+	assert_eq(back.monster_state["wild_ne"]["u1"]["state"], 1)
+	assert_eq(back.monster_state["wild_ne"]["u2"]["cell"], Vector2i(0, 0))
+	assert_eq(back.monster_state["wild_ne"]["u2"]["state"], 0)
+
+func test_monster_state_absent_is_empty():
+	var raw := {"version": SaveSerializer.VERSION, "state": {"player_pos": [0, 0]}}
+	var back := SaveSerializer.from_dict(raw)
+	assert_not_null(back)
+	assert_eq(back.monster_state, {})
+
+func test_monster_state_malformed_cell_skipped():
+	var raw := SaveSerializer.to_dict(_sample())
+	raw["state"]["monster_state"] = {"wild_ne": {"u1": {"cell": [9], "state": 2}}}  # size<2 → 畸形
+	var back := SaveSerializer.from_dict(raw)
+	assert_not_null(back)
+	assert_false(back.monster_state["wild_ne"].has("u1"), "畸形座標被略過")

@@ -16,9 +16,8 @@ var _regions: Dictionary = {}  # map_id -> Node3D 容器
 func rebuild(current_map: MapData) -> void:
 	if current_map == null:
 		return
-	var half: int = max(current_map.width, current_map.height)
-	var center := Vector2i(current_map.width / 2, current_map.height / 2)
-	var placed := WorldStitch.place(current_map, loader, half, center)
+	var win := WorldStitch.window_for(current_map)
+	var placed := WorldStitch.place(current_map, loader, win["half"], win["center"])
 	# 新集合的 id
 	var keep := {}
 	for node in placed:

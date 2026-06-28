@@ -30,3 +30,9 @@ func test_inventory_field_defaults_null_and_holds():
 	d.inventory = Inventory.new()
 	d.inventory.add("potion", 1)
 	assert_eq(d.inventory.count_of("potion"), 1)
+
+func test_monster_state_defaults_empty_and_holds():
+	var d := SaveData.new()
+	assert_eq(d.monster_state.size(), 0)
+	d.monster_state = {"m": {"u": {"cell": Vector2i(1, 2), "state": 1}}}
+	assert_eq(d.monster_state["m"]["u"]["cell"], Vector2i(1, 2))

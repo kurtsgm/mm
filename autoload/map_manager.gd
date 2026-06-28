@@ -5,7 +5,6 @@ extends Node
 const MAPS_DIR := "res://content/maps"
 
 var current_map: MapData
-var current_grid: GridData
 
 func load_text(text: String) -> MapData:
 	var map := MapImporter.parse(text)
@@ -23,7 +22,7 @@ func load_text_file(path: String) -> MapData:
 func load_by_id(id: String) -> MapData:
 	return load_text_file("%s/%s.json" % [MAPS_DIR, id])
 
-# 無副作用載入（拼裝鄰圖用）：不動 current_map/current_grid；失敗回 null（不 assert）。
+# 無副作用載入（拼裝鄰圖用）：不動 current_map；失敗回 null（不 assert）。
 func peek_map(id: String) -> MapData:
 	var path := "%s/%s.json" % [MAPS_DIR, id]
 	if not FileAccess.file_exists(path):
@@ -39,7 +38,6 @@ func peek_map(id: String) -> MapData:
 
 func _set_current(map: MapData) -> void:
 	current_map = map
-	current_grid = MapBuilder.to_grid_data(map)
 
 # 載入地圖並重套「已清遭遇」座標（切換/讀檔重入地圖共用，避免已清的怪復活）。
 func enter_map(map_id: String, cleared_positions: Array = []) -> MapData:

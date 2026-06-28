@@ -2,16 +2,14 @@ extends GutTest
 
 const MapManagerScript := preload("res://autoload/map_manager.gd")
 
-func test_load_text_sets_current_map_and_grid():
+func test_load_text_sets_current_map():
 	var mm = MapManagerScript.new()
 	add_child_autofree(mm)
 	var map := mm.load_text(JSON.stringify({"grid": ["###", "#@#", "###"]}))
 	assert_not_null(map)
 	assert_eq(mm.current_map, map)
-	assert_eq(mm.current_grid.width, 3)
-	assert_eq(mm.current_grid.height, 3)
-	assert_true(mm.current_grid.is_solid(Vector2i(0, 0)))
-	assert_true(mm.current_grid.is_walkable(Vector2i(1, 1)))
+	assert_eq(mm.current_map.width, 3)
+	assert_eq(mm.current_map.height, 3)
 
 func test_load_by_id_loads_level01_and_sets_map_id():
 	var mm = MapManagerScript.new()
@@ -20,7 +18,7 @@ func test_load_by_id_loads_level01_and_sets_map_id():
 	assert_not_null(map)
 	assert_eq(map.map_id, "level01")
 	assert_eq(mm.current_map, map)
-	assert_gt(mm.current_grid.width, 0)
+	assert_gt(mm.current_map.width, 0)
 	assert_true(mm.current_map.has_encounter(Vector2i(2, 2)), "level01 (2,2) 應有遭遇")
 
 func test_enter_map_clears_given_encounters():

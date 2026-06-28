@@ -1,0 +1,294 @@
+extends GutTest
+
+# ---- helpers (used by later tasks too) ----
+func _open(_c: Vector2i) -> bool:
+	return true
+
+func _mk(uid: String, home: Vector2i, cell: Vector2i, state: int) -> Dictionary:
+	return {"uid": uid, "group": "g", "origin_map": "m", "origin_off": Vector2i.ZERO, "home": home, "cell": cell, "state": state}
+
+func _om(entries: Array) -> OverworldMonsters:
+	var om := OverworldMonsters.new()
+	om._list = entries
+	return om
+
+# ---- cheb ----
+func test_cheb_diagonal_is_max_axis():
+	assert_eq(OverworldMonsters.cheb(Vector2i(0, 0), Vector2i(3, 2)), 3)
+
+func test_cheb_is_symmetric():
+	assert_eq(OverworldMonsters.cheb(Vector2i(5, 1), Vector2i(2, 4)), 3)
+
+func test_cheb_zero_for_same_cell():
+	assert_eq(OverworldMonsters.cheb(Vector2i(2, 2), Vector2i(2, 2)), 0)
+
+func test_constants():
+	assert_eq(OverworldMonsters.AGGRO_RANGE, 4)
+	assert_eq(OverworldMonsters.LEASH_RANGE, 8)
+
+# ---- next_step (BFS) ----
+func _walls_passable(walls: Dictionary, w: int, h: int) -> Callable:
+	return func(c: Vector2i) -> bool:
+		return c.x >= 0 and c.x < w and c.y >= 0 and c.y < h and not walls.has(c)
+
+func test_next_step_straight_line():
+	var step := OverworldMonsters.next_step(Vector2i(0, 0), Vector2i(3, 0), Callable(self, "_open"), {})
+	assert_eq(step, Vector2i(1, 0))
+
+func test_next_step_from_equals_goal():
+	var step := OverworldMonsters.next_step(Vector2i(2, 2), Vector2i(2, 2), Callable(self, "_open"), {})
+	assert_eq(step, Vector2i(2, 2))
+
+func test_next_step_around_wall():
+	var passable := _walls_passable({Vector2i(1, 0): true}, 3, 3)
+	var step := OverworldMonsters.next_step(Vector2i(0, 0), Vector2i(2, 0), passable, {})
+	assert_eq(step, Vector2i(0, 1), "牆擋住直線 → 先往下繞")
+
+func test_next_step_no_path_returns_from():
+	var passable := _walls_passable({Vector2i(1, 0): true}, 3, 1)   # 單列走道，被牆封死
+	var step := OverworldMonsters.next_step(Vector2i(0, 0), Vector2i(2, 0), passable, {})
+	assert_eq(step, Vector2i(0, 0), "無路 → 原地不動")
+
+func test_next_step_goal_terminal_even_if_not_passable():
+	var passable := func(_c: Vector2i) -> bool: return false   # 任何格都不可踏
+	var step := OverworldMonsters.next_step(Vector2i(0, 0), Vector2i(1, 0), passable, {})
+	assert_eq(step, Vector2i(1, 0), "goal 一律可當終點（怪能踏上玩家格）")
+
+func test_next_step_avoids_occupied():
+	var occupied := {Vector2i(1, 0): true}
+	var step := OverworldMonsters.next_step(Vector2i(0, 0), Vector2i(2, 0), Callable(self, "_open"), occupied)
+	assert_ne(step, Vector2i(1, 0), "被占用的格不踏")
+
+func test_next_step_occupied_as_array():
+	var step := OverworldMonsters.next_step(Vector2i(0, 0), Vector2i(2, 0), Callable(self, "_open"), [Vector2i(1, 0)])
+	assert_ne(step, Vector2i(1, 0), "occupied 可為 Array")
+
+# ---- lifecycle ----
+func _map_with_encounters() -> MapData:
+	var map := MapData.new()
+	map.encounters = {Vector2i(2, 2): "g", Vector2i(5, 1): "o"}
+	map.encounter_uids = {Vector2i(2, 2): "u-g", Vector2i(5, 1): "u-o"}
+	return map
+
+func _none_defeated(_uid: String) -> bool:
+	return false
+
+func test_init_from_map_brings_group_home_cell_idle():
+	var om := OverworldMonsters.new()
+	om.init_from_map(_map_with_encounters(), Callable(self, "_none_defeated"))
+	var rows := om.live()
+	assert_eq(rows.size(), 2)
+	# 找出 u-g 那筆
+	var g: Dictionary = {}
+	for r in rows:
+		if r["uid"] == "u-g":
+			g = r
+	assert_eq(g["group"], "g")
+	assert_eq(g["cell"], Vector2i(2, 2))
+	assert_eq(g["state"], OverworldMonsters.State.IDLE)
+	assert_eq(om.home_of("u-g"), Vector2i(2, 2))
+
+func test_init_from_map_excludes_defeated():
+	var om := OverworldMonsters.new()
+	var is_def := func(uid: String) -> bool: return uid == "u-o"
+	om.init_from_map(_map_with_encounters(), is_def)
+	var rows := om.live()
+	assert_eq(rows.size(), 1)
+	assert_eq(rows[0]["uid"], "u-g")
+
+func test_live_has_no_home_key():
+	var om := _om([_mk("a", Vector2i(0, 0), Vector2i(1, 1), OverworldMonsters.State.IDLE)])
+	var rows := om.live()
+	assert_false(rows[0].has("home"), "live() 不外洩 home（呈現層不需要）")
+	assert_true(rows[0].has("cell"))
+
+func test_home_of_unknown_returns_sentinel():
+	var om := _om([])
+	assert_eq(om.home_of("nope"), Vector2i(-1, -1))
+
+func test_remove_drops_monster():
+	var om := _om([
+		_mk("a", Vector2i(0, 0), Vector2i(0, 0), OverworldMonsters.State.IDLE),
+		_mk("b", Vector2i(1, 0), Vector2i(1, 0), OverworldMonsters.State.IDLE),
+	])
+	om.remove("a")
+	var rows := om.live()
+	assert_eq(rows.size(), 1)
+	assert_eq(rows[0]["uid"], "b")
+
+# ---- step() state machine ----
+func test_step_aggro_at_range_4_starts_chasing():
+	var om := _om([_mk("a", Vector2i(0, 0), Vector2i(0, 0), OverworldMonsters.State.IDLE)])
+	var res := om.step(Vector2i(4, 0), Callable(self, "_open"))
+	var m: Dictionary = om.live()[0]
+	assert_eq(m["state"], OverworldMonsters.State.CHASING, "距離 4 → 開始追")
+	assert_eq(m["cell"], Vector2i(1, 0), "並朝玩家走一步")
+	assert_eq(res["moved"], ["a"])
+
+func test_step_no_aggro_at_range_5_stays_idle():
+	var om := _om([_mk("a", Vector2i(0, 0), Vector2i(0, 0), OverworldMonsters.State.IDLE)])
+	var res := om.step(Vector2i(5, 0), Callable(self, "_open"))
+	var m: Dictionary = om.live()[0]
+	assert_eq(m["state"], OverworldMonsters.State.IDLE, "距離 5 不追")
+	assert_eq(m["cell"], Vector2i(0, 0), "不動")
+	assert_eq(res["moved"], [])
+
+func test_step_chasing_approaches_player():
+	var om := _om([_mk("a", Vector2i(0, 0), Vector2i(2, 0), OverworldMonsters.State.CHASING)])
+	om.step(Vector2i(6, 0), Callable(self, "_open"))
+	assert_eq(om.live()[0]["cell"], Vector2i(3, 0), "CHASING 逼近一步")
+
+func test_step_leash_beyond_8_returns_home():
+	var om := _om([_mk("a", Vector2i(0, 0), Vector2i(9, 0), OverworldMonsters.State.CHASING)])
+	om.step(Vector2i(10, 0), Callable(self, "_open"))
+	var m: Dictionary = om.live()[0]
+	assert_eq(m["state"], OverworldMonsters.State.RETURNING, "離 home 9>8 → 放棄返家")
+	assert_eq(m["cell"], Vector2i(8, 0), "本步改朝 home")
+
+func test_step_returning_ignores_player():
+	var om := _om([_mk("a", Vector2i(0, 0), Vector2i(2, 0), OverworldMonsters.State.RETURNING)])
+	om.step(Vector2i(3, 0), Callable(self, "_open"))   # 玩家就在旁邊
+	var m: Dictionary = om.live()[0]
+	assert_eq(m["state"], OverworldMonsters.State.RETURNING, "返家途中無視玩家")
+	assert_eq(m["cell"], Vector2i(1, 0), "繼續朝 home 走")
+
+func test_step_returning_reaches_home_becomes_idle():
+	var om := _om([_mk("a", Vector2i(0, 0), Vector2i(1, 0), OverworldMonsters.State.RETURNING)])
+	om.step(Vector2i(9, 9), Callable(self, "_open"))
+	var m: Dictionary = om.live()[0]
+	assert_eq(m["cell"], Vector2i(0, 0))
+	assert_eq(m["state"], OverworldMonsters.State.IDLE, "抵 home → IDLE")
+
+func test_step_contact_player_walks_into_standing_monster():
+	var om := _om([_mk("a", Vector2i(3, 3), Vector2i(3, 3), OverworldMonsters.State.IDLE)])
+	var res := om.step(Vector2i(3, 3), Callable(self, "_open"))   # 玩家走進站怪
+	assert_eq(res["contact"], "a")
+	assert_eq(res["moved"], [], "即時接觸不移動任何怪")
+	assert_eq(om.live()[0]["cell"], Vector2i(3, 3), "怪沒移動")
+
+func test_step_contact_monster_walks_into_player():
+	var om := _om([_mk("a", Vector2i(0, 0), Vector2i(1, 0), OverworldMonsters.State.CHASING)])
+	var res := om.step(Vector2i(2, 0), Callable(self, "_open"))
+	assert_eq(res["contact"], "a", "怪走進玩家格 → 接觸")
+	assert_true(res["moved"].has("a"))
+
+func test_step_two_monsters_never_overlap():
+	# 兩怪同時想往玩家走；占用更新確保不疊格。
+	var om := _om([
+		_mk("a", Vector2i(0, 1), Vector2i(0, 1), OverworldMonsters.State.CHASING),
+		_mk("b", Vector2i(2, 1), Vector2i(2, 1), OverworldMonsters.State.CHASING),
+	])
+	var passable := _walls_passable({}, 3, 3)
+	om.step(Vector2i(1, 0), passable)
+	var rows := om.live()
+	assert_ne(rows[0]["cell"], rows[1]["cell"], "兩怪不重疊")
+
+# ---- to_save ----
+func test_to_save_groups_by_origin_map():
+	var om := _om([_mk("a", Vector2i(0, 0), Vector2i(3, 4), OverworldMonsters.State.CHASING)])
+	var saved := om.to_save()
+	assert_true(saved.has("m"), "以 origin_map 分組")
+	assert_eq(saved["m"]["a"]["cell"], Vector2i(3, 4), "origin_off=0 → 原生相對 == 全域")
+	assert_eq(saved["m"]["a"]["state"], OverworldMonsters.State.CHASING)
+
+func test_to_save_projects_global_back_to_origin_relative():
+	# 東鄰 origin_off=(5,0)、全域 cell=(6,2) → 原生相對 = (1,2)
+	var e := _mk("a", Vector2i(5, 0), Vector2i(6, 2), OverworldMonsters.State.IDLE)
+	e["origin_off"] = Vector2i(5, 0)
+	var om := _om([e])
+	assert_eq(om.to_save()["m"]["a"]["cell"], Vector2i(1, 2), "全域 - origin_off = 原生相對 local")
+
+# ---- combat_info / init_from_map origin ----
+func test_combat_info_returns_group_origin_home_local():
+	var e := _mk("a", Vector2i(7, 2), Vector2i(9, 2), OverworldMonsters.State.CHASING)
+	e["origin_map"] = "north"
+	e["origin_off"] = Vector2i(5, 0)
+	var om := _om([e])
+	var info := om.combat_info("a")
+	assert_eq(info["group"], "g")
+	assert_eq(info["origin_map"], "north")
+	assert_eq(info["home_local"], Vector2i(2, 2), "home(7,2) - origin_off(5,0) = (2,2)")
+
+func test_combat_info_unknown_returns_empty():
+	assert_eq(_om([]).combat_info("nope"), {})
+
+func test_init_from_map_sets_origin_fields():
+	var map := _map_with_encounters()
+	map.map_id = "home"
+	var om := OverworldMonsters.new()
+	om.init_from_map(map, Callable(self, "_none_defeated"))
+	var saved := om.to_save()
+	assert_true(saved.has("home"), "init_from_map 設好 origin_map")
+	assert_true(saved["home"].has("u-g"))
+	assert_eq(saved["home"]["u-g"]["cell"], Vector2i(2, 2), "origin_off=0 → 原生相對 == local")
+
+func _enc_map(id: String, w: int, h: int, encs: Dictionary, uids: Dictionary) -> MapData:
+	var m := MapData.new()
+	m.map_id = id
+	m.width = w
+	m.height = h
+	m.encounters = encs
+	m.encounter_uids = uids
+	return m
+
+func _region(map: MapData, ox: int, oy: int) -> Dictionary:
+	return {"map": map, "ox": ox, "oy": oy}
+
+func _no_saved(_map_id: String) -> Dictionary:
+	return {}
+
+func test_init_from_regions_projects_current_and_neighbor_to_global():
+	var a := _enc_map("a", 5, 5, {Vector2i(0, 0): "g"}, {Vector2i(0, 0): "u-a"})
+	var e := _enc_map("e", 5, 5, {Vector2i(1, 2): "g"}, {Vector2i(1, 2): "u-e"})
+	var om := OverworldMonsters.new()
+	om.init_from_regions([_region(a, 0, 0), _region(e, 5, 0)], Callable(self, "_none_defeated"), Callable(self, "_no_saved"))
+	var rows := om.live()
+	assert_eq(rows.size(), 2, "含當前圖 + 鄰圖（統一 live 集）")
+	var by_uid := {}
+	for r in rows:
+		by_uid[r["uid"]] = r
+	assert_eq(by_uid["u-a"]["cell"], Vector2i(0, 0), "當前圖在原點")
+	assert_eq(by_uid["u-e"]["cell"], Vector2i(6, 2), "鄰圖怪投影到全域 (1+5, 2)")
+
+func test_init_from_regions_excludes_defeated():
+	var e := _enc_map("e", 5, 5, {Vector2i(1, 1): "g"}, {Vector2i(1, 1): "u-e"})
+	var is_def := func(uid: String) -> bool: return uid == "u-e"
+	var om := OverworldMonsters.new()
+	om.init_from_regions([_region(e, 0, 0)], is_def, Callable(self, "_no_saved"))
+	assert_eq(om.live().size(), 0)
+
+func test_init_from_regions_applies_saved_with_offset():
+	var e := _enc_map("e", 5, 5, {Vector2i(1, 1): "g"}, {Vector2i(1, 1): "u-e"})
+	var saved := func(mid: String) -> Dictionary:
+		if mid == "e":
+			return {"u-e": {"cell": Vector2i(3, 3), "state": OverworldMonsters.State.CHASING}}
+		return {}
+	var om := OverworldMonsters.new()
+	om.init_from_regions([_region(e, 5, 0)], Callable(self, "_none_defeated"), saved)
+	var m: Dictionary = om.live()[0]
+	assert_eq(m["cell"], Vector2i(8, 3), "原生相對(3,3) + offset(5,0) = 全域(8,3)")
+	assert_eq(m["state"], OverworldMonsters.State.CHASING)
+
+func test_init_from_regions_handles_non_dictionary_saved():
+	var e := _enc_map("e", 5, 5, {Vector2i(0, 0): "g"}, {Vector2i(0, 0): "u-e"})
+	var bad := func(_mid: String): return null
+	var om := OverworldMonsters.new()
+	om.init_from_regions([_region(e, 5, 0)], Callable(self, "_none_defeated"), bad)
+	assert_eq(om.live()[0]["cell"], Vector2i(5, 0), "non-dict saved → 當空、用 home(全域)")
+
+func test_init_from_regions_roundtrip_with_wandered_monster():
+	# 怪被引離原生圖：e 為東鄰(ox=5)，存檔越界原生相對 (-1,2) → 全域 (4,2)（已踏進西側當前圖）
+	var e := _enc_map("e", 5, 5, {Vector2i(1, 1): "g"}, {Vector2i(1, 1): "u-e"})
+	var saved := func(mid: String) -> Dictionary:
+		if mid == "e":
+			return {"u-e": {"cell": Vector2i(-1, 2), "state": OverworldMonsters.State.CHASING}}
+		return {}
+	var om := OverworldMonsters.new()
+	om.init_from_regions([_region(e, 5, 0)], Callable(self, "_none_defeated"), saved)
+	assert_eq(om.live()[0]["cell"], Vector2i(4, 2), "越界原生相對也能投影（怪已跨界）")
+	assert_eq(om.to_save()["e"]["u-e"]["cell"], Vector2i(-1, 2), "to_save 投影回越界原生相對（round-trip）")
+
+func test_init_from_regions_skips_null_map():
+	var om := OverworldMonsters.new()
+	om.init_from_regions([{"map": null, "ox": 0, "oy": 0}], Callable(self, "_none_defeated"), Callable(self, "_no_saved"))
+	assert_eq(om.live().size(), 0, "region map 為 null → 略過、不崩")

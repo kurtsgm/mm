@@ -14,4 +14,5 @@ var flags: Dictionary = {}  # String flag -> true
 var triggered_scenes: Dictionary = {}  # String map_id -> Array[Vector2i]
 var quests: Dictionary = {}  # String id -> { status, stage }
 var defeated_encounters: Dictionary = {}  # uid -> true
+var monster_state: Dictionary = {}  # String map_id -> { uid -> {"cell": Vector2i, "state": int} }（大地圖怪位置/狀態）
 var tracked_quest: String = ""  # 追蹤中任務 id（"" = 無）

@@ -144,3 +144,72 @@ func test_flash_missing_monster_no_crash():
 	var ghost := _monster("Ghost", 10)
 	st.flash(ghost)   # 不存在 → 安靜 return
 	assert_eq(st._anim.size(), 1)
+
+# ---- 真美術接通：base 回退 idle + 依貼圖尺寸正規化顯示高度 ----
+
+func _tex_tall(h: int) -> Texture2D:
+	var img := Image.create(2, h, false, Image.FORMAT_RGBA8)
+	img.fill(Color.GREEN)
+	return ImageTexture.create_from_image(img)
+
+func _goblin_monster() -> Monster:
+	var m := _monster("Goblin", 10)
+	m.monster_id = "goblin"
+	return m
+
+func test_base_texture_prefers_idle():
+	var idle := _tex(Color.GREEN)
+	var ph := _tex(Color.RED)
+	assert_eq(CombatStage.base_texture(idle, ph), idle, "有 idle 真圖 → base 用 idle")
+
+func test_base_texture_falls_back_to_placeholder():
+	var ph := _tex(Color.RED)
+	assert_eq(CombatStage.base_texture(null, ph), ph, "無 idle → base 用 placeholder")
+
+func test_pixel_size_normalizes_by_height():
+	assert_almost_eq(CombatStage.pixel_size_for(_tex_tall(1000), 2.0), 0.002, 0.0001, "1000px 高 → 2.0/1000")
+	assert_almost_eq(CombatStage.pixel_size_for(_tex_tall(100), 2.0), 0.02, 0.0001, "100px 高 → 2.0/100")
+
+func test_pixel_size_null_safe():
+	assert_eq(CombatStage.pixel_size_for(null, 2.0), 2.0, "null → 除以 1，不 crash")
+
+func test_rebuild_goblin_uses_idle_texture_and_normalized_size():
+	var g := _goblin_monster()
+	var st := _stage_with([g])
+	var s: Sprite3D = st._sprites[g]
+	var idle: Texture2D = MonsterSpriteCatalog.textures_for("goblin")["idle"]
+	assert_eq(s.texture, idle, "初始顯示 goblin idle 真圖")
+	assert_eq(st._textures[s]["base"], idle, "缺態回退 idle 真圖（非紅塊 placeholder）")
+	assert_almost_eq(s.pixel_size, CombatStage.pixel_size_for(idle, CombatStage.DISPLAY_HEIGHT), 0.0001, "pixel_size 依貼圖高度正規化")
+
+func test_apply_texture_recomputes_pixel_size_on_swap():
+	var a := _monster("A", 10)
+	var st := _stage_with([a])
+	var s: Sprite3D = st._sprites[a]
+	var tall := _tex_tall(500)
+	st._apply_texture(s, tall)   # 換到不同高度的貼圖
+	assert_eq(s.texture, tall)
+	assert_almost_eq(s.pixel_size, CombatStage.pixel_size_for(tall, CombatStage.DISPLAY_HEIGHT), 0.0001, "換圖時 pixel_size 跟著貼圖高度重算（不會大小跳動）")
+
+# ---- 腳貼地（修漂浮）----
+func test_feet_offset_pure():
+	assert_almost_eq(CombatStage.feet_offset(1.2, 2.0), -0.2, 0.0001, "眼高 1.2、顯示高 2.0 → 腳偏移 -0.2")
+
+func test_feet_offset_zero_eye_height():
+	assert_almost_eq(CombatStage.feet_offset(0.0, 2.0), 1.0, 0.0001, "眼高 0 → 中心抬到地板上方 1.0")
+
+func test_setup_records_feet_y_from_camera():
+	var cam := Camera3D.new()
+	add_child_autofree(cam)
+	cam.position.y = 1.2
+	var st := CombatStage.new()
+	add_child_autofree(st)
+	st.setup(cam)
+	assert_almost_eq(st._feet_y, -0.2, 0.0001, "眼高 1.2 → _feet_y = -0.2")
+
+func test_rebuild_places_sprite_at_feet_y():
+	var a := _monster("A", 10)
+	var st := _stage_with([a])   # 此 helper 相機在原點，_feet_y = 1.0
+	var s: Sprite3D = st._sprites[a]
+	assert_almost_eq(s.position.y, st._feet_y, 0.0001, "billboard 不再寫死 y=0.0（漂浮），改用 _feet_y")
+	assert_almost_eq(st._base_pos[s].y, st._feet_y, 0.0001, "base_pos 以 _feet_y 為基準（idle/attack/hit 都對）")

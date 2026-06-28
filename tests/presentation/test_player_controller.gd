@@ -1,5 +1,41 @@
 extends GutTest
 
+var _world := {}
+
+func _floor_map(id: String, w: int, h: int, neighbors := {}) -> MapData:
+	var m := MapData.new()
+	m.map_id = id
+	m.width = w
+	m.height = h
+	m.neighbors = neighbors
+	var t := PackedInt32Array()
+	t.resize(w * h)
+	m.tiles = t
+	return m
+
+func _with_wall(m: MapData, cell: Vector2i) -> MapData:
+	var t := m.tiles
+	t[cell.y * m.width + cell.x] = MapData.TileType.WALL
+	m.tiles = t
+	return m
+
+func _loader(id: String) -> MapData:
+	return _world.get(id, null)
+
+func _null_loader(_id: String) -> MapData:
+	return null
+
+func _wg(map: MapData, loader := Callable()) -> WorldGrid:
+	if not loader.is_valid():
+		loader = Callable(self, "_null_loader")
+	return WorldGrid.new(map, loader)
+
+func _make_pc(world_grid: WorldGrid, pos: Vector2i, facing: int) -> PlayerController:
+	var pc := PlayerController.new()
+	add_child_autofree(pc)
+	pc.setup(world_grid, pos, facing)
+	return pc
+
 func test_nearest_equivalent_angle_shortest_path():
 	var pc := PlayerController.new()
 	add_child_autofree(pc)
@@ -25,70 +61,76 @@ func test_input_actions_registered():
 		assert_true(InputMap.has_action(action), "missing input action: %s" % action)
 		assert_gt(InputMap.action_get_events(action).size(), 0, "no key bound to %s" % action)
 
-func _make_pc(grid: GridData, pos: Vector2i, facing: int) -> PlayerController:
-	var pc := PlayerController.new()
-	add_child_autofree(pc)
-	pc.setup(grid, pos, facing)
-	return pc
+func test_turn_emits_facing_changed():
+	var pc := _make_pc(_wg(_floor_map("a", 3, 3)), Vector2i(1, 1), GridDirection.Dir.NORTH)
+	watch_signals(pc)
+	pc._attempt_turn(GridDirection.turn_right(GridDirection.Dir.NORTH))  # → EAST
+	assert_signal_emitted_with_parameters(pc, "facing_changed", [GridDirection.Dir.EAST])
 
 func test_setup_emits_facing_changed():
 	var pc := PlayerController.new()
 	add_child_autofree(pc)
 	watch_signals(pc)
-	pc.setup(GridData.new(3, 3), Vector2i(1, 1), GridDirection.Dir.EAST)
+	pc.setup(_wg(_floor_map("a", 3, 3)), Vector2i(1, 1), GridDirection.Dir.EAST)
 	assert_signal_emitted_with_parameters(pc, "facing_changed", [GridDirection.Dir.EAST])
 
 func test_move_emits_entered_cell_with_new_pos():
-	var pc := _make_pc(GridData.new(3, 3), Vector2i(1, 1), GridDirection.Dir.NORTH)
+	var pc := _make_pc(_wg(_floor_map("a", 3, 3)), Vector2i(1, 1), GridDirection.Dir.NORTH)
 	watch_signals(pc)
-	pc._attempt_move(GridMovement.Move.FORWARD)  # 北 → (1,0)
+	pc._attempt_move(GridMovement.Move.FORWARD)   # 北 → (1,0)
 	assert_signal_emitted_with_parameters(pc, "entered_cell", [Vector2i(1, 0)])
 
-func test_blocked_move_does_not_emit_entered_cell():
-	var grid := GridData.new(3, 3)
-	grid.set_solid(Vector2i(1, 0), true)  # 北邊是牆
-	var pc := _make_pc(grid, Vector2i(1, 1), GridDirection.Dir.NORTH)
+func test_blocked_by_wall_does_not_emit_entered_cell():
+	var pc := _make_pc(_wg(_with_wall(_floor_map("a", 3, 3), Vector2i(1, 0))), Vector2i(1, 1), GridDirection.Dir.NORTH)
 	watch_signals(pc)
-	pc._attempt_move(GridMovement.Move.FORWARD)  # 撞牆，不動
+	pc._attempt_move(GridMovement.Move.FORWARD)   # 北邊牆，不動
 	assert_signal_not_emitted(pc, "entered_cell")
+	assert_eq(pc._pos, Vector2i(1, 1))
 
-func test_turn_emits_facing_changed():
-	var pc := _make_pc(GridData.new(3, 3), Vector2i(1, 1), GridDirection.Dir.NORTH)
+func test_outer_rim_blocks_move_no_signal():
+	# 站最北排 (1,0) 向北 → 出界（無鄰）→ 統一 grid 視為牆，不動、不發訊號（無 edge_exit_attempted）。
+	var pc := _make_pc(_wg(_floor_map("a", 3, 3)), Vector2i(1, 0), GridDirection.Dir.NORTH)
 	watch_signals(pc)
-	pc._attempt_turn(GridDirection.turn_right(GridDirection.Dir.NORTH))  # → EAST
-	assert_signal_emitted_with_parameters(pc, "facing_changed", [GridDirection.Dir.EAST])
+	pc._attempt_move(GridMovement.Move.FORWARD)
+	assert_signal_not_emitted(pc, "entered_cell")
+	assert_eq(pc._pos, Vector2i(1, 0), "外緣牆擋住不動")
+
+func test_no_edge_exit_attempted_signal_exists():
+	var pc := PlayerController.new()
+	add_child_autofree(pc)
+	assert_false(pc.has_signal("edge_exit_attempted"), "離散邊界訊號已移除")
+
+func test_walk_across_into_east_neighbor():
+	# 焦點圖 a(3x3) 東鄰 e(3x3)；玩家站 a 東緣 (2,1) 面向 EAST 前進 → 全域 (3,1) = e 的 local(0,1) 可走。
+	var a := _floor_map("a", 3, 3, { GridDirection.Dir.EAST: "e" })
+	var e := _floor_map("e", 3, 3, { GridDirection.Dir.WEST: "a" })
+	_world = { "a": a, "e": e }
+	var pc := _make_pc(_wg(a, Callable(self, "_loader")), Vector2i(2, 1), GridDirection.Dir.EAST)
+	watch_signals(pc)
+	pc._attempt_move(GridMovement.Move.FORWARD)
+	assert_signal_emitted_with_parameters(pc, "entered_cell", [Vector2i(3, 1)])
+	assert_eq(pc._pos, Vector2i(3, 1), "連續走進鄰圖（全域 cell）")
 
 func test_disabled_ignores_input():
-	var pc := _make_pc(GridData.new(3, 3), Vector2i(1, 1), GridDirection.Dir.NORTH)
+	var pc := _make_pc(_wg(_floor_map("a", 3, 3)), Vector2i(1, 1), GridDirection.Dir.NORTH)
 	pc.set_enabled(false)
 	var ev := InputEventAction.new()
 	ev.action = "move_forward"
 	ev.pressed = true
 	pc._unhandled_input(ev)
-	assert_eq(pc._pos, Vector2i(1, 1))  # 沒移動
+	assert_eq(pc._pos, Vector2i(1, 1))
 
 func test_enabled_processes_input():
-	var pc := _make_pc(GridData.new(3, 3), Vector2i(1, 1), GridDirection.Dir.NORTH)
+	var pc := _make_pc(_wg(_floor_map("a", 3, 3)), Vector2i(1, 1), GridDirection.Dir.NORTH)
 	var ev := InputEventAction.new()
 	ev.action = "move_forward"
 	ev.pressed = true
 	pc._unhandled_input(ev)
-	assert_eq(pc._pos, Vector2i(1, 0))  # 北移動一格
+	assert_eq(pc._pos, Vector2i(1, 0))
 
-func test_edge_move_emits_edge_exit_attempted():
-	# 站最北排 (1,0) 面向 NORTH 前進 → 出界 → 發 edge_exit_attempted(NORTH)
-	var pc := _make_pc(GridData.new(3, 3), Vector2i(1, 0), GridDirection.Dir.NORTH)
-	watch_signals(pc)
-	pc._attempt_move(GridMovement.Move.FORWARD)
-	assert_signal_emitted_with_parameters(pc, "edge_exit_attempted", [GridDirection.Dir.NORTH])
-	assert_signal_not_emitted(pc, "entered_cell")
-	assert_eq(pc._pos, Vector2i(1, 0), "出界不移動")
-
-func test_inbounds_wall_does_not_emit_edge_exit():
-	var grid := GridData.new(3, 3)
-	grid.set_solid(Vector2i(1, 0), true)  # 界內牆
-	var pc := _make_pc(grid, Vector2i(1, 1), GridDirection.Dir.NORTH)
-	watch_signals(pc)
-	pc._attempt_move(GridMovement.Move.FORWARD)
-	assert_signal_not_emitted(pc, "edge_exit_attempted")
-	assert_signal_not_emitted(pc, "entered_cell")
+func test_rebase_shifts_pos_and_swaps_grid():
+	var pc := _make_pc(_wg(_floor_map("a", 3, 3)), Vector2i(2, 2), GridDirection.Dir.NORTH)
+	var g2 := _wg(_floor_map("b", 3, 3))
+	pc.rebase(Vector2i(-3, 0), g2)
+	assert_eq(pc._pos, Vector2i(-1, 2), "rebase 後 _pos 平移 delta")
+	assert_eq(pc._world_grid, g2, "rebase 後切換到新 grid")

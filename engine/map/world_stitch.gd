@@ -1,6 +1,13 @@
 class_name WorldStitch
 extends Object
 
+# 渲染/玩法窗的 half/center 單一來源（WorldGrid 與 WorldStitchRenderer 共用，確保座標一致）。
+static func window_for(map: MapData) -> Dictionary:
+	return {
+		"half": max(map.width, map.height),
+		"center": Vector2i(map.width / 2, map.height / 2),
+	}
+
 # 以隊伍為中心的視窗內，從當前圖出發 BFS 走 neighbors，把相交的地圖（含對角）
 # 置入全域偏移。回傳 [{ "map": MapData, "ox": int, "oy": int }, …]。
 # loader: Callable(String)->MapData（注入；未知/不存在回 null）。
