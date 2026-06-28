@@ -115,3 +115,70 @@ func test_remove_drops_monster():
 	var rows := om.live()
 	assert_eq(rows.size(), 1)
 	assert_eq(rows[0]["uid"], "b")
+
+# ---- step() state machine ----
+func test_step_aggro_at_range_4_starts_chasing():
+	var om := _om([_mk("a", Vector2i(0, 0), Vector2i(0, 0), OverworldMonsters.State.IDLE)])
+	var res := om.step(Vector2i(4, 0), Callable(self, "_open"))
+	var m: Dictionary = om.live()[0]
+	assert_eq(m["state"], OverworldMonsters.State.CHASING, "距離 4 → 開始追")
+	assert_eq(m["cell"], Vector2i(1, 0), "並朝玩家走一步")
+	assert_eq(res["moved"], ["a"])
+
+func test_step_no_aggro_at_range_5_stays_idle():
+	var om := _om([_mk("a", Vector2i(0, 0), Vector2i(0, 0), OverworldMonsters.State.IDLE)])
+	var res := om.step(Vector2i(5, 0), Callable(self, "_open"))
+	var m: Dictionary = om.live()[0]
+	assert_eq(m["state"], OverworldMonsters.State.IDLE, "距離 5 不追")
+	assert_eq(m["cell"], Vector2i(0, 0), "不動")
+	assert_eq(res["moved"], [])
+
+func test_step_chasing_approaches_player():
+	var om := _om([_mk("a", Vector2i(0, 0), Vector2i(2, 0), OverworldMonsters.State.CHASING)])
+	om.step(Vector2i(6, 0), Callable(self, "_open"))
+	assert_eq(om.live()[0]["cell"], Vector2i(3, 0), "CHASING 逼近一步")
+
+func test_step_leash_beyond_8_returns_home():
+	var om := _om([_mk("a", Vector2i(0, 0), Vector2i(9, 0), OverworldMonsters.State.CHASING)])
+	om.step(Vector2i(10, 0), Callable(self, "_open"))
+	var m: Dictionary = om.live()[0]
+	assert_eq(m["state"], OverworldMonsters.State.RETURNING, "離 home 9>8 → 放棄返家")
+	assert_eq(m["cell"], Vector2i(8, 0), "本步改朝 home")
+
+func test_step_returning_ignores_player():
+	var om := _om([_mk("a", Vector2i(0, 0), Vector2i(2, 0), OverworldMonsters.State.RETURNING)])
+	om.step(Vector2i(3, 0), Callable(self, "_open"))   # 玩家就在旁邊
+	var m: Dictionary = om.live()[0]
+	assert_eq(m["state"], OverworldMonsters.State.RETURNING, "返家途中無視玩家")
+	assert_eq(m["cell"], Vector2i(1, 0), "繼續朝 home 走")
+
+func test_step_returning_reaches_home_becomes_idle():
+	var om := _om([_mk("a", Vector2i(0, 0), Vector2i(1, 0), OverworldMonsters.State.RETURNING)])
+	om.step(Vector2i(9, 9), Callable(self, "_open"))
+	var m: Dictionary = om.live()[0]
+	assert_eq(m["cell"], Vector2i(0, 0))
+	assert_eq(m["state"], OverworldMonsters.State.IDLE, "抵 home → IDLE")
+
+func test_step_contact_player_walks_into_standing_monster():
+	var om := _om([_mk("a", Vector2i(3, 3), Vector2i(3, 3), OverworldMonsters.State.IDLE)])
+	var res := om.step(Vector2i(3, 3), Callable(self, "_open"))   # 玩家走進站怪
+	assert_eq(res["contact"], "a")
+	assert_eq(res["moved"], [], "即時接觸不移動任何怪")
+	assert_eq(om.live()[0]["cell"], Vector2i(3, 3), "怪沒移動")
+
+func test_step_contact_monster_walks_into_player():
+	var om := _om([_mk("a", Vector2i(0, 0), Vector2i(1, 0), OverworldMonsters.State.CHASING)])
+	var res := om.step(Vector2i(2, 0), Callable(self, "_open"))
+	assert_eq(res["contact"], "a", "怪走進玩家格 → 接觸")
+	assert_true(res["moved"].has("a"))
+
+func test_step_two_monsters_never_overlap():
+	# 兩怪同時想往玩家走；占用更新確保不疊格。
+	var om := _om([
+		_mk("a", Vector2i(0, 1), Vector2i(0, 1), OverworldMonsters.State.CHASING),
+		_mk("b", Vector2i(2, 1), Vector2i(2, 1), OverworldMonsters.State.CHASING),
+	])
+	var passable := _walls_passable({}, 3, 3)
+	om.step(Vector2i(1, 0), passable)
+	var rows := om.live()
+	assert_ne(rows[0]["cell"], rows[1]["cell"], "兩怪不重疊")

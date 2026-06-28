@@ -82,3 +82,58 @@ func remove(uid: String) -> void:
 	for i in range(_list.size() - 1, -1, -1):
 		if _list[i]["uid"] == uid:
 			_list.remove_at(i)
+
+# 玩家走一步 → 驅動範圍內的怪走一步（步進制）。回 { contact: uid_or_"", moved: [uid...] }。
+# is_passable: func(cell:Vector2i)->bool（= in_bounds and is_walkable；占用由本函式內部處理）。
+func step(player_cell: Vector2i, is_passable: Callable) -> Dictionary:
+	# 1. 先判即時接觸：玩家剛走進站著的怪 → 不移動任何怪。
+	for m in _list:
+		if m["cell"] == player_cell:
+			return {"contact": m["uid"], "moved": []}
+	# 2. 逐隻跑狀態機並移動一步（依 _list 順序，確定性）。
+	var occupied := _occupied_set()
+	var moved: Array = []
+	for m in _list:
+		var before: Vector2i = m["cell"]
+		_step_one(m, player_cell, is_passable, occupied)
+		var after: Vector2i = m["cell"]
+		if after != before:
+			occupied.erase(before)   # 移走舊格、加入新格，避免後續怪疊上來
+			occupied[after] = true
+			moved.append(m["uid"])
+	# 3. 移動後再判接觸：怪走進玩家。
+	var contact := ""
+	for m in _list:
+		if m["cell"] == player_cell:
+			contact = m["uid"]
+			break
+	return {"contact": contact, "moved": moved}
+
+# 單隻狀態機一步（就地改 m["cell"]/m["state"]）。
+func _step_one(m: Dictionary, player_cell: Vector2i, is_passable: Callable, occupied: Dictionary) -> void:
+	match m["state"]:
+		State.IDLE:
+			if cheb(m["cell"], player_cell) <= AGGRO_RANGE:
+				m["state"] = State.CHASING
+				_chase(m, player_cell, is_passable, occupied)
+		State.CHASING:
+			_chase(m, player_cell, is_passable, occupied)
+		State.RETURNING:
+			m["cell"] = next_step(m["cell"], m["home"], is_passable, occupied)
+			if m["cell"] == m["home"]:
+				m["state"] = State.IDLE
+
+func _chase(m: Dictionary, player_cell: Vector2i, is_passable: Callable, occupied: Dictionary) -> void:
+	if cheb(m["cell"], m["home"]) > LEASH_RANGE:
+		m["state"] = State.RETURNING
+		m["cell"] = next_step(m["cell"], m["home"], is_passable, occupied)
+		if m["cell"] == m["home"]:
+			m["state"] = State.IDLE
+		return
+	m["cell"] = next_step(m["cell"], player_cell, is_passable, occupied)
+
+func _occupied_set() -> Dictionary:
+	var out: Dictionary = {}
+	for m in _list:
+		out[m["cell"]] = true
+	return out
