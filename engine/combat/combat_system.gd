@@ -55,7 +55,7 @@ func party_attack(monster_index: int) -> Array:
 		return events
 	var target: Monster = living[monster_index]
 	if CombatFormulas.roll_hit(actor.effective_accuracy(), target.speed, _rng):
-		var dmg := CombatFormulas.roll_damage(actor.attack_power(), target.effective_armor(), false, _rng)
+		var dmg := CombatFormulas.roll_damage(actor.attack_power(), target.effective_armor(), false, false, _rng)
 		target.hp -= dmg
 		target.statuses = StatusRules.cleared_on_hit(target.statuses)
 		events.append("%s 攻擊 %s，造成 %d 傷害。" % [actor.name, target.name, dmg])
@@ -82,7 +82,7 @@ func monster_act() -> Array:
 	var target: Character = targets[_rng.randi_range(0, targets.size() - 1)]
 	var defending := _defending.has(target)
 	if CombatFormulas.roll_hit(actor.effective_accuracy(), target.speed, _rng):
-		var dmg := CombatFormulas.roll_damage(actor.effective_attack(), target.armor_value(), defending, _rng)
+		var dmg := CombatFormulas.roll_damage(actor.effective_attack(), target.armor_value(), defending, false, _rng)
 		target.take_damage(dmg)
 		target.statuses = StatusRules.cleared_on_hit(target.statuses)
 		if actor.inflict_kind >= 0 and _rng.randf() <= actor.inflict_chance:

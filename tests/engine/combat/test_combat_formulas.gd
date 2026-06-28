@@ -15,13 +15,13 @@ func test_hit_chance_clamped():
 func test_roll_damage_within_bounds():
 	var rng := _rng(42)
 	for i in 200:
-		var d := CombatFormulas.roll_damage(10, 3, false, rng)  # base = 7
+		var d := CombatFormulas.roll_damage(10, 3, false, false, rng)  # base = 7
 		assert_between(d, 7, 14)
 
 func test_roll_damage_floor_at_one_when_armor_exceeds_might():
 	var rng := _rng(7)
 	for i in 50:
-		var d := CombatFormulas.roll_damage(2, 10, false, rng)  # base = max(1, -8) = 1
+		var d := CombatFormulas.roll_damage(2, 10, false, false, rng)  # base = max(1, -8) = 1
 		assert_between(d, 1, 2)
 
 func test_roll_damage_defending_reduces_total():
@@ -29,9 +29,29 @@ func test_roll_damage_defending_reduces_total():
 	var total_norm := 0
 	var total_def := 0
 	for i in 500:
-		total_norm += CombatFormulas.roll_damage(20, 0, false, rng)
-		total_def += CombatFormulas.roll_damage(20, 0, true, rng)
+		total_norm += CombatFormulas.roll_damage(20, 0, false, false, rng)
+		total_def += CombatFormulas.roll_damage(20, 0, true, false, rng)
 	assert_lt(total_def, total_norm)
+
+func test_roll_damage_crit_multiplies():
+	var rng := _rng(55)
+	var total_norm := 0
+	var total_crit := 0
+	for i in 500:
+		total_norm += CombatFormulas.roll_damage(20, 0, false, false, rng)
+		total_crit += CombatFormulas.roll_damage(20, 0, false, true, rng)
+	assert_gt(total_crit, total_norm)   # ×1.5 on average
+
+func test_roll_damage_crit_before_defend_halve():
+	# crit then halve: floor(base*1.5/2). With min rolls (base=10) → floor(15/2)=7 ≥ base/2=5.
+	# Assert crit+defend still beats plain defend on average (crit applied pre-halve, not post).
+	var rng := _rng(88)
+	var crit_def := 0
+	var plain_def := 0
+	for i in 500:
+		crit_def += CombatFormulas.roll_damage(20, 0, true, true, rng)
+		plain_def += CombatFormulas.roll_damage(20, 0, true, false, rng)
+	assert_gt(crit_def, plain_def)
 
 func test_roll_hit_high_chance_mostly_true():
 	var rng := _rng(123)
