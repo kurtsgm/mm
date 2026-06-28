@@ -54,3 +54,52 @@ func test_unknown_group_uses_non_null_placeholder():
 	l.rebuild([{"uid": "x1", "group": "no_such_group", "cell": Vector2i(0, 0), "state": 0}])
 	var s: Sprite3D = l._sprites["x1"]
 	assert_not_null(s.texture, "未知群組（無真圖）→ placeholder 非 null，避免 runtime null texture")
+
+# ---- idle 左右微幅晃動 ----
+func test_sway_offset_px_world_amplitude_independent_of_pixel_size():
+	# sin 峰值（t=period/4、phase=0 → t·TAU/period = PI/2）時 offset_px × pixel_size == sway_world。
+	var period := 1.8
+	var t := period / 4.0
+	var off_a := MonsterLayer.sway_offset_px(t, 0.0, 0.04, period, 0.01)
+	var off_b := MonsterLayer.sway_offset_px(t, 0.0, 0.04, period, 0.02)
+	assert_almost_eq(off_a * 0.01, 0.04, 0.0001, "world 振幅 = offset_px × pixel_size（峰值）")
+	assert_almost_eq(off_b * 0.02, 0.04, 0.0001, "不同 pixel_size 同 world 振幅")
+	assert_almost_eq(off_a, off_b * 2.0, 0.0001, "pixel_size 減半 → offset_px 加倍")
+
+func test_sway_offset_px_zero_at_start():
+	assert_almost_eq(MonsterLayer.sway_offset_px(0.0, 0.0, 0.04, 1.8, 0.01), 0.0, 0.0001, "t=0,phase=0 → sin(0)=0 無位移")
+
+func test_sway_offset_px_phase_shifts_waveform():
+	var off := MonsterLayer.sway_offset_px(0.0, PI / 2.0, 0.04, 1.8, 0.01)
+	assert_almost_eq(off, 0.04 / 0.01, 0.0001, "phase=PI/2 → t=0 即峰值")
+
+func test_sway_offset_px_guards_zero_pixel_size():
+	var off := MonsterLayer.sway_offset_px(0.45, 0.0, 0.04, 1.8, 0.0)
+	assert_true(is_finite(off), "pixel_size=0 → max guard，不 inf/nan")
+
+func test_rebuild_assigns_distinct_per_monster_phase():
+	var l := _layer()
+	l.rebuild([_live("u1", Vector2i(0, 0)), _live("u2", Vector2i(1, 0))])
+	assert_true(l._phase.has("u1") and l._phase.has("u2"))
+	assert_almost_eq(l._phase["u1"], 0.0, 0.0001, "第 0 隻相位 0")
+	assert_almost_eq(l._phase["u2"], MonsterLayer.PHASE_SPREAD, 0.0001, "第 1 隻相位差一個 spread")
+	assert_ne(l._phase["u1"], l._phase["u2"], "不同隻不同相位（不同手同腳）")
+
+func test_rebuild_enables_processing_when_monsters_present():
+	var l := _layer()
+	l.rebuild([_live("u1", Vector2i(0, 0))])
+	assert_true(l.is_processing(), "有怪 → idle 晃動常駐開啟")
+
+func test_rebuild_empty_disables_processing():
+	var l := _layer()
+	l.rebuild([])
+	assert_false(l.is_processing(), "無怪 → 關閉 process")
+
+func test_process_applies_bounded_horizontal_only_sway():
+	var l := _layer()
+	l.rebuild([_live("u1", Vector2i(0, 0))])
+	l._process(0.016)
+	var s: Sprite3D = l._sprites["u1"]
+	var max_px: float = MonsterLayer.SWAY_WORLD / s.pixel_size
+	assert_lt(absf(s.offset.x), max_px + 0.0001, "晃動 offset 不超過世界振幅換算")
+	assert_almost_eq(s.offset.y, 0.0, 0.0001, "只左右、不上下")
