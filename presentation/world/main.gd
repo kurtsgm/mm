@@ -20,6 +20,7 @@ var _world_renderer: WorldStitchRenderer
 
 var _overworld_monsters: OverworldMonsters
 var _monster_layer: MonsterLayer
+var _neighbor_monster_layer: MonsterLayer
 var _combat_uid: String = ""
 
 var _hud: Hud
@@ -49,6 +50,8 @@ func _ready() -> void:
 	_world_renderer.rebuild(MapManager.current_map)
 	_monster_layer = MonsterLayer.new()
 	add_child(_monster_layer)
+	_neighbor_monster_layer = MonsterLayer.new()
+	add_child(_neighbor_monster_layer)
 	_rebuild_monsters_for_current_map()
 	_setup_environment()
 	_setup_fade()
@@ -262,6 +265,11 @@ func _rebuild_monsters_for_current_map() -> void:
 	_overworld_monsters.init_from_map(map, Callable(GameState, "is_defeated"))
 	_overworld_monsters.apply_saved(GameState.monster_state.get(map.map_id, {}))
 	_monster_layer.rebuild(_overworld_monsters.live())
+	var neighbors := NeighborMonsters.collect(map, Callable(MapManager, "peek_map"), Callable(GameState, "is_defeated"), Callable(self, "_saved_monster_state"))
+	_neighbor_monster_layer.rebuild(neighbors)
+
+func _saved_monster_state(map_id) -> Dictionary:
+	return GameState.monster_state.get(map_id, {})
 
 func _is_passable(cell: Vector2i) -> bool:
 	return MapManager.current_grid.is_walkable(cell)   # is_walkable 已含 in_bounds
