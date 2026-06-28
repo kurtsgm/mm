@@ -10,6 +10,7 @@ var _rng: RandomNumberGenerator
 var _order: Array = []
 var _index: int = 0
 var _result: int = Result.ONGOING
+var round_count: int = 0          # 唯讀儀表：戰鬥開始=1，每進入新一輪 +1（供模擬器量回合）
 var _defending: Dictionary = {}   # Character -> true（本輪防禦中）
 var _pending_events: Array = []   # 回合外（DoT/起訖）事件，由 CombatLayer drain 進 log
 
@@ -257,6 +258,7 @@ func _decay(statuses: Array) -> void:
 		i -= 1
 
 func _start_round() -> void:
+	round_count += 1
 	_defending.clear()
 	_tick_statuses()
 	var combatants: Array = []
