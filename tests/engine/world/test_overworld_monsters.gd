@@ -183,7 +183,7 @@ func test_step_two_monsters_never_overlap():
 	var rows := om.live()
 	assert_ne(rows[0]["cell"], rows[1]["cell"], "兩怪不重疊")
 
-# ---- to_save / apply_saved ----
+# ---- to_save ----
 func test_to_save_groups_by_origin_map():
 	var om := _om([_mk("a", Vector2i(0, 0), Vector2i(3, 4), OverworldMonsters.State.CHASING)])
 	var saved := om.to_save()
@@ -197,21 +197,6 @@ func test_to_save_projects_global_back_to_origin_relative():
 	e["origin_off"] = Vector2i(5, 0)
 	var om := _om([e])
 	assert_eq(om.to_save()["m"]["a"]["cell"], Vector2i(1, 2), "全域 - origin_off = 原生相對 local")
-
-func test_apply_saved_overwrites_cell_and_state_keeps_home():
-	var om := _om([_mk("a", Vector2i(0, 0), Vector2i(0, 0), OverworldMonsters.State.IDLE)])
-	om.apply_saved({"a": {"cell": Vector2i(5, 6), "state": OverworldMonsters.State.RETURNING}})
-	var m: Dictionary = om.live()[0]
-	assert_eq(m["cell"], Vector2i(5, 6))
-	assert_eq(m["state"], OverworldMonsters.State.RETURNING)
-	assert_eq(om.home_of("a"), Vector2i(0, 0), "home 不被覆寫")
-
-func test_apply_saved_leaves_unlisted_at_defaults():
-	var om := _om([_mk("a", Vector2i(0, 0), Vector2i(0, 0), OverworldMonsters.State.IDLE)])
-	om.apply_saved({"other": {"cell": Vector2i(9, 9), "state": 1}})
-	var m: Dictionary = om.live()[0]
-	assert_eq(m["cell"], Vector2i(0, 0), "未在 saved 的怪維持預設")
-	assert_eq(m["state"], OverworldMonsters.State.IDLE)
 
 # ---- combat_info / init_from_map origin ----
 func test_combat_info_returns_group_origin_home_local():

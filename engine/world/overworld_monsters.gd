@@ -182,11 +182,3 @@ func combat_info(uid: String) -> Dictionary:
 		if m["uid"] == uid:
 			return {"group": m["group"], "origin_map": m["origin_map"], "home_local": m["home"] - m["origin_off"]}
 	return {}
-
-# saved 形如 { uid: {"cell": Vector2i, "state": int} }；對相符 uid 覆寫 cell/state（home 不動）。
-func apply_saved(saved: Dictionary) -> void:
-	for m in _list:
-		if saved.has(m["uid"]):
-			var rec: Dictionary = saved[m["uid"]]
-			m["cell"] = rec["cell"]
-			m["state"] = int(rec["state"])

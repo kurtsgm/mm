@@ -315,6 +315,7 @@ func _on_combat_finished(result: int) -> void:
 	_combat = null
 	_combat_uid = ""
 	_combat_origin_map = ""
+	_combat_home_local = Vector2i.ZERO
 
 func _has_unopened_chest(pos: Vector2i) -> bool:
 	var map := MapManager.current_map
