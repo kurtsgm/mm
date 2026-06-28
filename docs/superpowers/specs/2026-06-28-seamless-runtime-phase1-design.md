@@ -79,25 +79,28 @@ center = Vector2i(current_map.width / 2, current_map.height / 2)
 - `setup` 改吃 `WorldGrid`（取代 `GridData`）；移動 passability 改 `world_grid.is_walkable(target_global)`。
 - **移除 `edge_exit_attempted` 訊號與 `_on_edge_exit_attempted`**。出界不再是事件——統一 grid 的外緣本來就是 `is_walkable=false` 的牆，撞牆即不動；有鄰圖則鄰圖格 `is_walkable=true`，直接走過去。
 - `_pos` 語意改為**全域 cell**。`GridGeometry.cell_to_world(_pos)` 直接給全域世界座標（與 renderer 容器偏移一致）。
-- **`entered_cell` 改在移動補間結束（玩家落定）時才發**（目前是設好 `_pos` 後立即發、再補間）。
-  - 理由：recenter 的零跳動靠「玩家 + 怪 + 地形同步平移同一 delta」，必須在玩家靜止時做，才不會與 in-flight 的 `position` tween 打架。落定才發 → main 處理 recenter/內容時玩家已靜止。
-  - 副作用：內容觸發（combat/chest/對話…）時點從「出發即觸發」變「抵達才觸發」。此為更自然的時點（滑入動畫完成後才開戰/開箱），pre-release 可接受；相關測試一併更新。
+- **`entered_cell` 維持出發即發（同步，行為不變）**。emission 時點不改，既有同步測試風格沿用。
+- **新增 `rebase(delta: Vector2i, new_grid: WorldGrid)`**：把 `_pos += delta`、`position += GridGeometry.cell_to_world(delta)`（線性過原點，等同平移 `delta × CELL_SIZE`），切換到 `new_grid`，並**殺掉進行中的移動補間、在新框架重建到 `cell_to_world(_pos)`**（保留滑動視覺）。供 main 在 recenter 當下呼叫。
+  - 為此 PlayerController 持有 `_move_tween` 參考；`_attempt_move` 建立補間時記錄，`rebase` 可殺掉重建。
+  - 零跳動原理：recenter 當一幀內，所有 region 容器、怪 sprite、玩家 `position` 都平移同一 `delta_world`；camera 是 PlayerController 子節點亦隨之平移 → 相對相機零位移；滑動補間在新框架延續至同一目標。**不需把 emission 延到落定**——rebase 在 `entered_cell` 同步處理掉 in-flight 補間。
 
 ### main（`presentation/world/main.gd`）
 
 `_on_entered_cell(global: Vector2i)` 重寫為：
 
 1. `var r := _world_grid.resolve(global)`；取 `map_id = r["map_id"]`、`local = r["local"]`。
-2. **若 `map_id != GameState.current_map_id` → recenter(map_id)**：
+2. **若 `map_id != GameState.current_map_id` → recenter(map_id)**（玩家此刻仍在滑入補間中，靠 `rebase` 接手）：
+   - `var delta := local - global`（= 新焦點圖偏移的相反；把全域框架重基到新焦點圖原點）。
    - `MapManager.enter_map(map_id, GameState.cleared_for(map_id))`（換焦點圖）。
-   - `_world_grid = WorldGrid.new(...)`（以新焦點圖重建；沿用 `peek_map` loader）。
-   - `_world_renderer.rebuild(MapManager.current_map)`（pooling：只重定位 + 建新露出 + 清離開）。
-   - `_player.setup(_world_grid, local, GameState.player_facing)`（玩家 snap 到新框架的 local；因全體平移同一 delta，視覺零跳動）。
-   - `_rebuild_monsters_for_current_map()`（當前圖怪 + 鄰圖怪靜態，依新框架）。
-   - 更新 `GameState.current_map_id = map_id`。
-3. recenter 後 `MapManager.current_map` ＝玩家所在圖、玩家 cell ＝ `local`：**沿用今天 `_on_entered_cell` 的整段內容觸發碼**（pos 用 `local`）——`resolve_link`→`_enter_via_link`（portal 維持離散淡出）、`_overworld_monsters.step`、chest、scene、quest giver、vendor、tile message、`mark_explored`/`notify_enter`/`refresh_collect`。
+   - `_world_grid = WorldGrid.new(MapManager.current_map, peek_loader)`（以新焦點圖重建）。
+   - `_world_renderer.rebuild(MapManager.current_map)`（pooling：容器重定位到新框架 = 平移 `delta_world`；只建新露出、只清離開）。
+   - `_player.rebase(delta, _world_grid)`（玩家 `_pos`→`local`、`position` 平移 `delta_world`、滑動補間在新框架延續 → 視覺零跳動）。
+   - `_rebuild_monsters_for_current_map()`（當前圖怪 + 鄰圖怪靜態，依新框架重建）。
+   - `GameState.current_map_id = map_id`。
+3. recenter 後（或同圖移動無 recenter）`MapManager.current_map` ＝玩家所在圖、`local` ＝玩家在該圖 cell：**沿用今天 `_on_entered_cell` 的整段內容觸發碼**（pos 用 `local`）——`resolve_link`→`_enter_via_link`（portal 維持離散淡出）、`_overworld_monsters.step`、chest、scene、quest giver、vendor、tile message、`mark_explored`/`notify_enter`/`refresh_collect`。
 
-> recenter 的「同步平移零跳動」數學：camera 是 PlayerController 子節點；recenter 時玩家節點與所有 region 容器、怪 sprite 都平移同一個 `delta_world`（＝ -新焦點圖在舊框架的偏移 × CELL_SIZE）→ 相對相機零位移。已於 brainstorm 推導確認。
+> 同圖移動時焦點圖在原點 → `local == global`，`delta == 0`，無 recenter，行為與今天等價。
+> recenter 的「同步平移零跳動」數學：`delta_world = delta × CELL_SIZE`；玩家節點與所有 region 容器、怪 sprite 一幀內平移同一 `delta_world`；camera 是 PlayerController 子節點亦隨之平移 → 相對相機零位移。已於 brainstorm 推導確認。
 
 ### Portal 連結維持離散
 
@@ -132,8 +135,8 @@ center = Vector2i(current_map.width / 2, current_map.height / 2)
 
 **PlayerController**
 - 無 `edge_exit_attempted` 訊號（移除後不再發）。
-- 能從焦點圖走到鄰圖可走格（跨 union 連續移動）；外緣牆擋住不動。
-- `entered_cell` 於補間結束才發（落定）。
+- 吃 `WorldGrid`：能從焦點圖走到鄰圖可走格（跨 union 連續移動，`entered_cell` 同步發新全域 cell）；外緣牆 / 鄰圖實心格擋住不動、不發 `entered_cell`。
+- `rebase(delta, new_grid)`：`_pos` 與 `position` 各平移 `delta`／`delta×CELL_SIZE`、`world_grid` 換新、進行中補間被殺並重建到新 `_pos`。
 
 **整合（main）**
 - `entered_cell(global)` → `resolve` → 跨圖時 recenter（focus 圖換、玩家 cell 變 local、renderer rebuild 被呼叫）。
