@@ -43,15 +43,15 @@ func test_roll_damage_crit_multiplies():
 	assert_gt(total_crit, total_norm)   # ×1.5 on average
 
 func test_roll_damage_crit_before_defend_halve():
-	# crit then halve: floor(base*1.5/2). With min rolls (base=10) → floor(15/2)=7 ≥ base/2=5.
-	# Assert crit+defend still beats plain defend on average (crit applied pre-halve, not post).
-	var rng := _rng(88)
-	var crit_def := 0
-	var plain_def := 0
+	# 用同一 RNG 串複現原始擲值，斷言實作 == 「先爆擊後減半」的參考算式。
+	# 這能分辨順序：奇數中間值時，先乘1.5後除2 ≠ 先除2後乘1.5（如 raw 11 → 8 vs 7）。
+	var rng_impl := _rng(7)
+	var rng_ref := _rng(7)
 	for i in 500:
-		crit_def += CombatFormulas.roll_damage(20, 0, true, true, rng)
-		plain_def += CombatFormulas.roll_damage(20, 0, true, false, rng)
-	assert_gt(crit_def, plain_def)
+		var got := CombatFormulas.roll_damage(20, 0, true, true, rng_impl)   # base = 20 → raw ∈ [20,40]
+		var raw := rng_ref.randi_range(20, 40)
+		var expected: int = maxi(1, (raw * CombatFormulas.CRIT_MULT_PCT / 100) / 2)   # 爆擊在減半之前
+		assert_eq(got, expected, "raw=%d 應為先爆擊後減半" % raw)
 
 func test_roll_hit_high_chance_mostly_true():
 	var rng := _rng(123)
