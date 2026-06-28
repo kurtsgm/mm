@@ -182,3 +182,41 @@ func test_step_two_monsters_never_overlap():
 	om.step(Vector2i(1, 0), passable)
 	var rows := om.live()
 	assert_ne(rows[0]["cell"], rows[1]["cell"], "兩怪不重疊")
+
+# ---- to_save / apply_saved ----
+func test_to_save_format():
+	var om := _om([_mk("a", Vector2i(0, 0), Vector2i(3, 4), OverworldMonsters.State.CHASING)])
+	var saved := om.to_save()
+	assert_true(saved.has("a"))
+	assert_eq(saved["a"]["cell"], Vector2i(3, 4))
+	assert_eq(saved["a"]["state"], OverworldMonsters.State.CHASING)
+
+func test_apply_saved_overwrites_cell_and_state_keeps_home():
+	var om := _om([_mk("a", Vector2i(0, 0), Vector2i(0, 0), OverworldMonsters.State.IDLE)])
+	om.apply_saved({"a": {"cell": Vector2i(5, 6), "state": OverworldMonsters.State.RETURNING}})
+	var m: Dictionary = om.live()[0]
+	assert_eq(m["cell"], Vector2i(5, 6))
+	assert_eq(m["state"], OverworldMonsters.State.RETURNING)
+	assert_eq(om.home_of("a"), Vector2i(0, 0), "home 不被覆寫")
+
+func test_apply_saved_leaves_unlisted_at_defaults():
+	var om := _om([_mk("a", Vector2i(0, 0), Vector2i(0, 0), OverworldMonsters.State.IDLE)])
+	om.apply_saved({"other": {"cell": Vector2i(9, 9), "state": 1}})
+	var m: Dictionary = om.live()[0]
+	assert_eq(m["cell"], Vector2i(0, 0), "未在 saved 的怪維持預設")
+	assert_eq(m["state"], OverworldMonsters.State.IDLE)
+
+func test_save_roundtrip():
+	var om := _om([
+		_mk("a", Vector2i(0, 0), Vector2i(3, 1), OverworldMonsters.State.CHASING),
+		_mk("b", Vector2i(4, 4), Vector2i(4, 4), OverworldMonsters.State.IDLE),
+	])
+	var saved := om.to_save()
+	var om2 := _om([
+		_mk("a", Vector2i(0, 0), Vector2i(0, 0), OverworldMonsters.State.IDLE),
+		_mk("b", Vector2i(4, 4), Vector2i(4, 4), OverworldMonsters.State.IDLE),
+	])
+	om2.apply_saved(saved)
+	var a: Dictionary = om2.live()[0]
+	assert_eq(a["cell"], Vector2i(3, 1))
+	assert_eq(a["state"], OverworldMonsters.State.CHASING)
