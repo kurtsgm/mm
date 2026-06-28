@@ -17,7 +17,7 @@ Phase 2 把**全怪上統一 grid**：怪物移動/碰撞/狀態機/接觸都跑
 ## 已拍板前提（brainstorm 拍板，不翻案）
 
 1. **全 window 即時模擬**：載入的 3×3 內所有怪每步都跑狀態機（IDLE 遠怪只做便宜的 cheb 距離檢查；`AGGRO_RANGE 4`/`LEASH_RANGE 8` 自動 gate 成本與行為）。鄰圖怪只要玩家進其 aggro 範圍就真的跨界追來。
-2. **recenter 從存檔重建**：每次 recenter 從各圖存檔重建統一怪集；怪身分綁原生 encounter map、位置以「原生圖相對 local」存（可超出該圖邊界＝已跨界），save v11→**v12**。沿用 Phase 1 rebuild 模式：邏輯狀態（追/返/idle）由存檔保留、零視覺跳動。
+2. **recenter 從存檔重建**：每次 recenter 從各圖存檔重建統一怪集；怪身分綁原生 encounter map、位置以「原生圖相對 local」存（可超出該圖邊界＝已跨界）。存檔**結構不變、不升版**（cell 語意擴充為「原生相對 local」可越界；舊 v11 檔剛好仍能載入、不寫相容層；版本/格式最終化留 Phase 3）。沿用 Phase 1 rebuild 模式：邏輯狀態（追/返/idle）由存檔保留、零視覺跳動。
 3. 戰鬥維持模態、戰鬥本身不改。pre-release：breaking change 一律可接受，存檔直接升版/砍舊、不寫相容層。
 4. 區域大小 3×3（當前 + 8 鄰）；窗外怪不模擬（其存檔狀態凍結，待其圖進窗才喚醒）。
 
@@ -89,10 +89,10 @@ to_save() -> { origin_map: { uid: { "cell": Vector2i(原生相對 local), "state
   - 若 origin_map 的 live `MapData` 在 regions 內，順手 `clear_encounter(home_local)`（即時一致；非必要，持久層已足）。
 - chest 自動開 guard 升級：原 Phase 1 `_combat_pos == player_pos` 改 `_combat_origin_map == GameState.current_map_id and _combat_home_local == GameState.player_pos`（引離擊殺／跨界擊殺都不遠端開箱；走進站在當前圖怪上擊殺仍正常提示）。
 
-### 5. 存檔 v12
+### 5. 存檔（不升版）
 
-- `monster_state` 結構不變（`map_id → {uid → {cell, state}}`），但 `cell` 語意改「原生相對 local」（可越界）。
-- 序列化版本號升 v11→**v12**；舊檔不相容、不寫遷移。更新 `save_serializer` 版本斷言與相關測試。
+- `monster_state` 結構不變（`map_id → {uid → {cell, state}}`），`cell` 語意擴充為「原生相對 local」（可越界）。
+- **不動序列化版本號、不改 `save_serializer`**：結構相同，舊 v11 檔的 cell 皆在界內（＝合法原生相對 local）剛好仍能載入；不為此寫任何相容/遷移碼。版本/格式最終化留 **Phase 3**。
 
 ## 資料流
 
@@ -130,6 +130,7 @@ to_save() -> { origin_map: { uid: { "cell": Vector2i(原生相對 local), "state
 ## 非目標（Phase 2 不做）
 
 - 周邊系統全域對齊：探索迷霧、任務 reach、minimap 標記在跨界怪模型下的最終驗證 = **Phase 3**。
+- 存檔版本/格式最終化（本 phase 只擴充 `monster_state` cell 語意、不升版）= **Phase 3**。
 - 戰鬥內容/接觸後流程、相機接管邏輯任何改動。
 - 窗外（3×3 以外）怪物模擬。
 
