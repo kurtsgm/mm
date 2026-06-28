@@ -18,6 +18,7 @@ var triggered_scenes: Dictionary = {}  # String map_id -> Array[Vector2i]（once
 
 var quests: Dictionary = {}        # String id -> { "status", "stage" }
 var defeated_encounters: Dictionary = {}   # uid -> true（持久；擊敗的遇抵實例）
+var monster_state: Dictionary = {}   # String map_id -> { uid -> {"cell": Vector2i, "state": int} }（持久；大地圖怪位置/狀態）
 var quest_resolver: Callable = Callable()  # 注入 func(id)->QuestDef（鏡射 SaveSystem.item_resolver）
 var tracked_quest: String = ""     # 追蹤中任務 id（持久；"" = 無）
 

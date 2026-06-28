@@ -71,6 +71,7 @@ func capture_from(gs) -> SaveData:
 	data.quests = gs.quests
 	data.tracked_quest = gs.tracked_quest
 	data.defeated_encounters = gs.defeated_encounters
+	data.monster_state = gs.monster_state
 	return data
 
 func apply_to(data: SaveData, gs, mm) -> void:
@@ -88,6 +89,7 @@ func apply_to(data: SaveData, gs, mm) -> void:
 	gs.quests = data.quests
 	gs.tracked_quest = data.tracked_quest
 	gs.defeated_encounters = data.defeated_encounters
+	gs.monster_state = data.monster_state
 	mm.enter_map(data.map_id, gs.cleared_for(data.map_id))
 
 func capture() -> SaveData:

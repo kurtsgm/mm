@@ -42,8 +42,8 @@ func test_tracked_quest_absent_is_empty():
 	raw["state"].erase("tracked_quest")
 	assert_eq(SaveSerializer.from_dict(raw).tracked_quest, "")
 
-func test_version_is_10():
-	assert_eq(SaveSerializer.to_dict(_data())["version"], 10)
+func test_version_is_11():
+	assert_eq(SaveSerializer.to_dict(_data())["version"], 11)
 
 func test_old_version_rejected():
 	var raw := SaveSerializer.to_dict(_data())

@@ -1,7 +1,7 @@
 class_name SaveSerializer
 extends Object
 
-const VERSION := 10
+const VERSION := 11
 
 static func to_dict(data: SaveData) -> Dictionary:
 	return {
@@ -22,6 +22,7 @@ static func to_dict(data: SaveData) -> Dictionary:
 			"quests": _quests_to_dict(data.quests),
 			"tracked_quest": data.tracked_quest,
 			"defeated_encounters": data.defeated_encounters.keys(),
+			"monster_state": _monster_state_to_dict(data.monster_state),
 		},
 	}
 
@@ -52,6 +53,7 @@ static func from_dict(raw: Dictionary, resolver := Callable()) -> SaveData:
 	data.quests = _quests_from_dict(s.get("quests", {}))
 	data.tracked_quest = String(s.get("tracked_quest", ""))
 	data.defeated_encounters = _flags_from_array(s.get("defeated_encounters", []))
+	data.monster_state = _monster_state_from_dict(s.get("monster_state", {}))
 	return data
 
 # --- internal ---
@@ -183,6 +185,36 @@ static func _cleared_from_dict(raw) -> Dictionary:
 			if _is_vec_shape(a):
 				positions.append(_to_vec(a))
 		out[String(map_id)] = positions
+	return out
+
+static func _monster_state_to_dict(ms: Dictionary) -> Dictionary:
+	var out: Dictionary = {}
+	for map_id in ms:
+		var inner: Dictionary = {}
+		for uid in ms[map_id]:
+			var rec: Dictionary = ms[map_id][uid]
+			inner[uid] = {"cell": _vec(rec["cell"]), "state": int(rec["state"])}
+		out[map_id] = inner
+	return out
+
+static func _monster_state_from_dict(raw) -> Dictionary:
+	var out: Dictionary = {}
+	if typeof(raw) != TYPE_DICTIONARY:
+		return out
+	for map_id in raw:
+		var rec_map = raw[map_id]
+		if typeof(rec_map) != TYPE_DICTIONARY:
+			continue
+		var inner: Dictionary = {}
+		for uid in rec_map:
+			var rec = rec_map[uid]
+			if typeof(rec) != TYPE_DICTIONARY:
+				continue
+			var c = rec.get("cell", null)
+			if not _is_vec_shape(c):
+				continue
+			inner[String(uid)] = {"cell": _to_vec(c), "state": int(rec.get("state", 0))}
+		out[String(map_id)] = inner
 	return out
 
 static func _explored_to_dict(explored: Dictionary) -> Dictionary:

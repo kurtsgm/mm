@@ -8,8 +8,8 @@ func _data() -> SaveData:
 	d.triggered_scenes = {"town_oak": [Vector2i(1, 3)]}
 	return d
 
-func test_version_is_10():
-	assert_eq(SaveSerializer.to_dict(_data())["version"], 10)
+func test_version_is_11():
+	assert_eq(SaveSerializer.to_dict(_data())["version"], 11)
 
 func test_roundtrip_flags_and_scenes():
 	var raw := SaveSerializer.to_dict(_data())
