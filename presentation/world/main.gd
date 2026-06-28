@@ -17,6 +17,7 @@ const SKY_PANORAMA := "res://content/sky/citrus_orchard_road_puresky_2k.exr"
 @onready var _camera: Camera3D = $PlayerController/Camera3D
 
 var _world_renderer: WorldStitchRenderer
+var _world_grid: WorldGrid
 
 var _overworld_monsters: OverworldMonsters
 var _monster_layer: MonsterLayer
@@ -48,6 +49,7 @@ func _ready() -> void:
 	_world_renderer = WorldStitchRenderer.new()
 	add_child(_world_renderer)
 	_world_renderer.rebuild(MapManager.current_map)
+	_build_world_grid()
 	_monster_layer = MonsterLayer.new()
 	add_child(_monster_layer)
 	_neighbor_monster_layer = MonsterLayer.new()
@@ -61,7 +63,6 @@ func _ready() -> void:
 	_hud.setup(GameState, _player)            # 先連上 facing_changed
 	_player.entered_cell.connect(_on_entered_cell)
 	_player.facing_changed.connect(_on_facing_changed)
-	_player.edge_exit_attempted.connect(_on_edge_exit_attempted)
 
 	_mini_map = MiniMap.new()
 	add_child(_mini_map)
@@ -116,7 +117,7 @@ func _ready() -> void:
 
 	_menus = [_save_menu, _inventory_menu, _spell_menu, _quest_log]
 
-	_player.setup(MapManager.current_grid, map.start_pos, map.start_facing)
+	_player.setup(_world_grid, map.start_pos, map.start_facing)
 
 	GameState.current_map_id = START_MAP_ID
 	GameState.player_pos = map.start_pos
@@ -142,33 +143,51 @@ func _setup_environment() -> void:
 	we.environment = env
 	add_child(we)
 
-func _on_entered_cell(pos: Vector2i) -> void:
-	GameState.player_pos = pos
-	GameState.mark_explored(GameState.current_map_id, pos, MapManager.current_map.width, MapManager.current_map.height)
-	GameState.notify_enter(GameState.current_map_id, pos)
+func _on_entered_cell(global: Vector2i) -> void:
+	var r := _world_grid.resolve(global)
+	if r.is_empty():
+		return   # 理論上 walkable 格必可反查；防呆
+	var map_id: String = r["map_id"]
+	var local: Vector2i = r["local"]
+	if map_id != GameState.current_map_id:
+		_recenter_to(map_id, local, global)
+	# recenter 後 MapManager.current_map ＝玩家所在圖、local ＝該圖 cell：沿用既有內容觸發（pos → local）。
+	GameState.player_pos = local
+	GameState.mark_explored(GameState.current_map_id, local, MapManager.current_map.width, MapManager.current_map.height)
+	GameState.notify_enter(GameState.current_map_id, local)
 	GameState.refresh_collect()
-	var link := MapTransitions.resolve_link(MapManager.current_map, pos)
+	var link := MapTransitions.resolve_link(MapManager.current_map, local)
 	if not link.is_empty():
 		_enter_via_link(link["map"], link["entry"])
 		return
-	var res := _overworld_monsters.step(pos, Callable(self, "_is_passable"))
+	var res := _overworld_monsters.step(local, Callable(self, "_is_passable"))
 	_monster_layer.apply_moves(_overworld_monsters.live())
-	GameState.monster_state[GameState.current_map_id] = _overworld_monsters.to_save()   # 每步回寫（S/L 正確）
+	GameState.monster_state[GameState.current_map_id] = _overworld_monsters.to_save()
 	if res["contact"] != "":
 		_start_combat_for_uid(res["contact"])
 		return
-	if _has_unopened_chest(pos):
-		_prompt_chest(pos)
+	if _has_unopened_chest(local):
+		_prompt_chest(local)
 		return
-	if _try_scene(pos):
+	if _try_scene(local):
 		return
-	if _try_quest_giver(pos):
+	if _try_quest_giver(local):
 		return
-	if _try_vendor(pos):
+	if _try_vendor(local):
 		return
-	var text := TileMessages.for_tile(MapManager.current_map.get_tile(pos))
+	var text := TileMessages.for_tile(MapManager.current_map.get_tile(local))
 	if text != "":
 		GameState.message_log.push(text)
+
+# 跨圖 recenter：重建焦點圖/grid/renderer/怪物，玩家以 rebase 平移到新框架（保留滑動 → 零跳動）。
+func _recenter_to(map_id: String, local: Vector2i, global: Vector2i) -> void:
+	var delta := local - global   # = -新焦點圖在舊框架的偏移
+	MapManager.enter_map(map_id, GameState.cleared_for(map_id))
+	_build_world_grid()
+	_world_renderer.rebuild(MapManager.current_map)
+	_player.rebase(delta, _world_grid)
+	_rebuild_monsters_for_current_map()
+	GameState.current_map_id = map_id
 
 func _on_facing_changed(facing: int) -> void:
 	GameState.player_facing = facing
@@ -200,8 +219,9 @@ func _enter_via_link(map_id: String, entry_name: String) -> void:
 	var pos: Vector2i = e.get("pos", dest.start_pos)
 	var facing: int = e.get("facing", GridDirection.Dir.NORTH)
 	_world_renderer.rebuild(MapManager.current_map)
+	_build_world_grid()
 	_rebuild_monsters_for_current_map()
-	_player.setup(MapManager.current_grid, pos, facing)
+	_player.setup(_world_grid, pos, facing)
 	GameState.current_map_id = map_id
 	GameState.player_pos = pos
 	GameState.player_facing = facing
@@ -214,28 +234,6 @@ func _enter_via_link(map_id: String, entry_name: String) -> void:
 	await _fade(0.0)
 	_transitioning = false
 	_player.set_enabled(true)
-
-# 邊緣接壤：即時、無黑幕、保持面向（野外無縫）。
-func _on_edge_exit_attempted(move_dir: int) -> void:
-	var ex := MapTransitions.edge_exit(MapManager.current_map, GameState.player_pos, move_dir)
-	if ex.is_empty():
-		return
-	var neighbor_id: String = ex["neighbor_id"]
-	var dest := MapManager.enter_map(neighbor_id, GameState.cleared_for(neighbor_id))
-	var cell := MapTransitions.arrival_cell(dest, ex["edge_dir"], ex["lateral"])
-	if cell == Vector2i(-1, -1):
-		# 對邊實心 → 不能過去；還原當前地圖（enter_map 已切走 current）
-		MapManager.enter_map(GameState.current_map_id, GameState.cleared_for(GameState.current_map_id))
-		return
-	_world_renderer.rebuild(MapManager.current_map)
-	_rebuild_monsters_for_current_map()
-	_player.setup(MapManager.current_grid, cell, GameState.player_facing)
-	GameState.current_map_id = neighbor_id
-	GameState.player_pos = cell
-	GameState.mark_explored(neighbor_id, cell, MapManager.current_map.width, MapManager.current_map.height)
-	GameState.notify_enter(neighbor_id, cell)   # 邊界接壤抵達也算「踏入」→ reach 事件式
-	_mini_map.refresh()
-	_hud.refresh()
 
 func _start_combat(pos: Vector2i) -> void:
 	var id := MapManager.current_map.get_encounter(pos)
@@ -259,6 +257,9 @@ func _set_overworld_hud_visible(on: bool) -> void:
 	if _quest_tracker != null:
 		_quest_tracker.visible = on
 
+func _build_world_grid() -> void:
+	_world_grid = WorldGrid.new(MapManager.current_map, Callable(MapManager, "peek_map"))
+
 func _rebuild_monsters_for_current_map() -> void:
 	var map := MapManager.current_map
 	_overworld_monsters = OverworldMonsters.new()
@@ -272,7 +273,7 @@ func _saved_monster_state(map_id) -> Dictionary:
 	return GameState.monster_state.get(map_id, {})
 
 func _is_passable(cell: Vector2i) -> bool:
-	return MapManager.current_grid.is_walkable(cell)   # is_walkable 已含 in_bounds
+	return _world_grid.is_walkable(cell)   # 統一 grid（外緣無鄰 = 牆）
 
 func _start_combat_for_uid(uid: String) -> void:
 	_combat_uid = uid
@@ -507,8 +508,9 @@ func _on_loaded() -> void:
 	# 需單區重繪寶箱層讓開/關視覺對齊讀入的 opened_objects。
 	# （未來若 edge-stitch 的 wild_* 也放寶箱，須改為重繪所有區的寶箱層。）
 	_world_renderer.refresh_objects(MapManager.current_map)
+	_build_world_grid()
 	_rebuild_monsters_for_current_map()
-	_player.setup(MapManager.current_grid, GameState.player_pos, GameState.player_facing)
+	_player.setup(_world_grid, GameState.player_pos, GameState.player_facing)
 	GameState.mark_explored(GameState.current_map_id, GameState.player_pos, MapManager.current_map.width, MapManager.current_map.height)
 	_mini_map.refresh()
 	GameState.retrack()
