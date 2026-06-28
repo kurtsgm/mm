@@ -2,8 +2,8 @@ class_name SimMatrix
 extends Object
 # 掃描「遭遇 × 等級」，每格跑 N 場蒙地卡羅，彙整成難度表 rows。
 
-static func run_cell(encounter_id: String, level: int, n: int, base_seed: int, catalog = ClassCatalog) -> Dictionary:
-	var defs := Bestiary.group_defs_for(encounter_id)
+static func run_cell(encounter_id: String, level: int, n: int, base_seed: int, catalog = ClassCatalog, bestiary = TierBestiary) -> Dictionary:
+	var defs := bestiary.group_defs_for(encounter_id)
 	var wins := 0
 	var rounds_sum := 0.0
 	var deaths_sum := 0.0
@@ -35,11 +35,11 @@ static func run_cell(encounter_id: String, level: int, n: int, base_seed: int, c
 		"n": n,
 	}
 
-static func run_all(levels: Array, n: int, base_seed: int, catalog = ClassCatalog) -> Array:
+static func run_all(levels: Array, n: int, base_seed: int, catalog = ClassCatalog, bestiary = TierBestiary) -> Array:
 	var rows: Array = []
-	for enc in Bestiary.all_ids():
+	for enc in bestiary.all_ids():
 		for lvl in levels:
-			rows.append(run_cell(String(enc), int(lvl), n, base_seed, catalog))
+			rows.append(run_cell(String(enc), int(lvl), n, base_seed, catalog, bestiary))
 	return rows
 
 static func _cell_seed(base: int, encounter_id: String, level: int, run_index: int) -> int:
