@@ -80,3 +80,9 @@ func test_missing_neighbor_skipped():
 	_world = { "a": a }   # "e" 不在 → loader 回 null
 	var placed := WorldStitch.place(a, Callable(self, "_loader"), 6, Vector2i(2, 2))
 	assert_eq(placed.size(), 1, "鄰圖載入失敗 → 略過、不崩")
+
+func test_window_for_half_and_center():
+	var m := _map("a", 6, 4)
+	var win := WorldStitch.window_for(m)
+	assert_eq(win["half"], 6, "half = max(width, height)")
+	assert_eq(win["center"], Vector2i(3, 2), "center = (width/2, height/2)")
