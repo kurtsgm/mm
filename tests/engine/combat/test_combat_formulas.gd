@@ -64,3 +64,22 @@ func test_defense_from_endurance_integer_divide():
 	assert_eq(CombatFormulas.defense_from_endurance(8), 2)    # 8/4 = 2
 	assert_eq(CombatFormulas.defense_from_endurance(0), 0)
 	assert_eq(CombatFormulas.defense_from_endurance(3), 0)    # below one tier
+
+func test_crit_chance_scales_and_clamps():
+	assert_eq(CombatFormulas.crit_chance(0), 0)
+	assert_eq(CombatFormulas.crit_chance(10), 10)
+	assert_eq(CombatFormulas.crit_chance(1000), CombatFormulas.CRIT_CAP)  # capped
+	assert_eq(CombatFormulas.crit_chance(-5), 0)                          # never negative
+
+func test_roll_crit_high_luck_mostly_true():
+	var rng := _rng(321)
+	var trues := 0
+	for i in 1000:
+		if CombatFormulas.roll_crit(50, rng):   # cap = 50%
+			trues += 1
+	assert_between(trues, 400, 600)
+
+func test_roll_crit_zero_luck_never_true():
+	var rng := _rng(321)
+	for i in 200:
+		assert_false(CombatFormulas.roll_crit(0, rng))

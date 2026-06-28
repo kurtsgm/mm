@@ -13,6 +13,16 @@ const DEF_PER_ENDURANCE := 4
 static func defense_from_endurance(endurance: int) -> int:
 	return endurance / DEF_PER_ENDURANCE
 
+const CRIT_PER_LUCK := 1
+const CRIT_CAP := 50
+const CRIT_MULT_PCT := 150
+
+static func crit_chance(luck: int) -> int:
+	return clampi(luck * CRIT_PER_LUCK, 0, CRIT_CAP)
+
+static func roll_crit(luck: int, rng: RandomNumberGenerator) -> bool:
+	return rng.randi_range(1, 100) <= crit_chance(luck)
+
 static func hit_chance(accuracy: int, target_speed: int) -> int:
 	return clampi(HIT_BASE + (accuracy - target_speed) * HIT_PER_POINT, HIT_MIN, HIT_MAX)
 
