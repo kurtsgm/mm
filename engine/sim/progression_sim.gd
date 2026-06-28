@@ -66,24 +66,24 @@ static func clone_party(party: Party) -> Party:
 		p.members.append(c)
 	return p
 
-static func _monsters_for(encounter_id: String) -> Array[Monster]:
+static func _monsters_for(encounter_id: String, bestiary) -> Array[Monster]:
 	var mons: Array[Monster] = []
-	for d in Bestiary.group_defs_for(encounter_id):
+	for d in bestiary.group_defs_for(encounter_id):
 		mons.append(Monster.from_def(d))
 	return mons
 
-static func _xp_total(encounter_id: String) -> int:
+static func _xp_total(encounter_id: String, bestiary) -> int:
 	var total := 0
-	for d in Bestiary.group_defs_for(encounter_id):
+	for d in bestiary.group_defs_for(encounter_id):
 		total += d.xp_reward
 	return total
 
-static func estimate_encounter(party: Party, encounter_id: String, trials: int, base_seed: int) -> Dictionary:
+static func estimate_encounter(party: Party, encounter_id: String, trials: int, base_seed: int, bestiary = TierBestiary) -> Dictionary:
 	var wins := 0
 	var rounds_sum := 0.0
 	for t in trials:
 		var clone := clone_party(party)
-		var mons := _monsters_for(encounter_id)
+		var mons := _monsters_for(encounter_id, bestiary)
 		var rng := RandomNumberGenerator.new()
 		rng.seed = base_seed + hash(encounter_id) * 1000003 + t
 		var out := BattleRunner.run(clone, mons, rng)
@@ -92,11 +92,11 @@ static func estimate_encounter(party: Party, encounter_id: String, trials: int, 
 			rounds_sum += float(out["rounds"])
 	var win_rate := float(wins) / float(trials) if trials > 0 else 0.0
 	var avg_rounds := rounds_sum / float(wins) if wins > 0 else 0.0
-	var xp_total := _xp_total(encounter_id)
+	var xp_total := _xp_total(encounter_id, bestiary)
 	var efficiency := (float(xp_total) / avg_rounds) if avg_rounds > 0.0 else 0.0
 	return {"win_rate": win_rate, "avg_rounds": avg_rounds, "xp_total": xp_total, "efficiency": efficiency}
 
-static func run(target_level: int, base_seed: int, trials := 12, win_threshold := 0.7, max_fights := 500) -> Dictionary:
+static func run(target_level: int, base_seed: int, trials := 12, win_threshold := 0.7, max_fights := 500, bestiary = TierBestiary) -> Dictionary:
 	var party := Party.create_default()
 	full_rest(party)
 	var fights: Array = []
@@ -111,8 +111,8 @@ static func run(target_level: int, base_seed: int, trials := 12, win_threshold :
 		var best_id := ""
 		var best_eff := 0.0
 		var best_xp := 0
-		for enc in Bestiary.all_ids():
-			var est := estimate_encounter(party, String(enc), trials, fight_seed)
+		for enc in bestiary.all_ids():
+			var est := estimate_encounter(party, String(enc), trials, fight_seed, bestiary)
 			if est["win_rate"] >= win_threshold and est["efficiency"] > best_eff:
 				best_eff = est["efficiency"]
 				best_id = String(enc)
@@ -121,7 +121,7 @@ static func run(target_level: int, base_seed: int, trials := 12, win_threshold :
 			break   # 無可贏遭遇 → 卡住
 		var lvl_before := party_min_level(party)
 		# 真打一場
-		var mons := _monsters_for(best_id)
+		var mons := _monsters_for(best_id, bestiary)
 		var rng := RandomNumberGenerator.new()
 		rng.seed = fight_seed
 		fight_seed += 1
