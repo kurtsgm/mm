@@ -286,7 +286,9 @@ func _on_combat_finished(result: int) -> void:
 		_monster_layer.rebuild(_overworld_monsters.live())
 		GameState.monster_state[MapManager.current_map.map_id] = _overworld_monsters.to_save()
 		GameState.message_log.push("戰鬥勝利！")
-		if _has_unopened_chest(_combat_pos):
+		# 怪會走動：戰鬥錨在 home 格，但若怪是被引離 home 才打死，玩家此刻不在 home，
+		# 不該遠端開該格的寶箱（遭遇已清除，玩家日後踏到該格時由 _on_entered_cell 正常提示）。
+		if _combat_pos == GameState.player_pos and _has_unopened_chest(_combat_pos):
 			_prompt_chest(_combat_pos)
 		else:
 			_player.set_enabled(true)
@@ -298,6 +300,7 @@ func _on_combat_finished(result: int) -> void:
 		_show_game_over()
 	_hud.refresh()
 	_combat = null
+	_combat_uid = ""
 
 func _has_unopened_chest(pos: Vector2i) -> bool:
 	var map := MapManager.current_map

@@ -48,4 +48,4 @@ func test_version_is_11():
 func test_old_version_rejected():
 	var raw := SaveSerializer.to_dict(_data())
 	raw["version"] = 9
-	assert_null(SaveSerializer.from_dict(raw), "舊版不再接受（只收 v10）")
+	assert_null(SaveSerializer.from_dict(raw), "舊版不再接受（只收 v11）")

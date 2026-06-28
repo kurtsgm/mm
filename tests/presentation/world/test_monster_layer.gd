@@ -48,3 +48,9 @@ func test_goblin_group_uses_idle_texture():
 	var s: Sprite3D = l._sprites["g1"]
 	var idle: Texture2D = MonsterSpriteCatalog.textures_for("goblin")["idle"]
 	assert_eq(s.texture, idle, "哥布林群組（g→goblin.tres，id=goblin）代表用 idle 真圖")
+
+func test_unknown_group_uses_non_null_placeholder():
+	var l := _layer()
+	l.rebuild([{"uid": "x1", "group": "no_such_group", "cell": Vector2i(0, 0), "state": 0}])
+	var s: Sprite3D = l._sprites["x1"]
+	assert_not_null(s.texture, "未知群組（無真圖）→ placeholder 非 null，避免 runtime null texture")
