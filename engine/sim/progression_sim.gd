@@ -66,8 +66,8 @@ static func clone_party(party: Party) -> Party:
 		p.members.append(c)
 	return p
 
-static func _monsters_for(encounter_id: String) -> Array:
-	var mons := []
+static func _monsters_for(encounter_id: String) -> Array[Monster]:
+	var mons: Array[Monster] = []
 	for d in Bestiary.group_defs_for(encounter_id):
 		mons.append(Monster.from_def(d))
 	return mons
@@ -83,9 +83,7 @@ static func estimate_encounter(party: Party, encounter_id: String, trials: int, 
 	var rounds_sum := 0.0
 	for t in trials:
 		var clone := clone_party(party)
-		var mons: Array[Monster] = []
-		for d in Bestiary.group_defs_for(encounter_id):
-			mons.append(Monster.from_def(d))
+		var mons := _monsters_for(encounter_id)
 		var rng := RandomNumberGenerator.new()
 		rng.seed = base_seed + hash(encounter_id) * 1000003 + t
 		var out := BattleRunner.run(clone, mons, rng)
@@ -123,9 +121,7 @@ static func run(target_level: int, base_seed: int, trials := 12, win_threshold :
 			break   # 無可贏遭遇 → 卡住
 		var lvl_before := party_min_level(party)
 		# 真打一場
-		var mons: Array[Monster] = []
-		for d in Bestiary.group_defs_for(best_id):
-			mons.append(Monster.from_def(d))
+		var mons := _monsters_for(best_id)
 		var rng := RandomNumberGenerator.new()
 		rng.seed = fight_seed
 		fight_seed += 1
