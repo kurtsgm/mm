@@ -78,3 +78,47 @@ func test_set_tab_updates_body_to_status_of_member():
 	panel._unhandled_input(_key(KEY_TAB))  # 選到 C1（Lv2）
 	assert_true(panel.body_text().contains("C1"), "body 顯示目前隊員")
 	assert_true(panel.body_text().contains("Lv2"))
+
+func _state_with_inv(pairs: Dictionary) -> FakeState:
+	var st := _state(1)
+	for id in pairs:
+		st.inventory.add(id, int(pairs[id]))
+	st.party.members[0].hp = 5
+	st.party.members[0].hp_max = 30
+	return st
+
+func _items_panel(st: FakeState) -> CharacterPanel:
+	var panel := CharacterPanel.new()
+	add_child_autofree(panel)
+	panel.open(CharacterPanel.Tab.ITEMS, st)
+	return panel
+
+func test_enter_uses_consumable():
+	var st := _state_with_inv({"potion": 2})
+	var panel := _items_panel(st)
+	# rows[0..2]=裝備槽；rows[3]=potion → 游標移到 3
+	panel._unhandled_input(_key(KEY_DOWN))
+	panel._unhandled_input(_key(KEY_DOWN))
+	panel._unhandled_input(_key(KEY_DOWN))
+	panel._unhandled_input(_key(KEY_ENTER))
+	assert_eq(st.inventory.count_of("potion"), 1, "使用後背包減一")
+	assert_gt(st.party.members[0].hp, 5, "HP 回復")
+	assert_false(st.message_log.lines.is_empty(), "推了訊息")
+
+func test_enter_equips_then_unequips():
+	var st := _state_with_inv({"short_sword": 1})
+	var panel := _items_panel(st)
+	panel._unhandled_input(_key(KEY_DOWN))
+	panel._unhandled_input(_key(KEY_DOWN))
+	panel._unhandled_input(_key(KEY_DOWN))   # 落在 short_sword
+	panel._unhandled_input(_key(KEY_ENTER))  # 裝備
+	var m: Character = st.party.members[0]
+	assert_true(m.equipment.is_equipped(Equipment.Slot.WEAPON), "已裝備")
+	assert_eq(st.inventory.count_of("short_sword"), 0, "背包扣除")
+	# 裝備後背包該列消失 → rows 只剩 3 個裝備槽，游標被夾到索引 2(飾品)。
+	# 3 元素環按 2 次 UP：2→1→0，回到武器槽(rows[0])再卸下。
+	panel._unhandled_input(_key(KEY_UP))
+	panel._unhandled_input(_key(KEY_UP))
+	panel._unhandled_input(_key(KEY_ENTER))  # 卸下
+	assert_false(m.equipment.is_equipped(Equipment.Slot.WEAPON), "已卸下")
+	assert_eq(st.inventory.count_of("short_sword"), 1, "回到背包")

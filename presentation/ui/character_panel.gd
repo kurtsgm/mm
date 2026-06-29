@@ -151,7 +151,13 @@ func _activate() -> void:
 			_activate_spell()
 
 func _activate_item() -> void:
-	pass   # Task 5
+	var rows := CharacterItemsTab.rows(_selected_member(), _state.inventory)
+	if _item_cursor < 0 or _item_cursor >= rows.size():
+		return
+	var events := CharacterItemsTab.activate(rows[_item_cursor], _selected_member(), _state.inventory)
+	for e in events:
+		_push(String(e))
+	_refresh()
 
 func _activate_spell() -> void:
 	pass   # Task 6
