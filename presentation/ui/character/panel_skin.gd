@@ -13,8 +13,16 @@ const SECTION := Color(0.48, 0.35, 0.16)
 const HP_FILL := Color(0.75, 0.22, 0.16)
 const SP_FILL := Color(0.27, 0.45, 0.62)   # 法力藍（與暖羊皮對比、好辨識）
 const XP_FILL := Color(0.79, 0.63, 0.29)
+const USE_FILL := Color(0.32, 0.5, 0.26)   # 消耗品綠（道具分類色標）
 const BAR_BG := Color(0.42, 0.35, 0.22)
 const HILITE := Color(0.48, 0.35, 0.16, 0.30)
+
+# 面板字級（集中常數，一處調整全面板生效；版面骨架定位才走比例，字級可固定）。
+const FONT_BODY := 28      # 清單/欄內文
+const FONT_HEADER := 32    # 欄標題 / 區段標題
+const FONT_TAB := 30       # 頂部分頁
+const FONT_FOOTER := 24    # 底部操作提示
+const FONT_CHIP := 24      # 分類色標 / 狀態 chip
 # 文字描邊（米色淺暈）：在邊緣做舊區仍能分離；中央乾淨區影響很小。
 const OUTLINE_COLOR := Color(0.96, 0.91, 0.79, 0.85)
 const OUTLINE_SIZE := 3
@@ -135,7 +143,7 @@ static func make_chip(text: String, color: Color) -> Label:
 	var lbl := Label.new()
 	lbl.text = text
 	lbl.add_theme_color_override("font_color", Color.WHITE)
-	lbl.add_theme_font_size_override("font_size", 22)
+	lbl.add_theme_font_size_override("font_size", FONT_CHIP)
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = color
 	sb.set_corner_radius_all(8)

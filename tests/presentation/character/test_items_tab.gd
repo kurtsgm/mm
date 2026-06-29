@@ -33,6 +33,20 @@ func test_lines_mark_cursor_and_sections():
 	assert_true(text.contains("背包"), "有背包區塊標題")
 	assert_true(text.contains("> "), "有游標標記")
 
+func test_equip_row_includes_weapon_stat():
+	var m := _member()
+	m.equipment.equip(ItemCatalog.get_item("short_sword"))  # attack 6
+	var rows := CharacterItemsTab.rows(m, _inv({}))
+	assert_eq(String(rows[0]["stat"]), "+6", "武器槽顯示攻擊加成")
+
+func test_empty_equip_slot_has_blank_stat():
+	var rows := CharacterItemsTab.rows(_member(), _inv({}))
+	assert_eq(String(rows[2]["stat"]), "", "空飾品槽無數值")
+
+func test_item_row_includes_category():
+	var rows := CharacterItemsTab.rows(_member(), _inv({"potion": 2}))
+	assert_eq(int(rows[3]["category"]), ItemDef.Category.CONSUMABLE, "背包列帶分類")
+
 func test_activate_consumable_uses_and_decrements():
 	var m := _member()
 	var inv := _inv({"potion": 2})

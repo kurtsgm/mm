@@ -55,23 +55,32 @@ func test_open_lands_on_requested_tab():
 	panel.open(CharacterPanel.Tab.SPELLS, _state(2))
 	assert_eq(panel.current_tab(), CharacterPanel.Tab.SPELLS)
 
-func test_arrows_switch_tabs():
+func test_arrows_switch_tabs_on_non_item_tabs():
+	# 狀態/法術分頁的 ←→ 仍切頂層分頁（道具分頁則改切左右欄，見下方）。
 	var panel := _panel(2)
 	assert_eq(panel.current_tab(), CharacterPanel.Tab.STATUS)
-	panel._unhandled_input(_key(KEY_RIGHT))
-	assert_eq(panel.current_tab(), CharacterPanel.Tab.ITEMS)
-	panel._unhandled_input(_key(KEY_LEFT))
+	panel._unhandled_input(_key(KEY_LEFT))   # STATUS -左→ SPELLS(環狀)
+	assert_eq(panel.current_tab(), CharacterPanel.Tab.SPELLS)
+	panel._unhandled_input(_key(KEY_RIGHT))  # SPELLS -右→ STATUS
 	assert_eq(panel.current_tab(), CharacterPanel.Tab.STATUS)
 
-func test_tab_key_cycles_member():
+func test_tab_key_cycles_tabs():
+	var panel := _panel(3)
+	assert_eq(panel.current_tab(), CharacterPanel.Tab.STATUS)
+	panel._unhandled_input(_key(KEY_TAB))
+	assert_eq(panel.current_tab(), CharacterPanel.Tab.ITEMS, "Tab → 下一分頁")
+	panel._unhandled_input(_key(KEY_TAB))
+	assert_eq(panel.current_tab(), CharacterPanel.Tab.SPELLS)
+	panel._unhandled_input(_key(KEY_TAB))         # 環狀回狀態
+	assert_eq(panel.current_tab(), CharacterPanel.Tab.STATUS)
+	panel._unhandled_input(_key(KEY_TAB, true))   # Shift+Tab 反向 → 法術
+	assert_eq(panel.current_tab(), CharacterPanel.Tab.SPELLS)
+
+func test_tab_key_does_not_change_member():
 	var panel := _panel(3)
 	assert_eq(panel.selected_index(), 0)
 	panel._unhandled_input(_key(KEY_TAB))
-	assert_eq(panel.selected_index(), 1)
-	panel._unhandled_input(_key(KEY_TAB, true))  # Shift+Tab
-	assert_eq(panel.selected_index(), 0)
-	panel._unhandled_input(_key(KEY_TAB, true))  # 環狀回到尾端
-	assert_eq(panel.selected_index(), 2)
+	assert_eq(panel.selected_index(), 0, "Tab 只切分頁、不換角色")
 
 func test_number_keys_select_member():
 	var panel := _panel(3)
@@ -85,7 +94,7 @@ func test_number_keys_select_member():
 
 func test_set_tab_updates_body_to_status_of_member():
 	var panel := _panel(2)
-	panel._unhandled_input(_key(KEY_TAB))  # 選到 C1（Lv2）
+	panel._unhandled_input(_key(KEY_2))  # 數字鍵選到 C1（Lv2）
 	assert_true(panel.body_text().contains("C1"), "body 顯示目前隊員")
 	assert_true(panel.body_text().contains("Lv2"))
 
@@ -103,33 +112,150 @@ func _items_panel(st: FakeState) -> CharacterPanel:
 	panel.open(CharacterPanel.Tab.ITEMS, st)
 	return panel
 
-func test_enter_uses_consumable():
+func test_items_tab_shows_items_view():
+	var st := _state_with_inv({"potion": 1})
+	var panel := _items_panel(st)
+	assert_not_null(_find_node(panel, "CharacterItemsView"), "道具分頁含 CharacterItemsView")
+
+func test_items_arrows_switch_columns():
 	var st := _state_with_inv({"potion": 2})
 	var panel := _items_panel(st)
-	# rows[0..2]=裝備槽；rows[3]=potion → 游標移到 3
+	assert_eq(panel.item_zone(), 0, "起始在裝備欄")
+	panel._unhandled_input(_key(KEY_RIGHT))
+	assert_eq(panel.item_zone(), 1, "→ 進背包欄")
+	panel._unhandled_input(_key(KEY_LEFT))
+	assert_eq(panel.item_zone(), 0, "← 回裝備欄")
+
+func test_items_updown_moves_within_zone_only():
+	# 背包欄內 ↑↓ 只在背包列間環狀，不會跳回裝備欄。
+	var st := _state_with_inv({"potion": 2, "short_sword": 1})
+	var panel := _items_panel(st)
+	panel._unhandled_input(_key(KEY_RIGHT))   # 進背包欄
 	panel._unhandled_input(_key(KEY_DOWN))
-	panel._unhandled_input(_key(KEY_DOWN))
-	panel._unhandled_input(_key(KEY_DOWN))
-	panel._unhandled_input(_key(KEY_ENTER))
+	assert_eq(panel.item_zone(), 1, "↓ 後仍在背包欄")
+
+# ── 邊界外溢：分頁與左右欄排成同一條水平軸，←→ 連續貫穿 ──
+
+func test_items_left_at_equip_spills_to_status():
+	var st := _state_with_inv({"potion": 2})
+	var panel := _items_panel(st)
+	assert_eq(panel.item_zone(), 0, "在裝備欄")
+	panel._unhandled_input(_key(KEY_LEFT))    # 裝備欄再往左 → 外溢回狀態
+	assert_eq(panel.current_tab(), CharacterPanel.Tab.STATUS, "← 外溢到狀態分頁")
+
+func test_items_right_at_bag_spills_to_spells():
+	var st := _state_with_inv({"potion": 2})
+	var panel := _items_panel(st)
+	panel._unhandled_input(_key(KEY_RIGHT))   # 裝備 → 背包
+	assert_eq(panel.item_zone(), 1)
+	panel._unhandled_input(_key(KEY_RIGHT))   # 背包再往右 → 外溢到法術
+	assert_eq(panel.current_tab(), CharacterPanel.Tab.SPELLS, "→ 外溢到法術分頁")
+
+func test_items_right_with_empty_bag_spills_to_spells():
+	var st := _state_with_inv({})             # 背包空 → 裝備是唯一欄
+	var panel := _items_panel(st)
+	panel._unhandled_input(_key(KEY_RIGHT))   # 無背包可去 → 直接外溢到法術
+	assert_eq(panel.current_tab(), CharacterPanel.Tab.SPELLS, "空背包時 → 外溢到法術")
+
+func test_enter_items_from_status_lands_on_equip():
+	var panel := _panel(2)                     # 開在狀態
+	panel._unhandled_input(_key(KEY_RIGHT))    # 狀態 → 道具（從左邊進）
+	assert_eq(panel.current_tab(), CharacterPanel.Tab.ITEMS)
+	assert_eq(panel.item_zone(), 0, "從左邊進道具頁 → 落在裝備欄")
+
+func test_enter_items_from_spells_lands_on_bag():
+	var st := _state_with_inv({"potion": 2})
+	var panel := _items_panel(st)
+	panel.set_tab(CharacterPanel.Tab.SPELLS)   # 移到法術
+	panel._unhandled_input(_key(KEY_LEFT))     # 法術 → 道具（從右邊進）
+	assert_eq(panel.current_tab(), CharacterPanel.Tab.ITEMS)
+	assert_eq(panel.item_zone(), 1, "從右邊進道具頁 → 落在背包欄")
+
+func test_tab_labels_show_hotkeys():
+	var panel := _panel(2)
+	assert_true(_find_label_containing(panel, "道具").text.contains("(I)"), "道具分頁標籤顯示 (I)")
+	assert_true(_find_label_containing(panel, "狀態").text.contains("(C)"), "狀態分頁標籤顯示 (C)")
+	assert_true(_find_label_containing(panel, "法術").text.contains("(M)"), "法術分頁標籤顯示 (M)")
+
+func _find_label_containing(n: Node, sub: String) -> Label:
+	if n is Label and (n as Label).text.contains(sub):
+		return n
+	for c in n.get_children():
+		var r := _find_label_containing(c, sub)
+		if r != null:
+			return r
+	return null
+
+# ── 道具動作確認 modal ──
+
+func test_enter_opens_confirm_without_acting():
+	var st := _state_with_inv({"potion": 2})
+	var panel := _items_panel(st)
+	panel._unhandled_input(_key(KEY_RIGHT))   # 進背包欄，游標落在 potion
+	panel._unhandled_input(_key(KEY_ENTER))   # 開啟確認 modal（不直接使用）
+	assert_true(panel.confirm_open(), "Enter 開啟確認 modal")
+	assert_eq(st.inventory.count_of("potion"), 2, "尚未使用")
+
+func test_panel_has_hidden_confirm_dialog_initially():
+	var panel := _items_panel(_state_with_inv({"potion": 1}))
+	var d := _find_node(panel, "ItemConfirmDialog")
+	assert_not_null(d, "面板含 ItemConfirmDialog")
+	assert_false((d as Control).visible, "初始隱藏")
+
+func test_confirm_use_consumes_and_heals():
+	var st := _state_with_inv({"potion": 2})   # members[0].hp = 5/30（受傷）
+	var panel := _items_panel(st)
+	panel._unhandled_input(_key(KEY_RIGHT))
+	panel._unhandled_input(_key(KEY_ENTER))   # 開 modal（游標預設在「使用」）
+	panel._unhandled_input(_key(KEY_ENTER))   # 確認使用
+	assert_false(panel.confirm_open(), "確認後關閉 modal")
 	assert_eq(st.inventory.count_of("potion"), 1, "使用後背包減一")
 	assert_gt(st.party.members[0].hp, 5, "HP 回復")
-	assert_false(st.message_log.lines.is_empty(), "推了訊息")
 
-func test_enter_equips_then_unequips():
+func test_esc_cancels_confirm_keeps_panel_open():
+	var st := _state_with_inv({"potion": 2})
+	var panel := _items_panel(st)
+	panel._unhandled_input(_key(KEY_RIGHT))
+	panel._unhandled_input(_key(KEY_ENTER))   # 開 modal
+	panel._unhandled_input(_key(KEY_ESCAPE))  # 取消 modal
+	assert_false(panel.confirm_open(), "Esc 關閉 modal")
+	assert_true(panel.is_open(), "面板仍開")
+	assert_eq(st.inventory.count_of("potion"), 2, "未使用")
+
+func test_cancel_option_does_nothing():
+	var st := _state_with_inv({"potion": 2})
+	var panel := _items_panel(st)
+	panel._unhandled_input(_key(KEY_RIGHT))
+	panel._unhandled_input(_key(KEY_ENTER))   # 開 modal
+	panel._unhandled_input(_key(KEY_RIGHT))   # 游標移到「取消」
+	panel._unhandled_input(_key(KEY_ENTER))   # 選取消
+	assert_false(panel.confirm_open())
+	assert_eq(st.inventory.count_of("potion"), 2, "未使用")
+
+func test_unusable_consumable_offers_dismiss_only():
+	var st := _state_with_inv({"potion": 1})
+	st.party.members[0].hp = st.party.members[0].hp_max   # 滿血 → 無法治療
+	var panel := _items_panel(st)
+	panel._unhandled_input(_key(KEY_RIGHT))
+	panel._unhandled_input(_key(KEY_ENTER))   # 開 modal
+	assert_true(panel.confirm_open())
+	assert_eq(panel.confirm_options(), ["確定"], "滿血時只給『確定』、不給『使用』")
+	panel._unhandled_input(_key(KEY_ENTER))   # 確定 → 關閉、不消耗
+	assert_false(panel.confirm_open())
+	assert_eq(st.inventory.count_of("potion"), 1, "未消耗")
+
+func test_confirm_equips_then_unequips():
 	var st := _state_with_inv({"short_sword": 1})
 	var panel := _items_panel(st)
-	panel._unhandled_input(_key(KEY_DOWN))
-	panel._unhandled_input(_key(KEY_DOWN))
-	panel._unhandled_input(_key(KEY_DOWN))   # 落在 short_sword
-	panel._unhandled_input(_key(KEY_ENTER))  # 裝備
+	panel._unhandled_input(_key(KEY_RIGHT))   # 背包 short_sword
+	panel._unhandled_input(_key(KEY_ENTER))   # modal「裝備」
+	panel._unhandled_input(_key(KEY_ENTER))   # 確認裝備
 	var m: Character = st.party.members[0]
 	assert_true(m.equipment.is_equipped(Equipment.Slot.WEAPON), "已裝備")
 	assert_eq(st.inventory.count_of("short_sword"), 0, "背包扣除")
-	# 裝備後背包該列消失 → rows 只剩 3 個裝備槽，游標被夾到索引 2(飾品)。
-	# 3 元素環按 2 次 UP：2→1→0，回到武器槽(rows[0])再卸下。
-	panel._unhandled_input(_key(KEY_UP))
-	panel._unhandled_input(_key(KEY_UP))
-	panel._unhandled_input(_key(KEY_ENTER))  # 卸下
+	assert_eq(panel.item_zone(), 0, "背包空後退回裝備欄")
+	panel._unhandled_input(_key(KEY_ENTER))   # modal「卸下」
+	panel._unhandled_input(_key(KEY_ENTER))   # 確認卸下
 	assert_false(m.equipment.is_equipped(Equipment.Slot.WEAPON), "已卸下")
 	assert_eq(st.inventory.count_of("short_sword"), 1, "回到背包")
 

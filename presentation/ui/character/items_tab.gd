@@ -9,12 +9,31 @@ static func rows(member: Character, inventory) -> Array:
 	var out: Array = []
 	for slot in _SLOTS:
 		var it: ItemDef = member.equipment.get_item(slot)
-		out.append({"kind": "equip", "slot": slot, "name": (it.display_name if it != null else "-")})
+		out.append({
+			"kind": "equip", "slot": slot,
+			"name": (it.display_name if it != null else "-"),
+			"stat": (_equip_stat(slot, it) if it != null else ""),
+		})
 	for s in inventory.stacks():
 		var item := ItemCatalog.get_item(String(s["id"]))
 		var nm := item.display_name if item != null else String(s["id"])
-		out.append({"kind": "item", "id": String(s["id"]), "count": int(s["count"]), "name": nm})
+		var cat := int(item.category) if item != null else int(ItemDef.Category.CONSUMABLE)
+		out.append({"kind": "item", "id": String(s["id"]), "count": int(s["count"]), "name": nm, "category": cat})
 	return out
+
+# 已裝備道具的關鍵數值字串：武器→攻擊、防具→防禦、飾品→有什麼顯示什麼；皆無則空字串。
+static func _equip_stat(slot: int, it: ItemDef) -> String:
+	match slot:
+		Equipment.Slot.WEAPON:
+			return "+%d" % it.attack if it.attack != 0 else ""
+		Equipment.Slot.ARMOR:
+			return "+%d" % it.armor if it.armor != 0 else ""
+		Equipment.Slot.ACCESSORY:
+			if it.attack != 0:
+				return "+%d" % it.attack
+			if it.armor != 0:
+				return "+%d" % it.armor
+	return ""
 
 static func lines(rows_: Array, cursor: int) -> Array:
 	var out: Array = ["== 裝備 =="]
