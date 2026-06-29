@@ -1,0 +1,9 @@
+{
+  "id": "oak_inn",
+  "kind": "services",
+  "name": "橡鎮旅店「醉橡」",
+  "greeting": "客官，打尖還是住店？",
+  "offers": [
+    { "name": "住宿一晚（回復全隊）", "cost": 10, "effect": "rest", "target": "party" }
+  ]
+}

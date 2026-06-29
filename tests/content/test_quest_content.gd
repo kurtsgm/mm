@@ -22,7 +22,9 @@ func test_qg_oak_guard_dialogue_loads():
 func test_town_oak_has_questgiver():
 	var map := MapImporter.parse(FileAccess.get_file_as_string("res://content/maps/town_oak.json"))
 	assert_not_null(map)
-	assert_true(map.has_quest_giver(Vector2i(4, 2)))
+	# 守衛隊長（哥布林任務發包人）站在城門邊
+	assert_true(map.has_quest_giver(Vector2i(3, 7)))
+	assert_eq(map.get_quest_giver(Vector2i(3, 7))["dialogue"], "qg_oak_guard")
 
 func test_wild_ne_has_goblin_and_chest():
 	var map := MapImporter.parse(FileAccess.get_file_as_string("res://content/maps/wild_ne.json"))
