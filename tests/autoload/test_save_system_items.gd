@@ -36,7 +36,7 @@ func _save_with_items() -> SaveData:
 	var inv := Inventory.new()
 	inv.add("potion", 2)
 	var d := SaveData.new()
-	d.gold = 40; d.map_id = "level01"
+	d.gold = 40; d.map_id = "wild_ne"
 	d.player_pos = Vector2i(1, 1); d.player_facing = 0
 	d.party = p; d.inventory = inv
 	return d
@@ -62,7 +62,7 @@ func test_apply_to_restores_inventory():
 	var gs = _gs()
 	var mm = _mm()
 	var data := SaveData.new()
-	data.map_id = "level01"
+	data.map_id = "wild_ne"
 	data.party = Party.create_default()
 	var inv := Inventory.new(); inv.add("potion", 5)
 	data.inventory = inv
