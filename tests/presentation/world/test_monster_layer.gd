@@ -147,3 +147,32 @@ func test_update_frame_falls_back_to_sway_without_second_frame():
 	assert_almost_eq(s.offset.y, 0.0, 0.0001, "fallback 晃動只左右")
 	var max_px: float = MonsterLayer.SWAY_WORLD / s.pixel_size
 	assert_lt(absf(s.offset.x), max_px + 0.0001)
+
+# ---- cluster_offsets：叢內擺位 ----
+func test_cluster_offsets_single_centered():
+	var offs := MonsterLayer.cluster_offsets(1, 0.5)
+	assert_eq(offs.size(), 1)
+	assert_true(offs[0].is_equal_approx(Vector3.ZERO), "單隻置中")
+
+func test_cluster_offsets_returns_exactly_n():
+	assert_eq(MonsterLayer.cluster_offsets(2, 0.5).size(), 2)
+	assert_eq(MonsterLayer.cluster_offsets(3, 0.5).size(), 3)
+	assert_eq(MonsterLayer.cluster_offsets(5, 0.5).size(), 5)
+
+func test_cluster_offsets_three_distinct_centered_in_bounds():
+	var spread := 0.5
+	var offs := MonsterLayer.cluster_offsets(3, spread)
+	assert_false(offs[0].is_equal_approx(offs[1]), "三隻互不重疊")
+	assert_false(offs[1].is_equal_approx(offs[2]))
+	assert_false(offs[0].is_equal_approx(offs[2]))
+	for o in offs:
+		assert_true(absf(o.x) <= spread + 0.0001, "x 落在 spread 內")
+		assert_true(absf(o.z) <= spread + 0.0001, "z 落在 spread 內")
+	var sum := Vector3.ZERO
+	for o in offs:
+		sum += o
+	assert_almost_eq(sum.x, 0.0, 0.0001, "x 對稱置中")
+	assert_almost_eq(sum.z, 0.0, 0.0001, "z 對稱置中")
+
+func test_cluster_offsets_deterministic():
+	assert_eq(str(MonsterLayer.cluster_offsets(3, 0.5)), str(MonsterLayer.cluster_offsets(3, 0.5)), "同輸入同輸出")

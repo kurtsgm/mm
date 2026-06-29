@@ -25,6 +25,32 @@ static func sway_offset_px(t: float, phase: float, sway_world: float, period: fl
 static func frame_index(t: float, beat_offset: float, period: float) -> int:
 	return int(floor(t / max(period, 0.0001) + beat_offset)) % 2
 
+# 純函式：n 隻怪在格內的叢擺位（XZ 平面 offset，y=0）。spread=擺幅半徑（世界單位）。
+# 整體置中（centroid≈0）、確定性。n<=1 置中；2 並排；3 三角（前後分層）；>=4 每列至多 3 的置中網格。
+static func cluster_offsets(n: int, spread: float) -> Array[Vector3]:
+	var out: Array[Vector3] = []
+	if n <= 1:
+		out.append(Vector3.ZERO)
+		return out
+	if n == 2:
+		out.append(Vector3(-spread, 0.0, 0.0))
+		out.append(Vector3(spread, 0.0, 0.0))
+		return out
+	if n == 3:
+		out.append(Vector3(0.0, 0.0, -spread * 0.8))    # 後置中
+		out.append(Vector3(-spread, 0.0, spread * 0.4))  # 前左
+		out.append(Vector3(spread, 0.0, spread * 0.4))   # 前右
+		return out
+	var per_row := 3
+	var rows := int(ceil(float(n) / float(per_row)))
+	for r in rows:
+		var in_row: int = min(per_row, n - r * per_row)
+		for c in in_row:
+			var x := (float(c) - float(in_row - 1) / 2.0) * spread
+			var z := (float(r) - float(rows - 1) / 2.0) * spread
+			out.append(Vector3(x, 0.0, z))
+	return out
+
 func rebuild(monsters: Array) -> void:
 	_clear()
 	for i in monsters.size():
