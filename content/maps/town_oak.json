@@ -1,112 +1,29 @@
 {
-	"entities": [
-		{
-			"entry": "from_town",
-			"pos": [
-				2.0,
-				3.0
-			],
-			"to": "wild_nw",
-			"type": "portal"
-		},
-		{
-			"gold": 50.0,
-			"items": [
-				"potion"
-			],
-			"pos": [
-				1.0,
-				1.0
-			],
-			"type": "chest"
-		},
-		{
-			"gold": 30.0,
-			"items": [
-				"short_sword"
-			],
-			"pos": [
-				3.0,
-				1.0
-			],
-			"type": "chest"
-		},
-		{
-			"encounter": "g",
-			"id": "019f076a-1c32-7c88-9806-5b85b28e811d",
-			"pos": [
-				3.0,
-				1.0
-			],
-			"type": "monster"
-		},
-		{
-			"dialogue": "demo_event",
-			"once": false,
-			"pos": [
-				1.0,
-				3.0
-			],
-			"type": "scene"
-		},
-		{
-			"dialogue": "qg_oak_guard",
-			"pos": [
-				2.0,
-				1.0
-			],
-			"type": "questgiver"
-		},
-		{
-			"id": "oak_general_store",
-			"pos": [
-				1.0,
-				2.0
-			],
-			"type": "vendor"
-		},
-		{
-			"id": "oak_mage",
-			"pos": [
-				3.0,
-				2.0
-			],
-			"type": "vendor"
-		},
-		{
-			"id": "oak_temple",
-			"pos": [
-				3.0,
-				3.0
-			],
-			"type": "vendor"
-		},
-		{
-			"dialogue": "qg_margo",
-			"pos": [
-				2.0,
-				4.0
-			],
-			"type": "questgiver"
-		}
-	],
-	"entries": {
-		"gate": {
-			"facing": "S",
-			"pos": [
-				2.0,
-				1.0
-			]
-		}
-	},
-	"grid": [
-		"#####",
-		"#...#",
-		"#.@.#",
-		"#...#",
-		"#...#",
-		"#####"
-	],
-	"name": "橡鎮",
-	"theme": "town"
+  "name": "橡鎮",
+  "theme": "town",
+  "grid": [
+    "##########",
+    "#........#",
+    "#........#",
+    "#........#",
+    "#...@....#",
+    "#........#",
+    "#........#",
+    "#........#",
+    "#........#",
+    "##########"
+  ],
+  "entities": [
+    { "type": "portal", "pos": [4, 6], "to": "wild_nw", "entry": "from_town" },
+    { "type": "chest", "pos": [2, 2], "gold": 50, "items": ["potion"] },
+    { "type": "chest", "pos": [6, 2], "gold": 30, "items": ["short_sword"] },
+    { "type": "monster", "pos": [6, 2], "encounter": "g", "id": "019f076a-1c32-7c88-9806-5b85b28e811d" },
+    { "type": "scene", "pos": [2, 6], "dialogue": "demo_event", "once": false },
+    { "type": "questgiver", "pos": [4, 2], "dialogue": "qg_oak_guard" },
+    { "type": "vendor", "pos": [2, 4], "id": "oak_general_store" },
+    { "type": "vendor", "pos": [6, 4], "id": "oak_mage" },
+    { "type": "vendor", "pos": [6, 6], "id": "oak_temple" },
+    { "type": "questgiver", "pos": [4, 8], "dialogue": "qg_margo" }
+  ],
+  "entries": { "gate": { "pos": [4, 2], "facing": "S" } }
 }

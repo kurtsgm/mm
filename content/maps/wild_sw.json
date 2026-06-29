@@ -1,26 +1,20 @@
 {
-	"entities": [
-		{
-			"encounter": "dw",
-			"id": "019f09c6-6aa8-71f2-a346-48d9689f7698",
-			"pos": [
-				1.0,
-				1.0
-			],
-			"type": "monster"
-		}
-	],
-	"grid": [
-		".....",
-		".....",
-		"..@..",
-		".....",
-		"....."
-	],
-	"name": "西南野",
-	"neighbors": {
-		"east": "wild_se",
-		"north": "wild_nw"
-	},
-	"theme": "grassland"
+  "name": "西南野",
+  "theme": "grassland",
+  "grid": [
+    "..........",
+    "..........",
+    "..........",
+    "..........",
+    "....@.....",
+    "..........",
+    "..........",
+    "..........",
+    "..........",
+    ".........."
+  ],
+  "neighbors": { "east": "wild_se", "north": "wild_nw" },
+  "entities": [
+    { "type": "monster", "pos": [2, 2], "encounter": "dw", "id": "019f09c6-6aa8-71f2-a346-48d9689f7698" }
+  ]
 }

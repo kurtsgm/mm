@@ -4,7 +4,7 @@
   "stages": [
     { "type": "kill", "targets": ["019f076a-1c33-702d-89f4-2bdafcf85336"], "desc": "擊敗巢穴的哥布林" },
     { "type": "collect", "item": "lucky_charm", "count": 1, "desc": "取得哥布林信物" },
-    { "type": "reach", "map": "wild_ne", "pos": [3, 3], "desc": "確認巢穴最深處" },
+    { "type": "reach", "map": "wild_ne", "pos": [6, 6], "desc": "確認巢穴最深處" },
     { "type": "talk", "desc": "回橡鎮向守衛回報" }
   ],
   "rewards": { "gold": 100, "xp": 60, "items": ["potion"] }
