@@ -49,6 +49,13 @@ static func cluster_offsets(n: int, spread: float) -> Array[Vector3]:
 			var x := (float(c) - float(in_row - 1) / 2.0) * spread
 			var z := (float(r) - float(rows - 1) / 2.0) * spread
 			out.append(Vector3(x, 0.0, z))
+	# centroid 歸零：末列可能不滿（每列數不一）→ z 加權偏移；減平均使整體置中（x 本對稱、減 0 不變）。
+	var centroid := Vector3.ZERO
+	for o in out:
+		centroid += o
+	centroid /= float(out.size())
+	for i in out.size():
+		out[i] -= centroid
 	return out
 
 func rebuild(monsters: Array) -> void:

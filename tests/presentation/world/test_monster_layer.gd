@@ -176,3 +176,13 @@ func test_cluster_offsets_three_distinct_centered_in_bounds():
 
 func test_cluster_offsets_deterministic():
 	assert_eq(str(MonsterLayer.cluster_offsets(3, 0.5)), str(MonsterLayer.cluster_offsets(3, 0.5)), "同輸入同輸出")
+
+func test_cluster_offsets_grid_centered():
+	for n in [4, 5, 6, 7]:
+		var offs := MonsterLayer.cluster_offsets(n, 0.5)
+		assert_eq(offs.size(), n, "n=%d 回傳剛好 n 個" % n)
+		var sum := Vector3.ZERO
+		for o in offs:
+			sum += o
+		assert_almost_eq(sum.x, 0.0, 0.0001, "n=%d x 質心置中" % n)
+		assert_almost_eq(sum.z, 0.0, 0.0001, "n=%d z 質心置中" % n)
