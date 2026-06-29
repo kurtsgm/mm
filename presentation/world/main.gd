@@ -29,8 +29,7 @@ var _combat: CombatSystem
 var _combat_origin_map: String = ""
 var _combat_home_local: Vector2i
 var _save_menu: SaveMenu
-var _inventory_menu: InventoryMenu
-var _spell_menu: SpellMenu
+var _character_panel: CharacterPanel
 var _mini_map: MiniMap
 var _chest_prompt: ChestPrompt
 var _chest_pos: Vector2i
@@ -77,15 +76,11 @@ func _ready() -> void:
 	_save_menu.closed.connect(_on_menu_closed)
 	SaveSystem.loaded.connect(_on_loaded)
 
-	_inventory_menu = InventoryMenu.new()
-	add_child(_inventory_menu)
-	_inventory_menu.closed.connect(_on_menu_closed)
+	_character_panel = CharacterPanel.new()
+	add_child(_character_panel)
+	_character_panel.closed.connect(_on_menu_closed)
+	_character_panel.world_spell_cast.connect(_on_world_spell_cast)
 	SaveSystem.item_resolver = Callable(ItemCatalog, "get_item")
-
-	_spell_menu = SpellMenu.new()
-	add_child(_spell_menu)
-	_spell_menu.closed.connect(_on_menu_closed)
-	_spell_menu.world_spell_cast.connect(_on_world_spell_cast)
 
 	_chest_prompt = ChestPrompt.new()
 	add_child(_chest_prompt)
@@ -113,7 +108,7 @@ func _ready() -> void:
 	_quest_tracker = QuestTracker.new()
 	add_child(_quest_tracker)
 
-	_menus = [_save_menu, _inventory_menu, _spell_menu, _quest_log]
+	_menus = [_save_menu, _character_panel, _quest_log]
 
 	_player.setup(_world_grid, map.start_pos, map.start_facing)
 
@@ -463,10 +458,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		return  # 對話/商店中，不開其他選單
 	if event.keycode == KEY_TAB:
 		_toggle_menu(_save_menu)
+	elif event.keycode == KEY_C:
+		_character_tab_key(CharacterPanel.Tab.STATUS)
 	elif event.keycode == KEY_I:
-		_toggle_menu(_inventory_menu)
+		_character_tab_key(CharacterPanel.Tab.ITEMS)
 	elif event.keycode == KEY_M:
-		_toggle_menu(_spell_menu)
+		_character_tab_key(CharacterPanel.Tab.SPELLS)
 	elif event.keycode == KEY_J:
 		_toggle_menu(_quest_log)
 
@@ -480,6 +477,21 @@ func _toggle_menu(menu) -> void:
 	_player.set_enabled(false)
 	menu.open()
 
+# C/I/M：未開→開到該分頁；已開→切到該分頁；已開且已在該分頁→關閉。
+# 面板不自行攔 C/I/M（避免與此處雙重處理），但會攔 ←→/Tab/↑↓/Enter/Esc。
+func _character_tab_key(tab: int) -> void:
+	if _character_panel.is_open():
+		if _character_panel.current_tab() == tab:
+			_character_panel.close()
+		else:
+			_character_panel.set_tab(tab)
+		return
+	for other in _menus:
+		if other != _character_panel and other.is_open():
+			return   # 另一選單開著時不切換
+	_player.set_enabled(false)
+	_character_panel.open(tab, GameState)
+
 func _on_menu_closed() -> void:
 	if not _transitioning:
 		_player.set_enabled(true)
@@ -492,7 +504,7 @@ func _on_quests_changed() -> void:
 
 func _on_world_spell_cast(spell: SpellDef) -> void:
 	# 工具法術擴充樣板：加新 utility = 加一個 SpellDef.Effect + 一個 case + 一張 .tres。
-	# SP 已由 SpellMenu 扣除，這裡不再付費；僅做世界效果 dispatch。
+	# SP 已由 CharacterPanel 扣除，這裡不再付費；僅做世界效果 dispatch。
 	match spell.effect:
 		SpellDef.Effect.TELEPORT:
 			_cast_teleport(spell)
