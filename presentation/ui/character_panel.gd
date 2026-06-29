@@ -112,6 +112,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if _tab == Tab.SPELLS and _mode == Mode.PICK_TARGET:
 		_input_pick_target(event.keycode)
 		return
+	if event.keycode >= KEY_1 and event.keycode <= KEY_6:
+		_select_member_index(event.keycode - KEY_1)
+		return
 	match event.keycode:
 		KEY_ESCAPE:
 			close()
@@ -138,6 +141,15 @@ func _switch_member(d: int) -> void:
 	var n := _members().size()
 	if n > 0:
 		_member_idx = (_member_idx + d + n) % n
+	_item_cursor = 0
+	_spell_cursor = 0
+	_refresh()
+
+# 數字鍵 1-6 直接選第 idx+1 位隊員；超出隊伍人數則忽略。
+func _select_member_index(idx: int) -> void:
+	if idx < 0 or idx >= _members().size():
+		return
+	_member_idx = idx
 	_item_cursor = 0
 	_spell_cursor = 0
 	_refresh()
@@ -276,13 +288,13 @@ func _body_lines() -> Array:
 func _footer_text() -> String:
 	match _tab:
 		Tab.STATUS:
-			return "[←→]分頁  [Tab]換隊員  [Esc]關閉"
+			return "[←→]分頁  [Tab/1-6]換隊員  [Esc]關閉"
 		Tab.ITEMS:
-			return "[←→]分頁  [Tab]換隊員  [↑↓]選擇  [Enter]使用/裝備/卸下  [Esc]關閉"
+			return "[←→]分頁  [Tab/1-6]換隊員  [↑↓]選擇  [Enter]使用/裝備/卸下  [Esc]關閉"
 		Tab.SPELLS:
 			if _mode == Mode.PICK_TARGET:
 				return "[↑↓]選對象  [Enter]確定  [Esc]返回"
-			return "[←→]分頁  [Tab]換隊員  [↑↓]選擇  [Enter]施放  [Esc]關閉"
+			return "[←→]分頁  [Tab/1-6]換隊員  [↑↓]選擇  [Enter]施放  [Esc]關閉"
 	return ""
 
 func _pick_target_lines() -> Array:

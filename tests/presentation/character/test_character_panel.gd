@@ -73,6 +73,16 @@ func test_tab_key_cycles_member():
 	panel._unhandled_input(_key(KEY_TAB, true))  # 環狀回到尾端
 	assert_eq(panel.selected_index(), 2)
 
+func test_number_keys_select_member():
+	var panel := _panel(3)
+	assert_eq(panel.selected_index(), 0)
+	panel._unhandled_input(_key(KEY_3))
+	assert_eq(panel.selected_index(), 2, "數字鍵 3 → 第 3 位隊員")
+	panel._unhandled_input(_key(KEY_1))
+	assert_eq(panel.selected_index(), 0, "數字鍵 1 → 第 1 位隊員")
+	panel._unhandled_input(_key(KEY_6))
+	assert_eq(panel.selected_index(), 0, "超出隊伍人數的數字鍵忽略，維持原選")
+
 func test_set_tab_updates_body_to_status_of_member():
 	var panel := _panel(2)
 	panel._unhandled_input(_key(KEY_TAB))  # 選到 C1（Lv2）
