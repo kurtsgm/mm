@@ -27,6 +27,34 @@ static func lines(c: Character) -> Array:
 	out.append("狀態異常：%s" % _status_text(c.statuses))
 	return out
 
+# 結構化角色卡資料（給 widget 版 StatusView 用；與 lines() 並存）。
+static func fields(c: Character) -> Dictionary:
+	if c == null:
+		return {}
+	var need := Leveling.xp_for_level(c.level)
+	var statuses: Array = []
+	for s in c.statuses:
+		statuses.append({"label": StatusRules.label(s), "color": StatusRules.color(s)})
+	return {
+		"name": c.name,
+		"class_label": _class_label(c.char_class),
+		"level": c.level,
+		"xp": c.experience,
+		"xp_need": need,
+		"xp_to_next": maxi(0, need - c.experience),
+		"hp": c.hp, "hp_max": c.hp_max,
+		"sp": c.sp, "sp_max": c.sp_max,
+		"condition_label": _condition_label(c.condition),
+		"stats": {
+			"might": c.might, "intellect": c.intellect, "personality": c.personality,
+			"endurance": c.endurance, "speed": c.speed, "accuracy": c.accuracy, "luck": c.luck,
+		},
+		"attack": c.attack_power(),
+		"armor": c.armor_value(),
+		"accuracy_eff": c.effective_accuracy(),
+		"statuses": statuses,
+	}
+
 static func _class_label(cls: String) -> String:
 	return _CLASS_LABEL.get(cls, cls)
 

@@ -46,3 +46,27 @@ func test_lines_show_statuses_or_none():
 	assert_true("\n".join(CharacterStatusTab.lines(c)).contains("無"), "無異常時顯示『無』")
 	c.statuses = [StatusCatalog.poison(2, 3)]
 	assert_true("\n".join(CharacterStatusTab.lines(c)).contains("毒"), "中毒時顯示『毒』")
+
+func test_fields_structured_values():
+	var c := _knight()   # 既有 helper：Knight Lv3, exp50, hp20/42, might18, endurance20, accuracy13...
+	var f := CharacterStatusTab.fields(c)
+	assert_eq(String(f["name"]), "亞爾")
+	assert_eq(String(f["class_label"]), "騎士")
+	assert_eq(int(f["level"]), 3)
+	assert_eq(int(f["xp"]), 50)
+	assert_eq(int(f["xp_need"]), Leveling.xp_for_level(3))
+	assert_eq(int(f["xp_to_next"]), maxi(0, Leveling.xp_for_level(3) - 50))
+	assert_eq(int(f["stats"]["might"]), 18)
+	assert_eq(int(f["attack"]), c.attack_power())
+	assert_eq(int(f["armor"]), c.armor_value())
+	assert_eq(int(f["accuracy_eff"]), c.effective_accuracy())
+	assert_eq(String(f["condition_label"]), "正常")
+
+func test_fields_statuses_label_color():
+	var c := _knight()
+	assert_eq((CharacterStatusTab.fields(c)["statuses"] as Array).size(), 0)
+	c.statuses = [StatusCatalog.poison(2, 3)]
+	var st: Array = CharacterStatusTab.fields(c)["statuses"]
+	assert_eq(st.size(), 1)
+	assert_eq(String(st[0]["label"]), "毒")
+	assert_eq(st[0]["color"], StatusRules.color(c.statuses[0]))
