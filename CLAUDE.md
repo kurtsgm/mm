@@ -8,6 +8,7 @@
 - **UI 版面** — 一律依視窗比例、解析度無關、不寫死像素。見下「UI 版面」。
 - **美術風格** — 美式 D&D × CRPG 寫實 × 英雄高奇幻 × 英雄寫實比例；人物/NPC/怪物一致。見下「美術風格」與 `docs/art-style-guide.md`。
 - **不需向後相容** — 現階段為 pre-release 開發，breaking change 一律可接受，不為相容/存檔遷移付出任何成本。見下「不需向後相容」。
+- **開發工具（tools/）** — 離線跑的工具索引見 `tools/README.md`。含 `gen_parchment.gd`（程序化生成羊皮 UI 貼圖，可指定尺寸）、戰鬥/升級模擬器、任務驗證器等。
 
 ## 不需向後相容：現階段所有 breaking change 都可接受
 
