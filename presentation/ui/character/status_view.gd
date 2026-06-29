@@ -25,7 +25,7 @@ func refresh(member: Character) -> void:
 	for c in get_children():
 		c.queue_free()
 		remove_child(c)
-	add_theme_constant_override("separation", 16)
+	add_theme_constant_override("separation", 22)
 	if member == null:
 		_name_label = null
 		_hp_bar = {}
@@ -44,9 +44,9 @@ func refresh(member: Character) -> void:
 	ht.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	ht.add_theme_constant_override("separation", 5)
 	head.add_child(ht)
-	_name_label = _mk(String(f["name"]), PanelSkin.TITLE, 30)
+	_name_label = _mk(String(f["name"]), PanelSkin.TITLE, 38)
 	ht.add_child(_name_label)
-	ht.add_child(_mk("%s　Lv %d" % [String(f["class_label"]), int(f["level"])], PanelSkin.SECTION, 18))
+	ht.add_child(_mk("%s　Lv %d" % [String(f["class_label"]), int(f["level"])], PanelSkin.SECTION, 22))
 	ht.add_child(_labeled_bar("HP %d/%d" % [int(f["hp"]), int(f["hp_max"])], PanelSkin.HP_FILL,
 		PartyMemberCard.bar_ratio(int(f["hp"]), int(f["hp_max"])), "_hp_bar"))
 	ht.add_child(_labeled_bar("經驗 %d/%d（距下一級 %d）" % [int(f["xp"]), int(f["xp_need"]), int(f["xp_to_next"])],
@@ -55,27 +55,27 @@ func refresh(member: Character) -> void:
 	# --- 七圍格（3 欄）---
 	var grid := GridContainer.new()
 	grid.columns = 3
-	grid.add_theme_constant_override("h_separation", 32)
-	grid.add_theme_constant_override("v_separation", 10)
+	grid.add_theme_constant_override("h_separation", 44)
+	grid.add_theme_constant_override("v_separation", 14)
 	add_child(grid)
 	var s: Dictionary = f["stats"]
 	for pair in [["力量", s["might"]], ["智力", s["intellect"]], ["人格", s["personality"]],
 				 ["耐力", s["endurance"]], ["速度", s["speed"]], ["精準", s["accuracy"]],
 				 ["幸運", s["luck"]], ["SP", "%d/%d" % [int(f["sp"]), int(f["sp_max"])]],
 				 ["狀態", String(f["condition_label"])]]:
-		grid.add_child(_mk("%s %s" % [String(pair[0]), str(pair[1])], PanelSkin.TEXT, 19))
+		grid.add_child(_mk("%s %s" % [String(pair[0]), str(pair[1])], PanelSkin.TEXT, 22))
 
 	# --- 衍生 ---
-	add_child(_mk("攻擊 %d　　防禦 %d　　命中 %d" % [int(f["attack"]), int(f["armor"]), int(f["accuracy_eff"])], Color(0.49, 0.13, 0.10), 19))
+	add_child(_mk("攻擊 %d　　防禦 %d　　命中 %d" % [int(f["attack"]), int(f["armor"]), int(f["accuracy_eff"])], Color(0.49, 0.13, 0.10), 22))
 
 	# --- 狀態異常 chip ---
 	var chips := HBoxContainer.new()
 	chips.add_theme_constant_override("separation", 6)
 	add_child(chips)
-	chips.add_child(_mk("狀態異常：", PanelSkin.SECTION, 17))
+	chips.add_child(_mk("狀態異常：", PanelSkin.SECTION, 20))
 	_chip_count = (f["statuses"] as Array).size()
 	if _chip_count == 0:
-		chips.add_child(_mk("無", PanelSkin.TEXT, 17))
+		chips.add_child(_mk("無", PanelSkin.TEXT, 20))
 	else:
 		for st in f["statuses"]:
 			chips.add_child(PanelSkin.make_chip(String(st["label"]), st["color"]))
@@ -89,11 +89,21 @@ func _mk(text: String, color: Color, size: int) -> Label:
 
 func _labeled_bar(text: String, fill: Color, ratio: float, which: String) -> Control:
 	var wrap := VBoxContainer.new()
-	wrap.add_theme_constant_override("separation", 1)
-	wrap.add_child(_mk(text, PanelSkin.TEXT, 16))
+	wrap.add_theme_constant_override("separation", 2)
+	wrap.add_child(_mk(text, PanelSkin.TEXT, 18))
 	var bar := PanelSkin.make_bar(fill)
+	bar["root"].custom_minimum_size = Vector2(0, 16)
 	PanelSkin.set_ratio(bar, ratio)
-	wrap.add_child(bar["root"])
+	# 血條不佔滿整列：條占約一半寬、右側留白，避免在大面板上被拉太長。
+	var barline := HBoxContainer.new()
+	bar["root"].size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	bar["root"].size_flags_stretch_ratio = 0.5
+	barline.add_child(bar["root"])
+	var spacer := Control.new()
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	spacer.size_flags_stretch_ratio = 0.5
+	barline.add_child(spacer)
+	wrap.add_child(barline)
 	if which == "_hp_bar":
 		_hp_bar = bar
 	else:
@@ -102,7 +112,7 @@ func _labeled_bar(text: String, fill: Color, ratio: float, which: String) -> Con
 
 func _big_portrait(member: Character) -> Control:
 	var box := Control.new()
-	box.custom_minimum_size = Vector2(120, 120)
+	box.custom_minimum_size = Vector2(200, 200)
 	var tex := PortraitCatalog.texture_for(member)
 	if tex != null:
 		var tr := TextureRect.new()

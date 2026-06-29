@@ -47,17 +47,17 @@ func _build_row(member: Character, index: int, is_sel: bool) -> Control:
 	var nm := Label.new()
 	nm.text = "%s %s" % [member.name, _abbr(member.char_class)]
 	nm.add_theme_color_override("font_color", PanelSkin.TITLE)
-	nm.add_theme_font_size_override("font_size", 18)
+	nm.add_theme_font_size_override("font_size", 22)
 	col.add_child(nm)
 	var bar := PanelSkin.make_bar(PanelSkin.HP_FILL)
-	bar["root"].custom_minimum_size = Vector2(0, 9)
+	bar["root"].custom_minimum_size = Vector2(0, 12)
 	PanelSkin.set_ratio(bar, PartyMemberCard.bar_ratio(member.hp, member.hp_max))
 	col.add_child(bar["root"])
 	return row
 
 func _portrait(member: Character, index: int) -> Control:
 	var box := Control.new()
-	box.custom_minimum_size = Vector2(44, 44)
+	box.custom_minimum_size = Vector2(80, 80)
 	var tex := PortraitCatalog.texture_for(member)
 	if tex != null:
 		var tr := TextureRect.new()
@@ -74,7 +74,7 @@ func _portrait(member: Character, index: int) -> Control:
 	var num := Label.new()
 	num.text = str(index + 1)
 	num.add_theme_color_override("font_color", PanelSkin.TITLE)
-	num.add_theme_font_size_override("font_size", 14)
+	num.add_theme_font_size_override("font_size", 18)
 	box.add_child(num)
 	return box
 

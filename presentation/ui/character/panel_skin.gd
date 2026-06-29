@@ -67,7 +67,7 @@ static func make_chip(text: String, color: Color) -> Label:
 	var lbl := Label.new()
 	lbl.text = text
 	lbl.add_theme_color_override("font_color", Color.WHITE)
-	lbl.add_theme_font_size_override("font_size", 16)
+	lbl.add_theme_font_size_override("font_size", 18)
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = color
 	sb.set_corner_radius_all(8)

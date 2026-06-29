@@ -69,10 +69,10 @@ func _ready() -> void:
 	add_child(bg)
 
 	var box := Panel.new()
-	box.anchor_left = 0.27
-	box.anchor_right = 0.73
-	box.anchor_top = 0.18
-	box.anchor_bottom = 0.68
+	box.anchor_left = 0.10
+	box.anchor_right = 0.90
+	box.anchor_top = 0.10
+	box.anchor_bottom = 0.90
 	box.add_theme_stylebox_override("panel", PanelSkin.frame_stylebox())
 	add_child(box)
 
