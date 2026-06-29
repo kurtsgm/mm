@@ -69,10 +69,10 @@ func _ready() -> void:
 	add_child(bg)
 
 	var box := Panel.new()
-	box.anchor_left = 0.12
-	box.anchor_right = 0.88
-	box.anchor_top = 0.10
-	box.anchor_bottom = 0.90
+	box.anchor_left = 0.27
+	box.anchor_right = 0.73
+	box.anchor_top = 0.18
+	box.anchor_bottom = 0.68
 	box.add_theme_stylebox_override("panel", PanelSkin.frame_stylebox())
 	add_child(box)
 
@@ -117,7 +117,7 @@ func _ready() -> void:
 
 	_footer = Label.new()
 	_footer.add_theme_color_override("font_color", PanelSkin.SECTION)
-	_footer.add_theme_font_size_override("font_size", 13)
+	_footer.add_theme_font_size_override("font_size", 18)
 	main.add_child(_footer)
 
 	set_process_unhandled_input(false)
@@ -306,7 +306,7 @@ func _rebuild_tabbar() -> void:
 		t.text = names[i]
 		t.add_theme_stylebox_override("normal", PanelSkin.tab_stylebox(i == _tab))
 		t.add_theme_color_override("font_color", Color(0.95, 0.90, 0.77) if i == _tab else PanelSkin.SECTION)
-		t.add_theme_font_size_override("font_size", 14)
+		t.add_theme_font_size_override("font_size", 20)
 		_tabbar.add_child(t)
 
 # items/spells：用既有 _body_lines() 取字串，cursor 列（以 "> " 開頭）以金色粗體高亮。
