@@ -34,33 +34,47 @@ const _EN_FONT_PATHS := [
 	"/System/Library/Fonts/Supplemental/Baskerville.ttc",
 	"/System/Library/Fonts/Supplemental/Georgia.ttf",
 ]
+# 中文只走 res:// 字型（你丟思源宋體 TC 進去）；不再用系統 .ttc（raw 載入會破圖）。
+# 缺檔時中文交給 Godot 內建 Noto 保底（全覆蓋、不破圖）。
 const _CJK_FONT_PATHS := [
 	"res://content/ui/fonts/cjk.ttf", "res://content/ui/fonts/cjk.otf",
-	"/System/Library/Fonts/Songti.ttc",
-	"/System/Library/Fonts/PingFang.ttc",
+	"res://content/ui/fonts/cjk.ttc",
 ]
 
+# 字型鏈：英文襯線 → 中文(res:// 或內建) → Godot 內建 Noto（保底全覆蓋，絕不破圖）。
 static func panel_font() -> Font:
+	var chain: Array[Font] = []
 	var en := _load_font(_EN_FONT_PATHS)
+	if en != null:
+		chain.append(en)
 	var cjk := _load_font(_CJK_FONT_PATHS)
-	if en == null:
-		return cjk        # 無英文字型就直接用中文字型（其拉丁字也可用）
 	if cjk != null:
-		var fb: Array[Font] = en.fallbacks
-		fb.append(cjk)
-		en.fallbacks = fb
-	return en
+		chain.append(cjk)
+	if ThemeDB.fallback_font != null:
+		chain.append(ThemeDB.fallback_font)
+	if chain.size() <= 1:
+		return chain[0] if not chain.is_empty() else null
+	var base: Font = chain[0]
+	var fb: Array[Font] = []
+	for i in range(1, chain.size()):
+		fb.append(chain[i])
+	base.fallbacks = fb
+	return base
 
-static func _load_font(paths: Array) -> FontFile:
+static func _load_font(paths: Array) -> Font:
 	for p in paths:
 		var path := String(p)
-		if not FileAccess.file_exists(path):
-			continue
-		var f := FontFile.new()
-		var bytes := FileAccess.get_file_as_bytes(path)
-		if bytes.size() > 0:
-			f.data = bytes
-			return f
+		if path.begins_with("res://"):
+			if ResourceLoader.exists(path):
+				var r = load(path)
+				if r is Font:
+					return r
+		elif FileAccess.file_exists(path):
+			var bytes := FileAccess.get_file_as_bytes(path)
+			if bytes.size() > 0:
+				var f := FontFile.new()
+				f.data = bytes
+				return f
 	return null
 
 const PARCHMENT_TEX_PATH := "res://content/ui/parchment.png"

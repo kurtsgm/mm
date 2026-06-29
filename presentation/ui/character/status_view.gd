@@ -126,13 +126,13 @@ func _big_portrait(member: Character) -> Control:
 	else:
 		var ph := ColorRect.new()
 		ph.set_anchors_preset(Control.PRESET_FULL_RECT)
-		ph.color = Color(0.80, 0.74, 0.57)
+		ph.color = Color(0.30, 0.24, 0.15)
 		box.add_child(ph)
 		var g := Label.new()
 		g.set_anchors_preset(Control.PRESET_FULL_RECT)
 		g.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		g.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		g.text = "肖像"
-		g.add_theme_color_override("font_color", PanelSkin.SECTION)
+		g.add_theme_color_override("font_color", Color(0.85, 0.78, 0.60))
 		box.add_child(g)
 	return box

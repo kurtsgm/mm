@@ -58,8 +58,15 @@ func _build_row(member: Character, index: int, is_sel: bool) -> Control:
 	return row
 
 func _portrait(member: Character, index: int) -> Control:
-	var box := Control.new()
-	box.custom_minimum_size = Vector2(80, 80)
+	# 深棕有框槽位：缺圖的隊員也看得到框（不會消失在淺色閱讀底上）。
+	var box := Panel.new()
+	box.custom_minimum_size = Vector2(72, 72)
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.30, 0.24, 0.15)
+	sb.set_corner_radius_all(4)
+	sb.set_border_width_all(2)
+	sb.border_color = PanelSkin.FRAME
+	box.add_theme_stylebox_override("panel", sb)
 	var tex := PortraitCatalog.texture_for(member)
 	if tex != null:
 		var tr := TextureRect.new()
@@ -68,15 +75,14 @@ func _portrait(member: Character, index: int) -> Control:
 		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 		tr.texture = tex
 		box.add_child(tr)
-	else:
-		var ph := ColorRect.new()
-		ph.set_anchors_preset(Control.PRESET_FULL_RECT)
-		ph.color = Color(0.80, 0.74, 0.57)
-		box.add_child(ph)
+	# 編號角標（淺字深描邊，無論底圖深淺都讀得到）
 	var num := Label.new()
 	num.text = str(index + 1)
-	num.add_theme_color_override("font_color", PanelSkin.TITLE)
+	num.add_theme_color_override("font_color", Color(0.96, 0.90, 0.74))
+	num.add_theme_color_override("font_outline_color", Color(0.15, 0.10, 0.05))
+	num.add_theme_constant_override("outline_size", 4)
 	num.add_theme_font_size_override("font_size", 18)
+	num.position = Vector2(5, 2)
 	box.add_child(num)
 	return box
 
