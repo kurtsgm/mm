@@ -68,11 +68,13 @@ func _ready() -> void:
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
 
+	# 羊皮卷外框佔畫面 ~90%（依比例、解析度無關）。貼圖含烤焦破邊＋外圍棕色暈，
+	# 9-slice 的角落/邊（PanelSkin.FRAME_MARGIN 像素）即那圈邊框，故內容要再內縮避開。
 	var box := Panel.new()
-	box.anchor_left = 0.10
-	box.anchor_right = 0.90
-	box.anchor_top = 0.10
-	box.anchor_bottom = 0.90
+	box.anchor_left = 0.025
+	box.anchor_right = 0.975
+	box.anchor_top = 0.04
+	box.anchor_bottom = 0.96
 	box.add_theme_stylebox_override("panel", PanelSkin.frame_stylebox())
 	add_child(box)
 
@@ -83,23 +85,14 @@ func _ready() -> void:
 		th.default_font = pf
 		box.theme = th
 
-	# 半透明米色閱讀底：壓淡羊皮中央斑漬好讀；疊在 root 之下、紋理破邊照樣露出。
-	var reading := Panel.new()
-	reading.anchor_left = 0.07
-	reading.anchor_top = 0.08
-	reading.anchor_right = 0.93
-	reading.anchor_bottom = 0.92
-	reading.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	reading.add_theme_stylebox_override("panel", PanelSkin.reading_stylebox())
-	box.add_child(reading)
-
+	# 內容直接放在羊皮乾淨中央（用比例錨點貼齊乾淨區內側，避開外圈做舊/破邊）。
+	# 不再疊半透明閱讀底——新羊皮中央本身就乾淨，省掉那塊突兀的矩形。
 	var root := HBoxContainer.new()
-	# 比例內縮，避開羊皮貼圖的燒灼破邊（不壓到深色邊、內容留在乾淨中央）。
-	root.anchor_left = 0.08
-	root.anchor_top = 0.09
-	root.anchor_right = 0.92
-	root.anchor_bottom = 0.91
-	root.add_theme_constant_override("separation", 12)
+	root.anchor_left = PanelSkin.PARCH_INNER_L
+	root.anchor_right = 1.0 - PanelSkin.PARCH_INNER_R
+	root.anchor_top = PanelSkin.PARCH_INNER_T
+	root.anchor_bottom = 1.0 - PanelSkin.PARCH_INNER_B
+	root.add_theme_constant_override("separation", 16)
 	box.add_child(root)
 
 	# 左：隊員直欄（約 1/4 寬，比例式）
@@ -132,11 +125,13 @@ func _ready() -> void:
 	_list_text.add_theme_color_override("default_color", PanelSkin.TEXT)
 	_list_text.add_theme_constant_override("outline_size", PanelSkin.OUTLINE_SIZE)
 	_list_text.add_theme_color_override("font_outline_color", PanelSkin.OUTLINE_COLOR)
+	_list_text.add_theme_font_size_override("normal_font_size", 24)
+	_list_text.add_theme_font_size_override("bold_font_size", 24)
 	_content.add_child(_list_text)
 
 	_footer = Label.new()
 	_footer.add_theme_color_override("font_color", PanelSkin.SECTION)
-	_footer.add_theme_font_size_override("font_size", 18)
+	_footer.add_theme_font_size_override("font_size", 22)
 	_footer.add_theme_constant_override("outline_size", PanelSkin.OUTLINE_SIZE)
 	_footer.add_theme_color_override("font_outline_color", PanelSkin.OUTLINE_COLOR)
 	main.add_child(_footer)
@@ -327,7 +322,7 @@ func _rebuild_tabbar() -> void:
 		t.text = names[i]
 		t.add_theme_stylebox_override("normal", PanelSkin.tab_stylebox(i == _tab))
 		t.add_theme_color_override("font_color", Color(0.95, 0.90, 0.77) if i == _tab else PanelSkin.SECTION)
-		t.add_theme_font_size_override("font_size", 20)
+		t.add_theme_font_size_override("font_size", 26)
 		_tabbar.add_child(t)
 
 # items/spells：用既有 _body_lines() 取字串，cursor 列（以 "> " 開頭）以金色粗體高亮。

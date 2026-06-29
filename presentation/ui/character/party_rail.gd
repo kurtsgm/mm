@@ -32,6 +32,9 @@ func _build_row(member: Character, index: int, is_sel: bool) -> Control:
 	var row := PanelContainer.new()
 	if is_sel:
 		row.add_theme_stylebox_override("panel", PanelSkin.row_hilite_stylebox())
+	else:
+		# 非選取列：透明底，避免 PanelContainer 預設深色面板壓在乾淨羊皮上很突兀。
+		row.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	var hb := HBoxContainer.new()
 	hb.add_theme_constant_override("separation", 6)
 	row.add_child(hb)
@@ -47,7 +50,7 @@ func _build_row(member: Character, index: int, is_sel: bool) -> Control:
 	var nm := Label.new()
 	nm.text = "%s %s" % [member.name, _abbr(member.char_class)]
 	nm.add_theme_color_override("font_color", PanelSkin.TITLE)
-	nm.add_theme_font_size_override("font_size", 22)
+	nm.add_theme_font_size_override("font_size", 27)
 	nm.add_theme_constant_override("outline_size", PanelSkin.OUTLINE_SIZE)
 	nm.add_theme_color_override("font_outline_color", PanelSkin.OUTLINE_COLOR)
 	col.add_child(nm)
@@ -60,7 +63,7 @@ func _build_row(member: Character, index: int, is_sel: bool) -> Control:
 func _portrait(member: Character, index: int) -> Control:
 	# 深棕有框槽位：缺圖的隊員也看得到框（不會消失在淺色閱讀底上）。
 	var box := Panel.new()
-	box.custom_minimum_size = Vector2(72, 72)
+	box.custom_minimum_size = Vector2(84, 84)
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = Color(0.30, 0.24, 0.15)
 	sb.set_corner_radius_all(4)

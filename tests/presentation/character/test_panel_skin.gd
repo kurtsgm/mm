@@ -23,3 +23,22 @@ func test_styleboxes_exist():
 	assert_true(PanelSkin.tab_stylebox(true) is StyleBoxFlat)
 	assert_true(PanelSkin.tab_stylebox(false) is StyleBoxFlat)
 	assert_true(PanelSkin.row_hilite_stylebox() is StyleBoxFlat)
+
+# 面板字型必須能渲染「繁體中文」而不破圖（tofu）。
+# 回歸測試：先前 base 字型的系統 fallback 漂移到 Songti SC（簡體），
+# 繁體獨有字形（騎/聖/盜/準/擊/禦/術/經/驗）變成 .notdef 方框。
+func test_panel_font_renders_traditional_chinese_without_tofu():
+	var font := PanelSkin.panel_font()
+	assert_not_null(font, "panel_font() 應回傳可用字型")
+	# 繁體獨有字形 + 面板實際會出現的字，全部都該有字形（非簡繁共用）。
+	var sample := "騎聖盜準擊禦術經驗速度精準防禦命中屬性道具法術狀態經驗距下一級"
+	var ts := TextServerManager.get_primary_interface()
+	var sh := ts.create_shaped_text()
+	ts.shaped_text_add_string(sh, sample, font.get_rids(), 24)
+	ts.shaped_text_shape(sh)
+	var tofu := 0
+	for g in ts.shaped_text_get_glyphs(sh):
+		if int(g["index"]) == 0 or not (g["font_rid"] as RID).is_valid():
+			tofu += 1
+	ts.free_rid(sh)
+	assert_eq(tofu, 0, "繁體中文不得出現 .notdef 破圖方框（tofu）")
