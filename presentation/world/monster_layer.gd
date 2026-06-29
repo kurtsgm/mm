@@ -1,19 +1,20 @@
 class_name MonsterLayer
 extends Node3D
 
-# 大地圖會走動的怪 billboard 層。鏡射 ObjectLayer/ChestLayer：跟著切地圖由 main.gd rebuild。
-# 腳貼地與尺寸共用 CombatStage 的常數/static，確保和戰鬥裡同大小、同腳踩地板。
+# 大地圖會走動的怪 billboard 層。一格的遭遇組「實際的種類與數量」忠實畫出：
+# group 有幾隻、各是什麼怪，就畫幾個對應種類的 Sprite3D 排成一叢（cluster）。
+# 跟著切地圖由 main.gd rebuild。腳貼地與尺寸共用 CombatStage 的常數/static。
 # idle 生命感：有第二幀(idle2)的怪走「兩幀輪播」假動畫；沒有的退回「微幅左右晃動」。
-const MOVE_TIME := 0.18   # 移動補間時長（對齊玩家步速 feel；不像素測）
-const SWAY_WORLD := 0.04    # idle 左右晃動世界振幅（微幅，比照 CombatStage IDLE_AMP 等級）
-const SWAY_PERIOD := 1.8    # idle 晃動週期（秒）
-const PHASE_SPREAD := 1.7   # 每隻相位間隔（弧度）→ 一群怪不同手同腳
-const FRAME_PERIOD := 0.4   # idle 兩幀假動畫單幀顯示時長（秒）；一輪 ~0.8s
+const MOVE_TIME := 0.18      # 移動補間時長（對齊玩家步速 feel）
+const SWAY_WORLD := 0.04     # idle 左右晃動世界振幅
+const SWAY_PERIOD := 1.8     # idle 晃動週期（秒）
+const PHASE_SPREAD := 1.7    # 每隻相位間隔（弧度）→ 一群怪不同手同腳
+const FRAME_PERIOD := 0.4    # idle 兩幀假動畫單幀顯示時長（秒）
+const CLUSTER_SPREAD_RATIO := 0.28   # 叢擺幅半徑 / GridGeometry.CELL_SIZE（格距比例，不寫死世界值/像素）
+const CLUSTER_SCALE := 0.82  # n>=2 時叢內 sprite 縮小倍率（避免擠出格外；n=1 維持原大小）
 
-var _sprites: Dictionary = {}    # uid -> Sprite3D
-var _phase: Dictionary = {}      # uid -> float（idle 晃動/輪播相位）
-var _frames: Dictionary = {}     # uid -> {a: Texture2D, b: Texture2D|null}（b 為 null 則退回晃動）
-var _cur_frame: Dictionary = {}  # uid -> int（目前顯示幀 0/1，避免每幀重設貼圖）
+# uid -> Array[member]；member = {node:Sprite3D, a:Texture2D, b:Texture2D|null, phase:float, cur:int, offset:Vector3, scale:float}
+var _sprites: Dictionary = {}
 
 # 純函式：idle 左右晃動的 billboard offset.x（像素，本地平面）。
 # 以 SWAY_WORLD 世界振幅 / pixel_size 換算成像素 → 任何貼圖尺寸都呈現相同世界振幅；
@@ -60,68 +61,85 @@ static func cluster_offsets(n: int, spread: float) -> Array[Vector3]:
 
 func rebuild(monsters: Array) -> void:
 	_clear()
-	for i in monsters.size():
-		var m: Dictionary = monsters[i]
-		var fr := _frames_for(m["group"])
-		var s := Sprite3D.new()
-		s.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-		_apply_texture(s, fr["a"])
-		s.position = _world_pos(m["cell"])
-		add_child(s)
-		_sprites[m["uid"]] = s
-		_frames[m["uid"]] = fr
-		_phase[m["uid"]] = i * PHASE_SPREAD
-		_cur_frame[m["uid"]] = 0
+	var phase_seed := 0
+	for m in monsters:
+		var members := _build_members(m["group"], m["cell"], phase_seed)
+		_sprites[m["uid"]] = members
+		phase_seed += members.size()
 	set_process(not _sprites.is_empty())   # idle 動畫常駐（有怪才開）
+
+# 依 group 的 defs（種類+數量）建該 uid 的所有 member sprite，加入場景並回傳 member 陣列。
+func _build_members(group_key: String, cell: Vector2i, phase_seed: int) -> Array:
+	var defs := Bestiary.group_defs_for(group_key)
+	var n: int = defs.size()
+	var members: Array = []
+	if n == 0:
+		# 未知 group → 單一紅方塊 placeholder（維持既有 fallback）
+		members.append(_make_member(_placeholder(Color(0.8, 0.3, 0.3)), null, cell, Vector3.ZERO, 1.0, phase_seed))
+		return members
+	var spread := CLUSTER_SPREAD_RATIO * GridGeometry.CELL_SIZE
+	var offsets := cluster_offsets(n, spread)
+	var scale: float = CLUSTER_SCALE if n >= 2 else 1.0
+	for i in n:
+		var fr := _frames_for_def(defs[i].id)
+		members.append(_make_member(fr["a"], fr["b"], cell, offsets[i], scale, phase_seed + i))
+	return members
+
+# 建單一 member（Sprite3D + 動畫資料），加入場景並回傳 member dict。
+func _make_member(a: Texture2D, b, cell: Vector2i, offset: Vector3, scale: float, phase_seed: int) -> Dictionary:
+	var s := Sprite3D.new()
+	s.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	_apply_texture(s, a, scale)
+	s.position = _world_pos(cell) + offset
+	add_child(s)
+	return {"node": s, "a": a, "b": b, "phase": phase_seed * PHASE_SPREAD, "cur": 0, "offset": offset, "scale": scale}
 
 func apply_moves(monsters: Array) -> void:
 	for m in monsters:
 		var uid: String = m["uid"]
 		if not _sprites.has(uid):
 			continue
-		var s: Sprite3D = _sprites[uid]
-		var target := _world_pos(m["cell"])
-		if s.position.is_equal_approx(target):
-			continue
-		var tw := create_tween()
-		tw.tween_property(s, "position", target, MOVE_TIME)
+		var base := _world_pos(m["cell"])
+		for member in _sprites[uid]:
+			var s: Sprite3D = member["node"]
+			var target: Vector3 = base + member["offset"]
+			if s.position.is_equal_approx(target):
+				continue
+			var tw := create_tween()
+			tw.tween_property(s, "position", target, MOVE_TIME)
 
 func _process(_delta: float) -> void:
 	var t := Time.get_ticks_msec() / 1000.0
 	for uid in _sprites:
-		if not is_instance_valid(_sprites[uid]):
-			continue
-		_update_frame(uid, t)
+		for member in _sprites[uid]:
+			if is_instance_valid(member["node"]):
+				_update_member(member, t)
 
 # 有第二幀（idle2）→ 兩幀輪播；否則 → 微幅左右晃動 fallback。兩者與 position 獨立，不擾移動補間。
-func _update_frame(uid: String, t: float) -> void:
-	var s: Sprite3D = _sprites[uid]
-	var fr: Dictionary = _frames[uid]
-	if fr["b"] != null:
-		var idx := frame_index(t, _phase.get(uid, 0.0) / TAU, FRAME_PERIOD)
-		if idx != _cur_frame.get(uid, -1):
-			_apply_texture(s, fr["b"] if idx == 1 else fr["a"])
-			_cur_frame[uid] = idx
+func _update_member(member: Dictionary, t: float) -> void:
+	var s: Sprite3D = member["node"]
+	if member["b"] != null:
+		var idx := frame_index(t, member["phase"] / TAU, FRAME_PERIOD)
+		if idx != member["cur"]:
+			_apply_texture(s, member["b"] if idx == 1 else member["a"], member["scale"])
+			member["cur"] = idx
 	else:
-		s.offset = Vector2(sway_offset_px(t, _phase.get(uid, 0.0), SWAY_WORLD, SWAY_PERIOD, s.pixel_size), 0.0)
+		s.offset = Vector2(sway_offset_px(t, member["phase"], SWAY_WORLD, SWAY_PERIOD, s.pixel_size), 0.0)
 
 func _world_pos(cell: Vector2i) -> Vector3:
 	return GridGeometry.cell_to_world(cell) + Vector3(0.0, CombatStage.DISPLAY_HEIGHT / 2.0, 0.0)
 
-# 代表兩幀：群組第 0 隻的 idle(真圖/placeholder)=a、idle2=b（可 null）。
-func _frames_for(group_key: String) -> Dictionary:
+# 某怪 id 的兩幀：idle(真圖/placeholder)=a、idle2=b（可 null → 退回晃動）。
+func _frames_for_def(def_id: String) -> Dictionary:
 	var ph := _placeholder(Color(0.8, 0.3, 0.3))
-	var defs := Bestiary.group_defs_for(group_key)
-	if defs.is_empty():
-		return {"a": ph, "b": null}
-	var t = MonsterSpriteCatalog.textures_for(defs[0].id)
+	var t = MonsterSpriteCatalog.textures_for(def_id)
 	var a = t["idle"] if t["idle"] != null else ph
 	return {"a": a, "b": t.get("idle2", null)}
 
-# 設貼圖並依其高度正規化 pixel_size（換幀不變大小、腳貼地不變）。
-func _apply_texture(s: Sprite3D, tex: Texture2D) -> void:
+# 設貼圖並依其高度正規化 pixel_size（換幀不變大小、腳貼地不變）；scale 為叢內縮小倍率。
+func _apply_texture(s: Sprite3D, tex: Texture2D, scale: float) -> void:
 	s.texture = tex
-	s.pixel_size = CombatStage.pixel_size_for(tex, CombatStage.DISPLAY_HEIGHT)
+	s.pixel_size = CombatStage.pixel_size_for(tex, CombatStage.DISPLAY_HEIGHT) * scale
 
 func _placeholder(color: Color) -> Texture2D:
 	var img := Image.create(64, 96, false, Image.FORMAT_RGBA8)
@@ -133,7 +151,4 @@ func _clear() -> void:
 		remove_child(c)
 		c.free()
 	_sprites.clear()
-	_phase.clear()
-	_frames.clear()
-	_cur_frame.clear()
 	set_process(false)
