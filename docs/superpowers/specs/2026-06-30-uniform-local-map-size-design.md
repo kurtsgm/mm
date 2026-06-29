@@ -88,10 +88,13 @@ const LOCAL_SIZE := 10   # 每張 local map 一律 LOCAL_SIZE × LOCAL_SIZE
 
 `level01` 被測試廣泛當作測試用地圖 id。分兩類處理：
 
+分類判準：**「是否有任何程式路徑會用該 id 觸發 `enter_map`/`load_by_id`」**（不是「字面上有沒有直接傳給 loader」）。
+
 - **必須改（會實際載入 level01，刪檔後會壞）**：
   - `tests/autoload/test_map_manager.gd`（`test_load_by_id_loads_level01_and_sets_map_id` 等：`load_by_id`/`enter_map("level01")` 並斷言 (2,2) 有遭遇）→ 改指向現存地圖（如 `wild_ne`，其有遭遇格）並更新對應座標斷言。
-  - `tests/autoload/test_save_system_capture_apply.gd`（line 43、71 `mm.load_by_id("level01")` 取真實遭遇/探索格）→ 改指向現存地圖。
-- **建議改（僅把 "level01" 當不透明字串標籤，不載入該檔，刪檔後仍會過但語意混淆）**：`test_save_system_disk.gd`、`test_save_system_list.gd`、`test_save_system_items.gd`、`test_save_system_integration.gd`、`test_game_state.gd`、`test_game_state_objects.gd`、`test_game_state_flags.gd`、`test_save_serializer_items.gd` 等。建議將字串 `"level01"` 統一改成現存 map id（如 `town_oak`）以免日後誤解。屬清理性質、非必要。
+  - `tests/autoload/test_save_system_capture_apply.gd`（`mm.load_by_id("level01")` 取真實遭遇/探索格）→ 改指向現存地圖。
+  - `tests/autoload/test_save_system_integration.gd`、`tests/autoload/test_save_system_items.gd`：經 `save_to_slot`→`load_from_slot`→`apply_to`→`enter_map(map_id)`（`autoload/save_system.gd`）會**實際載入**，故同屬必須改（實作期經終審確認；本來誤列在下方「建議改」）。
+- **建議改（純把 "level01" 當不透明字串標籤，無任何路徑載入該檔，刪檔後仍會過但語意混淆）**：`test_save_system_disk.gd`、`test_save_system_list.gd`、`test_game_state.gd`、`test_game_state_objects.gd`、`test_game_state_flags.gd`、`test_save_serializer.gd`、`test_save_serializer_items.gd`、`test_save_serializer_spells.gd`、`test_save_data.gd` 等（純 dict/序列化 roundtrip）。建議將字串 `"level01"` 統一改成現存 map id 以免日後誤解。屬清理性質、非必要，本系列**未做**。
 
 ## 測試策略
 
