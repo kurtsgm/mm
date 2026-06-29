@@ -16,7 +16,7 @@ func load_text_file(path: String) -> MapData:
 	var text := FileAccess.get_file_as_string(path)
 	assert(text != "", "MapManager.load_text_file: cannot read %s" % path)
 	var map := load_text(text)
-	map.map_id = path.get_file().get_basename()  # "level01.json" → "level01"
+	map.map_id = path.get_file().get_basename()  # "town_oak.json" → "town_oak"
 	return map
 
 func load_by_id(id: String) -> MapData:
