@@ -16,6 +16,11 @@ var _member_idx: int = 0
 var _item_cursor: int = 0
 var _spell_cursor: int = 0
 
+enum Mode { LIST = 0, PICK_TARGET = 1 }
+var _mode: int = Mode.LIST
+var _target_cursor: int = 0
+var _pending_spell: SpellDef = null
+
 var _header: Label
 var _body: Label
 var _footer: Label
@@ -38,6 +43,7 @@ func open(tab: int, state) -> void:
 	_member_idx = 0
 	_item_cursor = 0
 	_spell_cursor = 0
+	_mode = Mode.LIST
 	visible = true
 	set_process_unhandled_input(true)
 	_refresh()
@@ -51,6 +57,7 @@ func set_tab(tab: int) -> void:
 	_tab = tab
 	_item_cursor = 0
 	_spell_cursor = 0
+	_mode = Mode.LIST
 	_refresh()
 
 func _ready() -> void:
@@ -101,6 +108,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not visible:
 		return
 	if not (event is InputEventKey and event.pressed and not event.echo):
+		return
+	if _tab == Tab.SPELLS and _mode == Mode.PICK_TARGET:
+		_input_pick_target(event.keycode)
 		return
 	match event.keycode:
 		KEY_ESCAPE:
@@ -160,7 +170,76 @@ func _activate_item() -> void:
 	_refresh()
 
 func _activate_spell() -> void:
-	pass   # Task 6
+	var rows := CharacterSpellsTab.rows(_selected_member())
+	if _spell_cursor < 0 or _spell_cursor >= rows.size():
+		return
+	if not bool(rows[_spell_cursor]["field"]):
+		return   # 戰鬥限定，野外不可施放
+	var spell: SpellDef = rows[_spell_cursor]["spell"]
+	var caster := _selected_member()
+	match spell.effect:
+		SpellDef.Effect.TELEPORT, SpellDef.Effect.RECALL:
+			if not _pay(caster, spell):
+				return
+			world_spell_cast.emit(spell)
+			close()
+		_:
+			if spell.target == SpellDef.Target.ALL_ALLIES:
+				if not _pay(caster, spell):
+					return
+				for m in _members():
+					for e in SpellEffects.apply(spell, caster, m):
+						_push(String(e))
+				_refresh()
+			else:
+				_pending_spell = spell
+				_target_cursor = 0
+				_mode = Mode.PICK_TARGET
+				_refresh()
+
+func _input_pick_target(key: int) -> void:
+	var ms := _members()
+	match key:
+		KEY_ESCAPE:
+			_mode = Mode.LIST
+			_refresh()
+		KEY_UP:
+			if ms.size() > 0:
+				_target_cursor = (_target_cursor - 1 + ms.size()) % ms.size()
+				_refresh()
+		KEY_DOWN:
+			if ms.size() > 0:
+				_target_cursor = (_target_cursor + 1) % ms.size()
+				_refresh()
+		KEY_ENTER, KEY_KP_ENTER:
+			_confirm_pick_target()
+
+func _confirm_pick_target() -> void:
+	var ms := _members()
+	if _target_cursor < 0 or _target_cursor >= ms.size():
+		return
+	var target: Character = ms[_target_cursor]
+	var caster := _selected_member()
+	if not SpellEffects.can_cast(_pending_spell, caster, target):
+		_push("無法對 %s 施放 %s。" % [target.name, _pending_spell.display_name])
+		_mode = Mode.LIST
+		_refresh()
+		return
+	if not _pay(caster, _pending_spell):
+		_mode = Mode.LIST
+		_refresh()
+		return
+	for e in SpellEffects.apply(_pending_spell, caster, target):
+		_push(String(e))
+	_mode = Mode.LIST
+	_refresh()
+
+func _pay(caster: Character, spell: SpellDef) -> bool:
+	if caster.sp < spell.sp_cost:
+		_push("%s 的 SP 不足。" % caster.name)
+		return false
+	caster.sp -= spell.sp_cost
+	return true
 
 func _refresh() -> void:
 	_clamp_cursors()
@@ -189,6 +268,8 @@ func _body_lines() -> Array:
 		Tab.ITEMS:
 			return CharacterItemsTab.lines(CharacterItemsTab.rows(_selected_member(), _state.inventory), _item_cursor)
 		Tab.SPELLS:
+			if _mode == Mode.PICK_TARGET:
+				return _pick_target_lines()
 			return CharacterSpellsTab.lines(CharacterSpellsTab.rows(_selected_member()), _spell_cursor)
 	return []
 
@@ -199,5 +280,16 @@ func _footer_text() -> String:
 		Tab.ITEMS:
 			return "[←→]分頁  [Tab]換隊員  [↑↓]選擇  [Enter]使用/裝備/卸下  [Esc]關閉"
 		Tab.SPELLS:
+			if _mode == Mode.PICK_TARGET:
+				return "[↑↓]選對象  [Enter]確定  [Esc]返回"
 			return "[←→]分頁  [Tab]換隊員  [↑↓]選擇  [Enter]施放  [Esc]關閉"
 	return ""
+
+func _pick_target_lines() -> Array:
+	var out: Array = ["選擇對象（%s）：" % _pending_spell.display_name]
+	var ms := _members()
+	for i in ms.size():
+		var m: Character = ms[i]
+		var mark := "> " if i == _target_cursor else "  "
+		out.append("%s%s  Lv%d  HP%d/%d" % [mark, m.name, m.level, m.hp, m.hp_max])
+	return out
