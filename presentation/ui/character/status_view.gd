@@ -7,7 +7,6 @@ extends VBoxContainer
 var _name_label: Label
 var _hp_bar: Dictionary
 var _xp_bar: Dictionary
-var _chips_box: HBoxContainer
 var _chip_count: int = 0
 
 func name_text() -> String:
@@ -28,6 +27,10 @@ func refresh(member: Character) -> void:
 		remove_child(c)
 	add_theme_constant_override("separation", 10)
 	if member == null:
+		_name_label = null
+		_hp_bar = {}
+		_xp_bar = {}
+		_chip_count = 0
 		return
 	var f := CharacterStatusTab.fields(member)
 
@@ -70,7 +73,6 @@ func refresh(member: Character) -> void:
 	chips.add_theme_constant_override("separation", 6)
 	add_child(chips)
 	chips.add_child(_mk("狀態異常：", PanelSkin.SECTION, 12))
-	_chips_box = chips
 	_chip_count = (f["statuses"] as Array).size()
 	if _chip_count == 0:
 		chips.add_child(_mk("無", PanelSkin.TEXT, 12))

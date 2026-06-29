@@ -78,6 +78,10 @@ func _ready() -> void:
 
 	var root := HBoxContainer.new()
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.offset_left = 18
+	root.offset_top = 14
+	root.offset_right = -18
+	root.offset_bottom = -14
 	root.add_theme_constant_override("separation", 12)
 	box.add_child(root)
 
@@ -311,10 +315,11 @@ func _apply_list_text() -> void:
 	var out: Array[String] = []
 	for ln in lines:
 		var s := String(ln)
+		var safe := s.replace("[", "[lb]")
 		if s.begins_with("> "):
-			out.append("[b][color=#b8923f]%s[/color][/b]" % s)
+			out.append("[b][color=#b8923f]%s[/color][/b]" % safe)
 		else:
-			out.append(s)
+			out.append(safe)
 	_list_text.text = "\n".join(out)
 
 # 目前分頁的文字鏡像（供測試/可及性；status 用 lines() 不用 widget 文字）。
