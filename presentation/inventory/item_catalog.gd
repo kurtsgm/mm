@@ -4,7 +4,10 @@ extends Object
 # 道具 id → .tres 路徑（鏡射 Bestiary）。骨架期小對照表；正式道具庫屬內容期。
 const _ITEMS := {
 	"short_sword": "res://content/items/short_sword.tres",
+	"iron_sword": "res://content/items/iron_sword.tres",
 	"leather": "res://content/items/leather_armor.tres",
+	"chain_mail": "res://content/items/chain_mail.tres",
+	"buckler": "res://content/items/buckler.tres",
 	"lucky_charm": "res://content/items/lucky_charm.tres",
 	"potion": "res://content/items/potion.tres",
 	"ether": "res://content/items/ether.tres",

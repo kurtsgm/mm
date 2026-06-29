@@ -38,3 +38,15 @@ func test_building_exterior_3x2_with_offset_door():
 	n.set("facing", "S")
 	add_child_autofree(n)
 	assert_gt(n.get_child_count(), 0)
+
+# 五間店的外觀 tscn（各自設好參數）能實例化、_ready 建出子節點（抓 tscn 參數/腳本錯誤）。
+func test_each_shop_exterior_scene_instantiates():
+	for id in ["oak_smithy_ext", "oak_temple_ext", "oak_mage_ext", "oak_general_ext", "oak_inn_ext"]:
+		var scene := DecorationCatalog.get_scene(id)
+		assert_not_null(scene, "%s 外觀應可解析" % id)
+		if scene == null:
+			continue
+		var inst = scene.instantiate()
+		add_child_autofree(inst)
+		assert_true(inst is Node3D, "%s 根節點應為 Node3D" % id)
+		assert_gt(inst.get_child_count(), 0, "%s 應建出牆/屋頂/招牌" % id)

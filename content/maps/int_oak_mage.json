@@ -1,0 +1,26 @@
+{
+  "name": "橡鎮法師塔",
+  "theme": "town",
+  "grid": [
+    "##########",
+    "#........#",
+    "#........#",
+    "#........#",
+    "#........#",
+    "#........#",
+    "#........#",
+    "#...@....#",
+    "#........#",
+    "##########"
+  ],
+  "entities": [
+    { "type": "portal", "pos": [4, 8], "to": "town_oak", "entry": "oak_mage_out" },
+    { "type": "vendor", "pos": [4, 3], "id": "oak_mage" },
+    { "type": "decoration", "pos": [4, 2], "model": "prop_table" },
+    { "type": "decoration", "pos": [2, 2], "model": "prop_bookshelf" },
+    { "type": "decoration", "pos": [6, 2], "model": "prop_bookshelf" },
+    { "type": "decoration", "pos": [2, 5], "model": "prop_bookshelf" },
+    { "type": "decoration", "pos": [6, 6], "model": "prop_brazier" }
+  ],
+  "entries": { "from_town": { "pos": [4, 7], "facing": "N" } }
+}

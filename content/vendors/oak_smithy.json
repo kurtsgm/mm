@@ -1,0 +1,8 @@
+{
+  "id": "oak_smithy",
+  "kind": "goods",
+  "name": "鐵匠舖",
+  "greeting": "要打把趁手的傢伙？看上哪件儘管說。",
+  "sell_factor": 0.5,
+  "stock": ["short_sword", "iron_sword", "leather", "chain_mail", "buckler"]
+}

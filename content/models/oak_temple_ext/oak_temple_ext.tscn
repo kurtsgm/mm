@@ -1,0 +1,13 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://presentation/world/town_building_ext.gd" id="1_ext"]
+
+[node name="OakTempleExt" type="Node3D"]
+script = ExtResource("1_ext")
+w = 3
+h = 2
+door_dx = 1
+door_dy = 1
+facing = "S"
+roof_color = Color(0.55, 0.5, 0.3, 1)
+sign_color = Color(0.85, 0.78, 0.45, 1)

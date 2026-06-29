@@ -1,0 +1,26 @@
+{
+  "name": "鐵匠舖",
+  "theme": "town",
+  "grid": [
+    "##########",
+    "#........#",
+    "#........#",
+    "#........#",
+    "#........#",
+    "#........#",
+    "#........#",
+    "#...@....#",
+    "#........#",
+    "##########"
+  ],
+  "entities": [
+    { "type": "portal", "pos": [4, 8], "to": "town_oak", "entry": "oak_smithy_out" },
+    { "type": "vendor", "pos": [4, 3], "id": "oak_smithy" },
+    { "type": "decoration", "pos": [4, 2], "model": "prop_counter" },
+    { "type": "decoration", "pos": [2, 2], "model": "prop_brazier" },
+    { "type": "decoration", "pos": [6, 2], "model": "prop_anvil" },
+    { "type": "decoration", "pos": [2, 6], "model": "prop_barrel" },
+    { "type": "decoration", "pos": [6, 6], "model": "prop_crate" }
+  ],
+  "entries": { "from_town": { "pos": [4, 7], "facing": "N" } }
+}

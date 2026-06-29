@@ -1,0 +1,13 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://presentation/world/town_building_ext.gd" id="1_ext"]
+
+[node name="OakMageExt" type="Node3D"]
+script = ExtResource("1_ext")
+w = 2
+h = 2
+door_dx = 0
+door_dy = 1
+facing = "S"
+roof_color = Color(0.2, 0.18, 0.4, 1)
+sign_color = Color(0.45, 0.35, 0.65, 1)
