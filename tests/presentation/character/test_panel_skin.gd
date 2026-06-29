@@ -18,7 +18,8 @@ func test_make_chip_text_and_node():
 	assert_eq(chip.text, "毒")
 
 func test_styleboxes_exist():
-	assert_true(PanelSkin.frame_stylebox() is StyleBoxFlat)
+	# frame 改為羊皮貼圖（StyleBoxTexture）；其餘仍為程式化 StyleBoxFlat。
+	assert_true(PanelSkin.frame_stylebox() is StyleBoxTexture)
 	assert_true(PanelSkin.tab_stylebox(true) is StyleBoxFlat)
 	assert_true(PanelSkin.tab_stylebox(false) is StyleBoxFlat)
 	assert_true(PanelSkin.row_hilite_stylebox() is StyleBoxFlat)

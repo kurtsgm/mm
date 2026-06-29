@@ -15,13 +15,14 @@ const XP_FILL := Color(0.79, 0.63, 0.29)
 const BAR_BG := Color(0.42, 0.35, 0.22)
 const HILITE := Color(0.48, 0.35, 0.16, 0.30)
 
-static func frame_stylebox() -> StyleBoxFlat:
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = PARCHMENT
-	sb.set_border_width_all(5)
-	sb.border_color = FRAME
-	sb.set_corner_radius_all(6)
-	sb.set_content_margin_all(14)
+const PARCHMENT_TEX_PATH := "res://content/ui/parchment.png"
+
+# 真・羊皮貼圖外框（9-slice）：四角不變形、邊緣與中央隨面板縮放。
+# 換圖只改這裡（圖務必透明底、邊緣裝飾厚度 ~ texture_margin）。
+static func frame_stylebox() -> StyleBoxTexture:
+	var sb := StyleBoxTexture.new()
+	sb.texture = load(PARCHMENT_TEX_PATH)
+	sb.set_texture_margin_all(150)   # 9-slice 角落保留（貼圖像素），保住燒灼破邊四角
 	return sb
 
 static func tab_stylebox(active: bool) -> StyleBoxFlat:

@@ -77,11 +77,11 @@ func _ready() -> void:
 	add_child(box)
 
 	var root := HBoxContainer.new()
-	root.set_anchors_preset(Control.PRESET_FULL_RECT)
-	root.offset_left = 18
-	root.offset_top = 14
-	root.offset_right = -18
-	root.offset_bottom = -14
+	# 比例內縮，避開羊皮貼圖的燒灼破邊（不壓到深色邊、內容留在乾淨中央）。
+	root.anchor_left = 0.08
+	root.anchor_top = 0.09
+	root.anchor_right = 0.92
+	root.anchor_bottom = 0.91
 	root.add_theme_constant_override("separation", 12)
 	box.add_child(root)
 
