@@ -134,3 +134,44 @@ func test_rebase_shifts_pos_and_swaps_grid():
 	pc.rebase(Vector2i(-3, 0), g2)
 	assert_eq(pc._pos, Vector2i(-1, 2), "rebase 後 _pos 平移 delta")
 	assert_eq(pc._world_grid, g2, "rebase 後切換到新 grid")
+
+# --- 0.5s 可調常數 ---
+
+func test_move_time_is_half_second():
+	assert_almost_eq(PlayerController.MOVE_TIME, 0.5, 0.0001, "每格移動時間預設 0.5s")
+
+func test_turn_time_faster_than_move_time():
+	assert_lt(PlayerController.TURN_TIME, PlayerController.MOVE_TIME, "轉向比走一格快")
+
+# --- 連續走（chaining）---
+
+func test_attempt_move_returns_true_when_moved():
+	var pc := _make_pc(_wg(_floor_map("a", 3, 3)), Vector2i(1, 1), GridDirection.Dir.NORTH)
+	assert_true(pc._attempt_move(GridMovement.Move.FORWARD), "成功移動回 true")
+
+func test_attempt_move_returns_false_when_blocked():
+	var pc := _make_pc(_wg(_with_wall(_floor_map("a", 3, 3), Vector2i(1, 0))), Vector2i(1, 1), GridDirection.Dir.NORTH)
+	assert_false(pc._attempt_move(GridMovement.Move.FORWARD), "撞牆回 false")
+
+func test_is_moving_true_after_successful_move():
+	var pc := _make_pc(_wg(_floor_map("a", 3, 3)), Vector2i(1, 1), GridDirection.Dir.NORTH)
+	pc._attempt_move(GridMovement.Move.FORWARD)
+	assert_true(pc._is_moving, "移動中 _is_moving 為 true（晃動依據）")
+
+func test_try_continue_false_when_no_key_held():
+	# headless 無實體按鍵 → 不會無限連走，停在原格
+	var pc := _make_pc(_wg(_floor_map("a", 3, 3)), Vector2i(1, 1), GridDirection.Dir.NORTH)
+	assert_false(pc._try_continue(), "無按鍵時不接續")
+	assert_eq(pc._pos, Vector2i(1, 1), "無按鍵時不前進")
+
+# --- head bob 純函式 ---
+
+func test_bob_offset_zero_weight_is_zero():
+	assert_almost_eq(PlayerController.bob_offset(1.3, 0.0, 0.06), 0.0, 0.0001, "weight=0 → 無偏移（回正）")
+
+func test_bob_offset_peak_at_quarter_cycle():
+	# sin(PI/2)=1 → 偏移 == amplitude * weight
+	assert_almost_eq(PlayerController.bob_offset(PI / 2.0, 1.0, 0.06), 0.06, 0.0001, "相位頂點 = 振幅")
+
+func test_bob_offset_scales_with_weight():
+	assert_almost_eq(PlayerController.bob_offset(PI / 2.0, 0.5, 0.06), 0.03, 0.0001, "weight 線性縮放偏移")
