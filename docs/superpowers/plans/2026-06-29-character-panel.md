@@ -238,7 +238,7 @@ func test_activate_equippable_equips_and_removes_from_inv():
 
 func test_activate_equipped_slot_unequips_back_to_inv():
 	var m := _member()
-	var inv := _inv({"short_sword": 1})
+	var inv := _inv({})   # 背包起始為空；下面直接裝備一把短劍，卸下後背包才會恰好 1 把
 	m.equipment.equip(ItemCatalog.get_item("short_sword"))
 	var rows := CharacterItemsTab.rows(m, inv)
 	# rows[0] = 武器槽（已裝 short_sword）
