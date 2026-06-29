@@ -21,9 +21,12 @@ var _mode: int = Mode.LIST
 var _target_cursor: int = 0
 var _pending_spell: SpellDef = null
 
-var _header: Label
-var _body: Label
 var _footer: Label
+var _rail: PartyRail
+var _status_view: CharacterStatusView
+var _list_text: RichTextLabel       # items / spells 分頁的清單文字（BBCode 高亮游標列）
+var _tabbar: HBoxContainer
+var _content: Control               # 內容容器（status_view 與 list_text 疊放、依分頁切顯示）
 
 func is_open() -> bool:
 	return visible
@@ -33,9 +36,6 @@ func current_tab() -> int:
 
 func selected_index() -> int:
 	return _member_idx
-
-func body_text() -> String:
-	return _body.text
 
 func open(tab: int, state) -> void:
 	_state = state
@@ -67,29 +67,55 @@ func _ready() -> void:
 	bg.color = Color(0, 0, 0, 0.6)
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
+
 	var box := Panel.new()
 	box.anchor_left = 0.12
 	box.anchor_right = 0.88
 	box.anchor_top = 0.10
 	box.anchor_bottom = 0.90
+	box.add_theme_stylebox_override("panel", PanelSkin.frame_stylebox())
 	add_child(box)
-	var vb := VBoxContainer.new()
-	vb.set_anchors_preset(Control.PRESET_FULL_RECT)
-	vb.offset_left = 20
-	vb.offset_top = 16
-	vb.offset_right = -20
-	vb.offset_bottom = -16
-	box.add_child(vb)
-	_header = Label.new()
-	_header.add_theme_font_size_override("font_size", 18)
-	vb.add_child(_header)
-	_body = Label.new()
-	_body.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_body.add_theme_font_size_override("font_size", 16)
-	vb.add_child(_body)
+
+	var root := HBoxContainer.new()
+	root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.add_theme_constant_override("separation", 12)
+	box.add_child(root)
+
+	# 左：隊員直欄（約 1/4 寬，比例式）
+	_rail = PartyRail.new()
+	_rail.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_rail.size_flags_stretch_ratio = 0.28
+	root.add_child(_rail)
+
+	# 右：主區（分頁列 + 內容 + footer）
+	var main := VBoxContainer.new()
+	main.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	main.size_flags_stretch_ratio = 0.72
+	main.add_theme_constant_override("separation", 8)
+	root.add_child(main)
+
+	_tabbar = HBoxContainer.new()
+	_tabbar.add_theme_constant_override("separation", 6)
+	main.add_child(_tabbar)
+
+	_content = Control.new()
+	_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	main.add_child(_content)
+	_status_view = CharacterStatusView.new()
+	_status_view.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_content.add_child(_status_view)
+	_list_text = RichTextLabel.new()
+	_list_text.bbcode_enabled = true
+	_list_text.fit_content = true
+	_list_text.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_list_text.add_theme_color_override("default_color", PanelSkin.TEXT)
+	_content.add_child(_list_text)
+
 	_footer = Label.new()
-	_footer.add_theme_font_size_override("font_size", 14)
-	vb.add_child(_footer)
+	_footer.add_theme_color_override("font_color", PanelSkin.SECTION)
+	_footer.add_theme_font_size_override("font_size", 13)
+	main.add_child(_footer)
+
 	set_process_unhandled_input(false)
 
 func _members() -> Array:
@@ -255,15 +281,47 @@ func _pay(caster: Character, spell: SpellDef) -> bool:
 
 func _refresh() -> void:
 	_clamp_cursors()
-	var c := _selected_member()
-	var who := "◄ %s  Lv%d ►" % [c.name, c.level] if c != null else "-"
-	var names := ["Status", "Items", "Spells"]
-	var tbar := ""
-	for i in names.size():
-		tbar += ("[%s] " % names[i]) if i == _tab else ("%s  " % names[i])
-	_header.text = "%s        %s" % [who, tbar]
-	_body.text = "\n".join(_body_lines())
+	_rail.refresh(_members(), _member_idx)
+	_rebuild_tabbar()
+	var is_status := _tab == Tab.STATUS
+	_status_view.visible = is_status
+	_list_text.visible = not is_status
+	if is_status:
+		_status_view.refresh(_selected_member())
+	else:
+		_apply_list_text()
 	_footer.text = _footer_text()
+
+func _rebuild_tabbar() -> void:
+	for c in _tabbar.get_children():
+		c.queue_free()
+		_tabbar.remove_child(c)
+	var names := ["狀態", "道具", "法術"]
+	for i in names.size():
+		var t := Label.new()
+		t.text = names[i]
+		t.add_theme_stylebox_override("normal", PanelSkin.tab_stylebox(i == _tab))
+		t.add_theme_color_override("font_color", Color(0.95, 0.90, 0.77) if i == _tab else PanelSkin.SECTION)
+		t.add_theme_font_size_override("font_size", 14)
+		_tabbar.add_child(t)
+
+# items/spells：用既有 _body_lines() 取字串，cursor 列（以 "> " 開頭）以金色粗體高亮。
+func _apply_list_text() -> void:
+	var lines := _body_lines()
+	var out: Array[String] = []
+	for ln in lines:
+		var s := String(ln)
+		if s.begins_with("> "):
+			out.append("[b][color=#b8923f]%s[/color][/b]" % s)
+		else:
+			out.append(s)
+	_list_text.text = "\n".join(out)
+
+# 目前分頁的文字鏡像（供測試/可及性；status 用 lines() 不用 widget 文字）。
+func body_text() -> String:
+	if _tab == Tab.STATUS:
+		return "\n".join(CharacterStatusTab.lines(_selected_member()))
+	return "\n".join(_body_lines())
 
 func _clamp_cursors() -> void:
 	var ni := CharacterItemsTab.rows(_selected_member(), _state.inventory).size()

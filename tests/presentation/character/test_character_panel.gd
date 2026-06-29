@@ -184,3 +184,27 @@ func test_recall_emits_world_spell_cast_and_closes():
 	assert_signal_emitted(panel, "world_spell_cast")
 	assert_false(panel.is_open(), "施放後關閉")
 	assert_eq(st.party.members[0].sp, 4, "扣 SP 6")
+
+func test_builds_party_rail_and_status_view():
+	var panel := _panel(3)
+	var rail := _find_node(panel, "PartyRail")
+	var sv := _find_node(panel, "CharacterStatusView")
+	assert_not_null(rail, "面板含 PartyRail")
+	assert_not_null(sv, "面板含 CharacterStatusView")
+	assert_eq((rail as PartyRail).row_count(), 3)
+
+func test_rail_selection_follows_member_switch():
+	var panel := _panel(3)
+	var rail := _find_node(panel, "PartyRail") as PartyRail
+	assert_eq(rail.selected(), 0)
+	panel._unhandled_input(_key(KEY_3))
+	assert_eq(rail.selected(), 2, "1-6 切換時直欄同步高亮")
+
+func _find_node(n: Node, cls: String) -> Node:
+	if n.get_class() == cls or (n.get_script() != null and n.get_script().get_global_name() == cls):
+		return n
+	for c in n.get_children():
+		var r := _find_node(c, cls)
+		if r != null:
+			return r
+	return null
