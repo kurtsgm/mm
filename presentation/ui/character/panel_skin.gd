@@ -11,6 +11,7 @@ const TEXT := Color(0.23, 0.16, 0.09)
 const TITLE := Color(0.35, 0.23, 0.09)
 const SECTION := Color(0.48, 0.35, 0.16)
 const HP_FILL := Color(0.75, 0.22, 0.16)
+const SP_FILL := Color(0.27, 0.45, 0.62)   # 法力藍（與暖羊皮對比、好辨識）
 const XP_FILL := Color(0.79, 0.63, 0.29)
 const BAR_BG := Color(0.42, 0.35, 0.22)
 const HILITE := Color(0.48, 0.35, 0.16, 0.30)
