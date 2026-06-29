@@ -43,6 +43,14 @@ static func bob_offset(phase: float, weight: float, amplitude: float) -> float:
 	return sin(phase) * amplitude * weight
 
 func setup(world_grid: WorldGrid, start_pos: Vector2i, start_facing: int) -> void:
+	# setup 是「硬重定位」（boot 起點、portal 切換後落在入口）。先殺掉任何進行中的移動補間，
+	# 否則踏上 portal 格那步建立的補間會在 setup 之後繼續把 position 拖向舊目標格 → 視覺(鏡頭)
+	# 與邏輯 _pos/小地圖分歧、下一步從錯位置滑出（瞬移）。
+	if _move_tween != null and _move_tween.is_valid():
+		_move_tween.kill()
+	_move_tween = null
+	_is_busy = false
+	_is_moving = false
 	_world_grid = world_grid
 	_pos = start_pos
 	_facing = start_facing

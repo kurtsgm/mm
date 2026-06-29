@@ -135,6 +135,30 @@ func test_rebase_shifts_pos_and_swaps_grid():
 	assert_eq(pc._pos, Vector2i(-1, 2), "rebase 後 _pos 平移 delta")
 	assert_eq(pc._world_grid, g2, "rebase 後切換到新 grid")
 
+# --- portal 切換：setup 為硬重定位（入口），須殺掉進行中的移動補間 ---
+# 重現回報的 bug：踏上 portal 格觸發 _enter_via_link → setup 到入口，但 _attempt_move 仍建立了
+# 「滑向 portal 那格」的補間；若不殺，補間在 setup 後繼續把 position 拖向舊目標 →
+# 小地圖(邏輯 _pos)正確、但視野(視覺 position)錯位，下一步從錯位置滑出 = 瞬移。
+
+func test_setup_during_move_kills_tween_and_repositions():
+	var pc := _make_pc(_wg(_floor_map("a", 5, 5)), Vector2i(2, 2), GridDirection.Dir.NORTH)
+	pc._attempt_move(GridMovement.Move.FORWARD)   # 建立滑向 (2,1) 的補間、_is_busy
+	assert_true(pc._is_busy, "移動中應 busy")
+	pc.setup(_wg(_floor_map("a", 5, 5)), Vector2i(4, 4), GridDirection.Dir.SOUTH)
+	assert_null(pc._move_tween, "setup 應殺掉並清空進行中的移動補間")
+	assert_false(pc._is_busy, "setup 後不再 busy")
+	assert_false(pc._is_moving, "setup 後不再移動")
+	assert_eq(pc.position, GridGeometry.cell_to_world(Vector2i(4, 4)), "位置立即落在新入口")
+
+func test_setup_position_does_not_drift_after_frames():
+	# 邏輯位置對、視覺位置不可被殘留補間拖走（直接對應「小地圖對、視野錯」）
+	var pc := _make_pc(_wg(_floor_map("a", 5, 5)), Vector2i(2, 2), GridDirection.Dir.NORTH)
+	pc._attempt_move(GridMovement.Move.FORWARD)   # 補間目標 (2,1)
+	pc.setup(_wg(_floor_map("a", 5, 5)), Vector2i(4, 4), GridDirection.Dir.NORTH)
+	await wait_seconds(0.6)   # > MOVE_TIME；殘留補間若活著會把 position 拖到 (2,1)
+	assert_eq(pc.position, GridGeometry.cell_to_world(Vector2i(4, 4)), "視覺位置不被殘留補間拖走")
+	assert_eq(pc._pos, Vector2i(4, 4), "邏輯位置一致")
+
 # --- 0.5s 可調常數 ---
 
 func test_move_time_is_half_second():
