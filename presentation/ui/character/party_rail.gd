@@ -48,6 +48,8 @@ func _build_row(member: Character, index: int, is_sel: bool) -> Control:
 	nm.text = "%s %s" % [member.name, _abbr(member.char_class)]
 	nm.add_theme_color_override("font_color", PanelSkin.TITLE)
 	nm.add_theme_font_size_override("font_size", 22)
+	nm.add_theme_constant_override("outline_size", PanelSkin.OUTLINE_SIZE)
+	nm.add_theme_color_override("font_outline_color", PanelSkin.OUTLINE_COLOR)
 	col.add_child(nm)
 	var bar := PanelSkin.make_bar(PanelSkin.HP_FILL)
 	bar["root"].custom_minimum_size = Vector2(0, 12)

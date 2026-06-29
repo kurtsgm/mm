@@ -85,6 +85,8 @@ func _mk(text: String, color: Color, size: int) -> Label:
 	l.text = text
 	l.add_theme_color_override("font_color", color)
 	l.add_theme_font_size_override("font_size", size)
+	l.add_theme_constant_override("outline_size", PanelSkin.OUTLINE_SIZE)
+	l.add_theme_color_override("font_outline_color", PanelSkin.OUTLINE_COLOR)
 	return l
 
 func _labeled_bar(text: String, fill: Color, ratio: float, which: String) -> Control:

@@ -14,6 +14,15 @@ const HP_FILL := Color(0.75, 0.22, 0.16)
 const XP_FILL := Color(0.79, 0.63, 0.29)
 const BAR_BG := Color(0.42, 0.35, 0.22)
 const HILITE := Color(0.48, 0.35, 0.16, 0.30)
+# 文字描邊（米色淺暈）：讓深色字在做舊羊皮上仍清楚。
+const OUTLINE_COLOR := Color(0.95, 0.90, 0.78, 0.85)
+const OUTLINE_SIZE := 3
+# 半透明米色「閱讀底」：疊在羊皮中央、壓淡斑漬好讀；破邊/邊框照樣露出。
+static func reading_stylebox() -> StyleBoxFlat:
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.91, 0.84, 0.67, 0.55)
+	sb.set_corner_radius_all(10)
+	return sb
 
 const PARCHMENT_TEX_PATH := "res://content/ui/parchment.png"
 

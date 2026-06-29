@@ -76,6 +76,16 @@ func _ready() -> void:
 	box.add_theme_stylebox_override("panel", PanelSkin.frame_stylebox())
 	add_child(box)
 
+	# 半透明米色閱讀底：壓淡羊皮中央斑漬好讀；疊在 root 之下、紋理破邊照樣露出。
+	var reading := Panel.new()
+	reading.anchor_left = 0.07
+	reading.anchor_top = 0.08
+	reading.anchor_right = 0.93
+	reading.anchor_bottom = 0.92
+	reading.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	reading.add_theme_stylebox_override("panel", PanelSkin.reading_stylebox())
+	box.add_child(reading)
+
 	var root := HBoxContainer.new()
 	# 比例內縮，避開羊皮貼圖的燒灼破邊（不壓到深色邊、內容留在乾淨中央）。
 	root.anchor_left = 0.08
@@ -113,11 +123,15 @@ func _ready() -> void:
 	_list_text.fit_content = true
 	_list_text.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_list_text.add_theme_color_override("default_color", PanelSkin.TEXT)
+	_list_text.add_theme_constant_override("outline_size", PanelSkin.OUTLINE_SIZE)
+	_list_text.add_theme_color_override("font_outline_color", PanelSkin.OUTLINE_COLOR)
 	_content.add_child(_list_text)
 
 	_footer = Label.new()
 	_footer.add_theme_color_override("font_color", PanelSkin.SECTION)
 	_footer.add_theme_font_size_override("font_size", 18)
+	_footer.add_theme_constant_override("outline_size", PanelSkin.OUTLINE_SIZE)
+	_footer.add_theme_color_override("font_outline_color", PanelSkin.OUTLINE_COLOR)
 	main.add_child(_footer)
 
 	set_process_unhandled_input(false)
