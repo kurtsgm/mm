@@ -3,6 +3,8 @@ extends Resource
 
 enum TileType { FLOOR = 0, WALL = 1, DOOR = 2, STAIRS_UP = 3, STAIRS_DOWN = 4 }
 
+const LOCAL_SIZE := 10   # 每張 local map 一律 LOCAL_SIZE × LOCAL_SIZE（無縫拼接需等邊長）
+
 @export var map_id: String
 @export var width: int
 @export var height: int
