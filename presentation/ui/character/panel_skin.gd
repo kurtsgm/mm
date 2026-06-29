@@ -24,6 +24,45 @@ static func reading_stylebox() -> StyleBoxFlat:
 	sb.set_corner_radius_all(10)
 	return sb
 
+# 面板字型：英文走典雅襯線、中文 fallback 宋體，羊皮卷風。
+# 執行時讀系統字型路徑（不把 Apple 字型 commit 進 repo）；找不到回 null → 退回 Godot 預設。
+# 出貨時改成 bundle 的免費字型（EN: Cinzel/EB Garamond、中: 思源宋體 Noto Serif TC），只改下面兩個清單。
+const _EN_FONT_PATHS := [
+	"res://content/ui/fonts/en.ttf", "res://content/ui/fonts/en.otf",
+	"/System/Library/Fonts/Supplemental/Hoefler Text.ttc",
+	"/System/Library/Fonts/Palatino.ttc",
+	"/System/Library/Fonts/Supplemental/Baskerville.ttc",
+	"/System/Library/Fonts/Supplemental/Georgia.ttf",
+]
+const _CJK_FONT_PATHS := [
+	"res://content/ui/fonts/cjk.ttf", "res://content/ui/fonts/cjk.otf",
+	"/System/Library/Fonts/Songti.ttc",
+	"/System/Library/Fonts/PingFang.ttc",
+]
+
+static func panel_font() -> Font:
+	var en := _load_font(_EN_FONT_PATHS)
+	var cjk := _load_font(_CJK_FONT_PATHS)
+	if en == null:
+		return cjk        # 無英文字型就直接用中文字型（其拉丁字也可用）
+	if cjk != null:
+		var fb: Array[Font] = en.fallbacks
+		fb.append(cjk)
+		en.fallbacks = fb
+	return en
+
+static func _load_font(paths: Array) -> FontFile:
+	for p in paths:
+		var path := String(p)
+		if not FileAccess.file_exists(path):
+			continue
+		var f := FontFile.new()
+		var bytes := FileAccess.get_file_as_bytes(path)
+		if bytes.size() > 0:
+			f.data = bytes
+			return f
+	return null
+
 const PARCHMENT_TEX_PATH := "res://content/ui/parchment.png"
 
 # 真・羊皮貼圖外框（9-slice）：四角不變形、邊緣與中央隨面板縮放。

@@ -76,6 +76,13 @@ func _ready() -> void:
 	box.add_theme_stylebox_override("panel", PanelSkin.frame_stylebox())
 	add_child(box)
 
+	# 面板字型（英文襯線 + 中文宋體）；找不到系統字型則維持預設。全面板子節點繼承。
+	var pf := PanelSkin.panel_font()
+	if pf != null:
+		var th := Theme.new()
+		th.default_font = pf
+		box.theme = th
+
 	# 半透明米色閱讀底：壓淡羊皮中央斑漬好讀；疊在 root 之下、紋理破邊照樣露出。
 	var reading := Panel.new()
 	reading.anchor_left = 0.07
