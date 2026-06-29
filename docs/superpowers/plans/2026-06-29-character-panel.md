@@ -788,7 +788,7 @@ Expected: 產生 `character_panel.gd.uid`
 - [ ] **Step 5: 跑測試確認 GREEN**
 
 Run: `godot --headless --path . -s res://addons/gut/gut_cmdln.gd -gdir=res://tests -ginclude_subdirs -gselect=test_character_panel.gd -gexit`
-Expected: PASS（6 tests）
+Expected: PASS（5 tests）
 
 - [ ] **Step 6: Commit**
 
@@ -888,7 +888,7 @@ func _activate_item() -> void:
 - [ ] **Step 4: 跑測試確認 GREEN**
 
 Run: `godot --headless --path . -s res://addons/gut/gut_cmdln.gd -gdir=res://tests -ginclude_subdirs -gselect=test_character_panel.gd -gexit`
-Expected: PASS（8 tests）
+Expected: PASS（7 tests）
 
 - [ ] **Step 5: Commit**
 
@@ -1136,7 +1136,7 @@ func _pick_target_lines() -> Array:
 - [ ] **Step 4: 跑測試確認 GREEN**
 
 Run: `godot --headless --path . -s res://addons/gut/gut_cmdln.gd -gdir=res://tests -ginclude_subdirs -gselect=test_character_panel.gd -gexit`
-Expected: PASS（12 tests）
+Expected: PASS（11 tests）
 
 - [ ] **Step 5: Commit**
 
