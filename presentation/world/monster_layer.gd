@@ -79,20 +79,24 @@ func _build_members(group_key: String, cell: Vector2i, phase_seed: int) -> Array
 		return members
 	var spread := CLUSTER_SPREAD_RATIO * GridGeometry.CELL_SIZE
 	var offsets := cluster_offsets(n, spread)
-	var scale: float = CLUSTER_SCALE if n >= 2 else 1.0
+	var member_scale: float = CLUSTER_SCALE if n >= 2 else 1.0
+	# 腳貼地修正：_world_pos 把中心固定在 DISPLAY_HEIGHT/2（原大小腳貼地）；縮放後身高變 scale*DISPLAY_HEIGHT，
+	# 中心須下移 (1-scale)*DISPLAY_HEIGHT/2 才能把腳留在地板。n==1（scale=1）→ 0，單隻行為不變。
+	var foot_drop := (CombatStage.DISPLAY_HEIGHT * (1.0 - member_scale)) / 2.0
 	for i in n:
 		var fr := _frames_for_def(defs[i].id)
-		members.append(_make_member(fr["a"], fr["b"], cell, offsets[i], scale, phase_seed + i))
+		var offset: Vector3 = offsets[i] - Vector3(0.0, foot_drop, 0.0)
+		members.append(_make_member(fr["a"], fr["b"], cell, offset, member_scale, phase_seed + i))
 	return members
 
 # 建單一 member（Sprite3D + 動畫資料），加入場景並回傳 member dict。
-func _make_member(a: Texture2D, b, cell: Vector2i, offset: Vector3, scale: float, phase_seed: int) -> Dictionary:
+func _make_member(a: Texture2D, b, cell: Vector2i, offset: Vector3, member_scale: float, phase_seed: int) -> Dictionary:
 	var s := Sprite3D.new()
 	s.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	_apply_texture(s, a, scale)
+	_apply_texture(s, a, member_scale)
 	s.position = _world_pos(cell) + offset
 	add_child(s)
-	return {"node": s, "a": a, "b": b, "phase": phase_seed * PHASE_SPREAD, "cur": 0, "offset": offset, "scale": scale}
+	return {"node": s, "a": a, "b": b, "phase": phase_seed * PHASE_SPREAD, "cur": 0, "offset": offset, "scale": member_scale}
 
 func apply_moves(monsters: Array) -> void:
 	for m in monsters:
@@ -136,10 +140,10 @@ func _frames_for_def(def_id: String) -> Dictionary:
 	var a = t["idle"] if t["idle"] != null else ph
 	return {"a": a, "b": t.get("idle2", null)}
 
-# 設貼圖並依其高度正規化 pixel_size（換幀不變大小、腳貼地不變）；scale 為叢內縮小倍率。
-func _apply_texture(s: Sprite3D, tex: Texture2D, scale: float) -> void:
+# 設貼圖並依其高度正規化 pixel_size（換幀不變大小、腳貼地不變）；member_scale 為叢內縮小倍率。
+func _apply_texture(s: Sprite3D, tex: Texture2D, member_scale: float) -> void:
 	s.texture = tex
-	s.pixel_size = CombatStage.pixel_size_for(tex, CombatStage.DISPLAY_HEIGHT) * scale
+	s.pixel_size = CombatStage.pixel_size_for(tex, CombatStage.DISPLAY_HEIGHT) * member_scale
 
 func _placeholder(color: Color) -> Texture2D:
 	var img := Image.create(64, 96, false, Image.FORMAT_RGBA8)

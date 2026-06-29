@@ -57,6 +57,13 @@ func test_rebuild_places_feet_on_floor():
 	assert_almost_eq(s.position.x, w.x, 0.0001)
 	assert_almost_eq(s.position.z, w.z, 0.0001)
 
+func test_cluster_members_feet_on_floor():
+	var l := _layer()
+	l.rebuild([_live("u1", Vector2i(0, 0), "g")])   # 3 隻（縮放叢）
+	var s: Sprite3D = l._sprites["u1"][1]["node"]
+	var wh := s.texture.get_height() * s.pixel_size   # 實際渲染身高
+	assert_almost_eq(s.position.y - wh / 2.0, 0.0, 0.0001, "縮放後仍腳貼地")
+
 func test_rebuild_uses_billboard():
 	var l := _layer()
 	l.rebuild([_live("u1", Vector2i(0, 0), "o")])
