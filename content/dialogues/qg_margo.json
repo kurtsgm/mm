@@ -4,6 +4,7 @@
   "nodes": {
     "root": {
       "text": "瑪歌正俯身替一個臉色發青的老農擦汗。",
+      "image": "margo_clinic",
       "choices": [
         { "text": "「我能幫什麼？」", "require": {"quest_inactive": "oak_antidote"},
           "effects": [{"op": "accept_quest", "quest": "oak_antidote"}], "goto": "accepted" },
@@ -15,10 +16,10 @@
         { "text": "離開", "goto": null }
       ]
     },
-    "money": { "text": "瑪歌：「付得起付不起，他都得活。我問的從來不是這個。你要是手腳俐落，倒能幫他一個大忙——也幫我。」", "choices": [ {"text": "…", "goto": "root"} ] },
-    "accepted": { "text": "瑪歌：「毒澤深處有種葉背發紫、貼著水長的草，鄉里叫它『澤蘭』——解毒蛛的毒就靠它。給我採三株回來，葉子要完整的。那地方毒蛛多，當心些。」", "choices": [ {"text": "…", "goto": null} ] },
-    "nag": { "text": "瑪歌：「澤蘭採到了嗎？葉背發紫、貼著水長的那種。老人家還撐著，但別讓我等太久。」", "choices": [ {"text": "…", "goto": null} ] },
-    "turned_in": { "text": "瑪歌接過草，捻了捻葉子，鬆一口氣：「對，就是這個。」她搗藥敷上，老農的呼吸漸漸平了。「成了，睡一覺就能下床。這點謝禮你收著——別跟我客氣，跑這趟的是你的腿，不是我的嘴。」", "choices": [ {"text": "…", "goto": null} ] },
-    "thanks": { "text": "瑪歌：「那老人家？前兒個還來幫我曬藥草呢。這年頭糧倉空了一半，病的人卻多了一倍。能扶一個是一個。」", "choices": [ {"text": "…", "goto": null} ] }
+    "money": { "text": "瑪歌：「付得起付不起，他都得活。我問的從來不是這個。你要是手腳俐落，倒能幫他一個大忙——也幫我。」", "image": "margo_portrait", "choices": [ {"text": "…", "goto": "root"} ] },
+    "accepted": { "text": "瑪歌：「毒澤深處有種葉背發紫、貼著水長的草，鄉里叫它『澤蘭』——解毒蛛的毒就靠它。給我採三株回來，葉子要完整的。那地方毒蛛多，當心些。」", "image": "marsh_swampherb", "choices": [ {"text": "…", "goto": null} ] },
+    "nag": { "text": "瑪歌：「澤蘭採到了嗎？葉背發紫、貼著水長的那種。老人家還撐著，但別讓我等太久。」", "image": "margo_portrait", "choices": [ {"text": "…", "goto": null} ] },
+    "turned_in": { "text": "瑪歌接過草，捻了捻葉子，鬆一口氣：「對，就是這個。」她搗藥敷上，老農的呼吸漸漸平了。「成了，睡一覺就能下床。這點謝禮你收著——別跟我客氣，跑這趟的是你的腿，不是我的嘴。」", "image": "margo_clinic", "choices": [ {"text": "…", "goto": null} ] },
+    "thanks": { "text": "瑪歌：「那老人家？前兒個還來幫我曬藥草呢。這年頭糧倉空了一半，病的人卻多了一倍。能扶一個是一個。」", "image": "margo_portrait", "choices": [ {"text": "…", "goto": null} ] }
   }
 }
