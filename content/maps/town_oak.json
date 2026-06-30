@@ -22,7 +22,10 @@
     { "type": "building", "id": "oak_well", "rect": [4, 4, 1, 1], "model": "oak_well" },
     { "type": "portal", "pos": [4, 8], "to": "wild_nw", "entry": "from_town" },
     { "type": "questgiver", "pos": [3, 7], "dialogue": "qg_oak_guard" },
-    { "type": "questgiver", "pos": [5, 5], "dialogue": "qg_margo" }
+    { "type": "questgiver", "pos": [5, 5], "dialogue": "qg_margo" },
+    { "type": "questgiver", "pos": [4, 3], "dialogue": "qg_oak_lord" },
+    { "type": "questgiver", "pos": [6, 3], "dialogue": "qg_oak_taxman" },
+    { "type": "scene", "pos": [4, 6], "dialogue": "oak_inquisitor_omen", "require": {"quest_done": "oak_levy"}, "once": true }
   ],
   "entries": { "gate": { "pos": [4, 7], "facing": "N" } }
 }
