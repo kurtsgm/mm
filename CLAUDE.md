@@ -7,6 +7,7 @@
 - **溝通語言** — 給使用者的說明/建議一律繁體中文。見下「溝通語言」。
 - **UI 版面** — 一律依視窗比例、解析度無關、不寫死像素。見下「UI 版面」。
 - **美術風格** — 美式 D&D × CRPG 寫實 × 英雄高奇幻 × 英雄寫實比例；人物/NPC/怪物一致。見下「美術風格」與 `docs/art-style-guide.md`。
+- **資產處理（容量）** — 圖片進 repo 前一律壓 WebP、不放原圖（場景 q82@1280／肖像 q88@1024／去背 sprite q85 保 alpha）；PBR 材質與 normal map 例外不 lossy。見 `docs/art-style-guide.md`「資產處理」。
 - **不需向後相容** — 現階段為 pre-release 開發，breaking change 一律可接受，不為相容/存檔遷移付出任何成本。見下「不需向後相容」。
 - **開發工具（tools/）** — 離線跑的工具索引見 `tools/README.md`。含 `gen_parchment.gd`（程序化生成羊皮 UI 貼圖，可指定尺寸）、戰鬥/升級模擬器、任務驗證器等。
 

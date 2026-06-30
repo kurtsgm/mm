@@ -69,6 +69,21 @@ blurry, deformed face, extra limbs, extra fingers, text, watermark, signature, l
 - **色彩空間**：sRGB。
 - **命名/放置**：素材入庫位置與命名沿用 `content/`（英雄/NPC 與 `content/monsters` 等既有分類；實際路徑於接圖時定）。
 
+## 資產處理（容量／格式）—— 圖片進 repo 前一律壓縮，不放原圖
+
+生圖/委託拿到的原圖（常見 1–3 MB PNG）**不可直接入庫**；一律先壓成 WebP 再 commit（catalog 路徑用 `.webp`），生圖/換圖後跑一次 `godot --headless --path . --import`。參考量：2 MB PNG → ~80 KB WebP（縮 ~96%）。
+
+| 類型 | 處理（`cwebp`） | 備註 |
+|---|---|---|
+| **場景情境圖／插畫**（無 alpha） | `cwebp -q 82 -resize 1280 0 in.png -o out.webp` | max width 1280；對話視窗背景畫質足夠 |
+| **角色肖像**（1:1，HUD＋對話） | `cwebp -q 88 -resize 1024 1024 in.png -o out.webp` | 臉要清楚 → 品質略高、上限 1024 |
+| **去背 sprite**（NPC／怪物 billboard，有 alpha） | `cwebp -q 85 in.png -o out.webp` | **保 alpha、不可用 JPG**；不過度縮小，去背邊與輪廓要清楚 |
+
+**例外（不套此 lossy-WebP 政策）：**
+
+- **3D PBR 材質**（`content/materials/*`：color/normal/roughness/ao）：屬寫實 PBR 流程、非本指南。**normal map 尤其不可 lossy**（會壞光照）；維持來源格式，export 體積交由 Godot 匯入時的 VRAM 壓縮處理。
+- **UI 程序貼圖**（`gen_parchment.gd` 產的 `parchment_*`）：可重生、低優先；要瘦身用 **WebP 無損保 alpha**（`cwebp -lossless -exact`），不可 lossy（破邊透明會出髒邊）。
+
 ## 一致性檢查（產一批前自問）
 
 - [ ] 用了同一固定前綴（同風格/打光/背景）？
