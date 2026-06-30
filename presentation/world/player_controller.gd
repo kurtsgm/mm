@@ -3,6 +3,7 @@ extends Node3D
 
 signal entered_cell(pos: Vector2i)
 signal facing_changed(facing: int)
+signal bumped(cell: Vector2i)
 
 # 每格移動時間（可調）。0.18 偏快、1.0 偏慢；0.5 是有走路感又不拖沓的折衷。
 const MOVE_TIME := 0.5
@@ -105,7 +106,8 @@ func _attempt_move(move: int) -> bool:
 	var move_dir := GridMovement.direction_of(_facing, move)
 	var target := _pos + GridDirection.to_vector(move_dir)
 	if not _world_grid.is_walkable(target):
-		return false   # 牆（含外緣無鄰）→ 不動；無離散切圖
+		bumped.emit(target)
+		return false   # 牆/實心 NPC（含外緣無鄰）→ 不動；main 端決定 bump 是否觸發互動
 	_pos = target
 	entered_cell.emit(_pos)
 	_is_busy = true

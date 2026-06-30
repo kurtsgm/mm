@@ -199,3 +199,17 @@ func test_bob_offset_peak_at_quarter_cycle():
 
 func test_bob_offset_scales_with_weight():
 	assert_almost_eq(PlayerController.bob_offset(PI / 2.0, 0.5, 0.06), 0.03, 0.0001, "weight 線性縮放偏移")
+
+# --- bump：撞不可走格時 emit bumped(target)（供 NPC 互動）---
+
+func test_blocked_move_emits_bumped_with_target():
+	var pc := _make_pc(_wg(_with_wall(_floor_map("a", 3, 3), Vector2i(1, 0))), Vector2i(1, 1), GridDirection.Dir.NORTH)
+	watch_signals(pc)
+	pc._attempt_move(GridMovement.Move.FORWARD)   # 北 → (1,0) 是牆
+	assert_signal_emitted_with_parameters(pc, "bumped", [Vector2i(1, 0)])
+
+func test_successful_move_does_not_emit_bumped():
+	var pc := _make_pc(_wg(_floor_map("a", 3, 3)), Vector2i(1, 1), GridDirection.Dir.NORTH)
+	watch_signals(pc)
+	pc._attempt_move(GridMovement.Move.FORWARD)   # (1,0) 可走
+	assert_signal_not_emitted(pc, "bumped")
