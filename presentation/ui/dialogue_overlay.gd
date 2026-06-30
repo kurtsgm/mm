@@ -10,6 +10,7 @@ signal finished
 var _runner: DialogueRunner
 var _parchment_rect: TextureRect
 const PARCHMENT_PATH := "res://content/ui/parchment_dialogue.png"
+const IMAGE_FEATHER_SHADER := "res://presentation/ui/dialogue_image_feather.gdshader"
 var _image_rect: TextureRect
 var _text_label: Label
 var _choice_box: VBoxContainer
@@ -41,6 +42,11 @@ func _ready() -> void:
 	_image_rect.anchor_bottom = 0.66
 	_image_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_image_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	# 邊緣羽化：讓情境圖融入羊皮紙、消除硬矩形邊界。
+	if ResourceLoader.exists(IMAGE_FEATHER_SHADER):
+		var feather_mat := ShaderMaterial.new()
+		feather_mat.shader = load(IMAGE_FEATHER_SHADER)
+		_image_rect.material = feather_mat
 	add_child(_image_rect)
 
 	# 下 ~30%：對話框（文字 + 數字鍵選項）。

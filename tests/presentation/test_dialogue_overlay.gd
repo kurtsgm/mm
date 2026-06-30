@@ -102,3 +102,7 @@ func test_text_box_in_bottom_region():
 	var ov := _overlay()
 	# 對話框是 _text_label 的父鏈最外層 Control；用其全域 anchor 反推：文字落在下方 ~30%
 	assert_gt(ov._text_label.get_parent().get_parent().anchor_top, 0.6, "對話文字落在下半部")
+
+func test_image_rect_has_feather_material():
+	var ov := _overlay()
+	assert_true(ov._image_rect.material is ShaderMaterial, "情境圖套羽化 shader 融入羊皮紙")
