@@ -1,0 +1,9 @@
+{
+  "id": "oak_levy",
+  "title": "領主的難處",
+  "stages": [
+    { "type": "talk", "desc": "去和鎮上的帝國稅吏交涉" },
+    { "type": "talk", "desc": "回報橡境伯哈洛" }
+  ],
+  "rewards": { "gold": 120, "xp": 80, "items": ["chain_mail"] }
+}
