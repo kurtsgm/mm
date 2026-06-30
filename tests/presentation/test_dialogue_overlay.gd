@@ -96,7 +96,33 @@ func test_parchment_is_near_full_screen():
 func test_image_occupies_top_region():
 	var ov := _overlay()
 	assert_lt(ov._image_rect.anchor_top, 0.15, "情境圖貼近頂部")
-	assert_almost_eq(ov._image_rect.anchor_bottom, 0.66, 0.03, "情境圖底約在 ~66%（上 ~70%）")
+	assert_almost_eq(ov._image_rect.anchor_bottom, 0.62, 0.03, "情境圖底約在 ~62%（上半部）")
+
+func test_relayout_frames_image_centered_with_text_aligned():
+	# 開啟後等版面就緒，驗證「羊皮紙緊貼情境圖、置中、對話框對齊圖左緣」。
+	var ov := _overlay()
+	ov.open(_runner(50))
+	await wait_frames(3)
+	var vp := ov.get_viewport().get_visible_rect().size
+	var img: Rect2 = ov._drawn_image_rect()
+	assert_gt(img.size.x, 1.0, "情境圖已畫出（有實際尺寸）")
+	# 羊皮紙不再近滿版：明顯比視窗窄。
+	assert_lt(ov._parchment_rect.size.x, vp.x * 0.95, "羊皮紙比視窗窄（不是近滿版）")
+	# 羊皮紙框住情境圖（四邊都在圖外側）。
+	var p_pos: Vector2 = ov._parchment_rect.position
+	var p_sz: Vector2 = ov._parchment_rect.size
+	assert_lte(p_pos.x, img.position.x, "羊皮紙左緣在圖左緣外側")
+	assert_gte(p_pos.x + p_sz.x, img.position.x + img.size.x, "羊皮紙右緣在圖右緣外側")
+	# 卡片水平置中：左右留白接近相等。
+	var margin_l: float = p_pos.x
+	var margin_r: float = vp.x - (p_pos.x + p_sz.x)
+	assert_almost_eq(margin_l, margin_r, vp.x * 0.02, "羊皮紙水平置中（左右留白相近）")
+	# 對話框貼在圖正下方，左右各內縮 → 文字兩側有留白、不貼圖緣。
+	assert_gt(ov._box.position.y, img.position.y + img.size.y - 1.0, "對話框在情境圖下方")
+	var inset_l: float = ov._box.position.x - img.position.x
+	var inset_r: float = (img.position.x + img.size.x) - (ov._box.position.x + ov._box.size.x)
+	assert_gt(inset_l, 1.0, "對話框左緣在圖左緣內側（左留白）")
+	assert_almost_eq(inset_l, inset_r, 1.0, "左右內縮對稱（兩側留白相等）")
 
 func test_text_box_in_bottom_region():
 	var ov := _overlay()
