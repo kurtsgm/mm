@@ -3,7 +3,11 @@ extends Object
 # image id → 全版面圖路徑（鏡射 DecorationCatalog/ThemeCatalog）。
 # 內容期把真圖加進來，例如 "shop_oak_interior": "res://content/scenes/shop_oak.png"。
 # 缺圖 → 由 id 衍生顏色的純色 placeholder（不崩、可先驗流程；美術屬委派流程）。
-const _IMAGES := {}
+const _IMAGES := {
+	"margo_clinic": "res://content/scenes/margo_clinic.png",
+	"marsh_swampherb": "res://content/scenes/marsh_swampherb.png",
+	"margo_portrait": "res://content/scenes/margo_portrait.png",
+}
 
 const _PLACEHOLDER_SIZE := Vector2i(320, 180)
 
@@ -11,7 +15,7 @@ static func has_image(id: String) -> bool:
 	return _IMAGES.has(id)
 
 static func get_texture(id: String) -> Texture2D:
-	if _IMAGES.has(id):
+	if _IMAGES.has(id) and ResourceLoader.exists(_IMAGES[id]):
 		return load(_IMAGES[id])
 	return _placeholder(id)
 
