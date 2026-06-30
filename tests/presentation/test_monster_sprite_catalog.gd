@@ -1,6 +1,6 @@
 extends GutTest
 
-const REAL := "res://content/portraits/gerard.png"   # 專案既有資源（PortraitCatalog 用）
+const REAL := "res://content/portraits/gerard.webp"   # 專案既有資源（PortraitCatalog 用）
 
 func test_unknown_id_returns_all_nulls():
 	var out := MonsterSpriteCatalog.textures_for("no_such_monster")

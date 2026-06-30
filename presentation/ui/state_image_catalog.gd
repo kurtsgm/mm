@@ -5,7 +5,7 @@ extends RefCounted
 
 const _DOWN_MALE := "res://content/portraits/states/down_male.png"
 const _DOWN_FEMALE := "res://content/portraits/states/down_female.png"
-const _TOMBSTONE := "res://content/portraits/states/tombstone.png"
+const _TOMBSTONE := "res://content/portraits/states/tombstone.webp"
 
 const _FEMALE_NAMES := { "Cordelia": true, "Sira": true, "Cassia": true }
 

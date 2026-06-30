@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://2q0revtpe6ce"
-path="res://.godot/imported/cordelia.png-25f7f7ab909910af93283f4c8828e0ce.ctex"
+uid="uid://dv4lnbcxis1i0"
+path="res://.godot/imported/tombstone.webp-981f1a50d333ae275bce09a056ae7b29.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://content/portraits/cordelia.png"
-dest_files=["res://.godot/imported/cordelia.png-25f7f7ab909910af93283f4c8828e0ce.ctex"]
+source_file="res://content/portraits/states/tombstone.webp"
+dest_files=["res://.godot/imported/tombstone.webp-981f1a50d333ae275bce09a056ae7b29.ctex"]
 
 [params]
 

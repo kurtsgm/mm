@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://03r756bik1q5"
-path="res://.godot/imported/gerard.png-1f7dd59b2f66386710ca8440ddb120da.ctex"
+uid="uid://bn6dt6x7ocvbs"
+path="res://.godot/imported/gerard.webp-1649af7c4a2535ce5246e47e55d17673.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://content/portraits/gerard.png"
-dest_files=["res://.godot/imported/gerard.png-1f7dd59b2f66386710ca8440ddb120da.ctex"]
+source_file="res://content/portraits/gerard.webp"
+dest_files=["res://.godot/imported/gerard.webp-1649af7c4a2535ce5246e47e55d17673.ctex"]
 
 [params]
 

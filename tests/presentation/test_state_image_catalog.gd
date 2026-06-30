@@ -18,7 +18,7 @@ func test_unconscious_path_by_gender():
 	assert_eq(StateImageCatalog.state_path(_char("Gerard"), PortraitState.Face.UNCONSCIOUS), "res://content/portraits/states/down_male.png")
 
 func test_dead_path_is_tombstone():
-	assert_eq(StateImageCatalog.state_path(_char("Gerard"), PortraitState.Face.DEAD), "res://content/portraits/states/tombstone.png")
+	assert_eq(StateImageCatalog.state_path(_char("Gerard"), PortraitState.Face.DEAD), "res://content/portraits/states/tombstone.webp")
 
 func test_non_down_states_have_no_path():
 	assert_eq(StateImageCatalog.state_path(_char("Gerard"), PortraitState.Face.OK), "")

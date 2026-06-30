@@ -5,8 +5,8 @@ extends RefCounted
 # 之後若要狀態變體圖（受擊/暈倒/死亡），於此擴充對照與查詢即可。
 
 const _BY_NAME := {
-	"Gerard": "res://content/portraits/gerard.png",
-	"Cordelia": "res://content/portraits/cordelia.png",
+	"Gerard": "res://content/portraits/gerard.webp",
+	"Cordelia": "res://content/portraits/cordelia.webp",
 }
 
 static func texture_for(c: Character) -> Texture2D:
