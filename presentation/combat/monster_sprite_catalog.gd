@@ -5,10 +5,10 @@ extends Object
 # 「id→資源路徑對照表」慣例。未註冊的怪 fallback 到 placeholder；三態可缺（缺的回退 base/idle）。
 # 之後逐怪填入；貼圖為去背 alpha PNG（同畫風、同框同比例，見 docs/art-style-guide.md）。
 const _SPRITES := {
-	"goblin": {"idle": "res://content/monsters/sprites/goblin_idle.png",
-		"idle2": "res://content/monsters/sprites/goblin_idle_b.png",
-		"attack": "res://content/monsters/sprites/goblin_attack.png",
-		"hurt": "res://content/monsters/sprites/goblin_hurt.png"},
+	"goblin": {"idle": "res://content/monsters/sprites/goblin_idle.webp",
+		"idle2": "res://content/monsters/sprites/goblin_idle_b.webp",
+		"attack": "res://content/monsters/sprites/goblin_attack.webp",
+		"hurt": "res://content/monsters/sprites/goblin_hurt.webp"},
 }
 
 # 回 {idle,idle2,attack,hurt}，每項為 Texture2D 或 null（缺項/未註冊 → null，由呼叫端 fallback base）。

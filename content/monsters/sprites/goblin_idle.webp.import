@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c8n0w7trgryaj"
-path="res://.godot/imported/goblin_hurt.png-5e2ad3082405b2921f6e8801c0b3e0db.ctex"
+uid="uid://dfmqvhl8jman2"
+path="res://.godot/imported/goblin_idle.webp-19fe43ef8ad8be127a0d7afd9bb90ca9.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://content/monsters/sprites/goblin_hurt.png"
-dest_files=["res://.godot/imported/goblin_hurt.png-5e2ad3082405b2921f6e8801c0b3e0db.ctex"]
+source_file="res://content/monsters/sprites/goblin_idle.webp"
+dest_files=["res://.godot/imported/goblin_idle.webp-19fe43ef8ad8be127a0d7afd9bb90ca9.ctex"]
 
 [params]
 
