@@ -18,7 +18,7 @@
     { "type": "vendor", "pos": [4, 4], "id": "wandering_merchant" },
     { "type": "monster", "pos": [2, 2], "encounter": "g", "id": "019f076a-1c33-702d-89f4-2bdafcf85336" },
     { "type": "chest", "pos": [6, 2], "gold": 0, "items": ["lucky_charm"] },
-    { "type": "questgiver", "pos": [2, 6], "dialogue": "qg_ne_scout" },
+    { "type": "questgiver", "pos": [2, 6], "dialogue": "qg_ne_scout", "sprite": "ne_scout" },
     { "type": "scene", "pos": [6, 6], "dialogue": "nav_echo_nest", "require": {"quest_active": "goblin_menace"}, "once": true }
   ]
 }
