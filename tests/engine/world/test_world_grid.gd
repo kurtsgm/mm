@@ -76,3 +76,29 @@ func test_regions_match_world_stitch_place():
 	for r in placed:
 		ws_by_id[r["map"].map_id] = Vector2i(r["ox"], r["oy"])
 	assert_eq(wg_by_id, ws_by_id, "WorldGrid.regions 偏移與 WorldStitch.place 同源一致")
+
+func _qg_map(id: String, w: int, h: int, qgs: Array, neighbors := {}) -> MapData:
+	var m := _floor_map(id, w, h, neighbors)
+	m.quest_givers = qgs
+	return m
+
+func test_questgiver_cell_not_walkable_and_occupant():
+	var a := _qg_map("a", 3, 3, [{"pos": Vector2i(1, 1), "dialogue": "qg_x"}])
+	var wg := WorldGrid.new(a, Callable(self, "_null_loader"))
+	assert_false(wg.is_walkable(Vector2i(1, 1)), "questgiver 格實心不可走")
+	assert_eq(wg.occupant_at(Vector2i(1, 1)), {"kind": "questgiver", "dialogue": "qg_x"})
+	assert_eq(wg.resolve(Vector2i(1, 1)), {"map_id": "a", "local": Vector2i(1, 1)}, "仍可反查")
+
+func test_no_occupant_returns_empty():
+	var a := _floor_map("a", 3, 3)
+	var wg := WorldGrid.new(a, Callable(self, "_null_loader"))
+	assert_eq(wg.occupant_at(Vector2i(1, 1)), {}, "無 NPC 格回空")
+
+func test_questgiver_in_neighbor_region_occupant_resolved():
+	var a := _floor_map("a", 3, 3, {GridDirection.Dir.EAST: "e"})
+	var e := _qg_map("e", 3, 3, [{"pos": Vector2i(0, 1), "dialogue": "qg_e"}], {GridDirection.Dir.WEST: "a"})
+	_world = {"a": a, "e": e}
+	var wg := WorldGrid.new(a, Callable(self, "_loader"))
+	# e 在 ox=3 → 其 local (0,1) = global (3,1)
+	assert_eq(wg.occupant_at(Vector2i(3, 1)), {"kind": "questgiver", "dialogue": "qg_e"})
+	assert_false(wg.is_walkable(Vector2i(3, 1)), "鄰圖 questgiver 也實心")

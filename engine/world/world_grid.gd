@@ -8,6 +8,7 @@ extends RefCounted
 var _owner: Dictionary = {}     # Vector2i(global) -> { "map_id": String, "local": Vector2i }
 var _walkable: Dictionary = {}  # Vector2i(global) -> true
 var _regions: Array = []        # [{ "map": MapData, "ox": int, "oy": int }]
+var _occupants: Dictionary = {}  # Vector2i(global) -> { "kind": String, "dialogue": String }
 
 func _init(focus_map: MapData, loader: Callable) -> void:
 	if focus_map == null:
@@ -27,9 +28,18 @@ func _init(focus_map: MapData, loader: Callable) -> void:
 				_owner[g] = { "map_id": m.map_id, "local": local }
 				if MapBuilder.is_walkable_type(m.get_tile(local)):
 					_walkable[g] = true
+		for q in m.quest_givers:
+			var qg: Vector2i = q["pos"] + Vector2i(ox, oy)
+			if _occupants.has(qg):
+				continue   # 第一寫入者勝（與 _owner 同確定性規則）
+			_occupants[qg] = {"kind": "questgiver", "dialogue": String(q["dialogue"])}
+			_walkable.erase(qg)   # NPC 實心擋路：占用格不可走（牆格 erase 為 no-op）
 
 func is_walkable(global: Vector2i) -> bool:
 	return _walkable.has(global)
+
+func occupant_at(global: Vector2i) -> Dictionary:
+	return _occupants.get(global, {})
 
 func resolve(global: Vector2i) -> Dictionary:
 	return _owner.get(global, {})
