@@ -73,3 +73,33 @@ func test_update_member_swaps_texture_when_second_frame_present():
 	member["phase"] = 0.0
 	l._update_member(member, MonsterLayer.FRAME_PERIOD)   # idx=1 → 切到 b
 	assert_eq(member["node"].texture, tex_b, "有第二幀 → 切到 frame B")
+
+func _qg_map(id: String, w: int, h: int, qgs: Array) -> MapData:
+	var m := MapData.new()
+	m.map_id = id
+	m.width = w
+	m.height = h
+	m.quest_givers = qgs
+	return m
+
+func test_collect_focus_region_keeps_local_pos():
+	var a := _qg_map("a", 5, 5, [{"pos": Vector2i(1, 1), "dialogue": "d", "sprite": "s_a"}])
+	var out := NpcLayer.collect([{"map": a, "ox": 0, "oy": 0}])
+	assert_eq(out.size(), 1)
+	assert_eq(out[0], {"pos": Vector2i(1, 1), "sprite": "s_a"}, "焦點區偏移 0 → 位置不變")
+
+func test_collect_neighbor_region_applies_offset():
+	var a := _qg_map("a", 5, 5, [{"pos": Vector2i(1, 1), "dialogue": "d", "sprite": "s_a"}])
+	var e := _qg_map("e", 5, 5, [{"pos": Vector2i(0, 2), "dialogue": "d", "sprite": "s_e"}])
+	var out := NpcLayer.collect([{"map": a, "ox": 0, "oy": 0}, {"map": e, "ox": 5, "oy": 0}])
+	assert_eq(out.size(), 2)
+	assert_eq(out[0], {"pos": Vector2i(1, 1), "sprite": "s_a"})
+	assert_eq(out[1], {"pos": Vector2i(5, 2), "sprite": "s_e"}, "鄰區加 (ox,oy) → 全域 cell")
+
+func test_collect_missing_sprite_defaults_empty():
+	var a := _qg_map("a", 5, 5, [{"pos": Vector2i(2, 2), "dialogue": "d"}])
+	var out := NpcLayer.collect([{"map": a, "ox": 0, "oy": 0}])
+	assert_eq(out[0]["sprite"], "", "缺 sprite → 空字串")
+
+func test_collect_empty_regions():
+	assert_eq(NpcLayer.collect([]), [], "無 region → 空清單")

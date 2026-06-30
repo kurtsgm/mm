@@ -17,6 +17,17 @@ func build(quest_givers: Array) -> void:
 		phase_seed += 1
 	set_process(not _sprites.is_empty())   # idle 動畫常駐（有 NPC 才開）
 
+# 從 WorldGrid.regions()（[{map, ox, oy}]）收集所有 region（焦點+鄰圖）的 questgiver，
+# 算成全域 cell 的渲染清單，與 OverworldMonsters.init_from_regions 的 region→global 慣例一致。
+static func collect(regions: Array) -> Array:
+	var out: Array = []
+	for region in regions:
+		var off := Vector2i(int(region["ox"]), int(region["oy"]))
+		var m: MapData = region["map"]
+		for q in m.quest_givers:
+			out.append({"pos": q["pos"] + off, "sprite": String(q.get("sprite", ""))})
+	return out
+
 func _make_sprite(a: Texture2D, b, cell: Vector2i, phase_seed: int) -> Dictionary:
 	var s := Sprite3D.new()
 	s.billboard = BaseMaterial3D.BILLBOARD_ENABLED
