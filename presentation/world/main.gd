@@ -48,14 +48,11 @@ func _ready() -> void:
 	var map := MapManager.enter_map(START_MAP_ID, GameState.cleared_for(START_MAP_ID))
 	_world_renderer = WorldStitchRenderer.new()
 	add_child(_world_renderer)
-	_world_renderer.rebuild(MapManager.current_map)
-	_build_world_grid()
 	_monster_layer = MonsterLayer.new()
 	add_child(_monster_layer)
-	_rebuild_monsters_for_current_map()
 	_npc_layer = NpcLayer.new()
 	add_child(_npc_layer)
-	_rebuild_npcs_for_current_map()
+	_rebuild_world()
 	_setup_environment()
 	_setup_fade()
 
@@ -182,11 +179,8 @@ func _on_entered_cell(global: Vector2i) -> void:
 func _recenter_to(map_id: String, local: Vector2i, global: Vector2i) -> void:
 	var delta := local - global   # = -新焦點圖在舊框架的偏移
 	MapManager.enter_map(map_id, GameState.cleared_for(map_id))
-	_build_world_grid()
-	_world_renderer.rebuild(MapManager.current_map)
+	_rebuild_world()
 	_player.rebase(delta, _world_grid)
-	_rebuild_monsters_for_current_map()
-	_rebuild_npcs_for_current_map()
 	GameState.current_map_id = map_id
 
 func _on_facing_changed(facing: int) -> void:
@@ -218,10 +212,7 @@ func _enter_via_link(map_id: String, entry_name: String) -> void:
 	var e := dest.get_entry(entry_name)
 	var pos: Vector2i = e.get("pos", dest.start_pos)
 	var facing: int = e.get("facing", GridDirection.Dir.NORTH)
-	_world_renderer.rebuild(MapManager.current_map)
-	_build_world_grid()
-	_rebuild_monsters_for_current_map()
-	_rebuild_npcs_for_current_map()
+	_rebuild_world()
 	_player.setup(_world_grid, pos, facing)
 	GameState.current_map_id = map_id
 	GameState.player_pos = pos
@@ -259,13 +250,22 @@ func _set_overworld_hud_visible(on: bool) -> void:
 func _build_world_grid() -> void:
 	_world_grid = WorldGrid.new(MapManager.current_map, Callable(MapManager, "peek_map"))
 
-func _rebuild_monsters_for_current_map() -> void:
+# 單一世界載入編排：一次 stitch（_build_world_grid）→ regions → 所有層共用。
+# 未來新世界內容：在此加一行 _x.build(regions) 即可，不必再碰各重建點。
+func _rebuild_world() -> void:
+	_build_world_grid()
+	var regions := _world_grid.regions()
+	_world_renderer.rebuild(regions)
+	_rebuild_monsters(regions)
+	_rebuild_npcs(regions)
+
+func _rebuild_monsters(regions: Array) -> void:
 	_overworld_monsters = OverworldMonsters.new()
-	_overworld_monsters.init_from_regions(_world_grid.regions(), Callable(GameState, "is_defeated"), Callable(self, "_saved_monster_state"))
+	_overworld_monsters.init_from_regions(regions, Callable(GameState, "is_defeated"), Callable(self, "_saved_monster_state"))
 	_monster_layer.rebuild(_overworld_monsters.live())
 
-func _rebuild_npcs_for_current_map() -> void:
-	_npc_layer.build(MapManager.current_map.quest_givers)
+func _rebuild_npcs(regions: Array) -> void:
+	_npc_layer.build(NpcLayer.collect(regions))
 
 func _saved_monster_state(map_id) -> Dictionary:
 	return GameState.monster_state.get(map_id, {})
@@ -529,14 +529,11 @@ func _cast_recall(spell: SpellDef) -> void:
 	_enter_via_link(HOME_MAP_ID, HOME_ENTRY)
 
 func _on_loaded() -> void:
-	_world_renderer.rebuild(MapManager.current_map)
+	_rebuild_world()
 	# 讀檔後目前區可能是 pooling 沿用的容器（rebuild 不會重建其內容），
 	# 需單區重繪寶箱層讓開/關視覺對齊讀入的 opened_objects。
 	# （未來若 edge-stitch 的 wild_* 也放寶箱，須改為重繪所有區的寶箱層。）
 	_world_renderer.refresh_objects(MapManager.current_map)
-	_build_world_grid()
-	_rebuild_monsters_for_current_map()
-	_rebuild_npcs_for_current_map()
 	_player.setup(_world_grid, GameState.player_pos, GameState.player_facing)
 	GameState.mark_explored(GameState.current_map_id, GameState.player_pos, MapManager.current_map.width, MapManager.current_map.height)
 	_mini_map.refresh()

@@ -3,9 +3,8 @@ extends Node3D
 # 渲染目前區域 + 一圈鄰區（含對角）的地形+裝飾，各擺在 WorldStitch 全域偏移。
 # 以 map_id pooling 重用已建區域節點：跨界只重定位、只建新露出、只清離開
 # （避免每次跨界重新 instantiate 持續存在的重 prop，達成無縫）。
-# 目前區域用傳入的 live current_map；鄰區用 loader（peek_map）。
+# regions 由 WorldGrid 注入（焦點為 live、鄰圖為 peek，與 grid 同源）。
 
-var loader: Callable = Callable(MapManager, "peek_map")
 # 測試 seam：func(container: Node3D, map: MapData)。預設無效 → 建真 WorldBuilder+ObjectLayer。
 var region_builder: Callable = Callable()
 # 開啟狀態提供者：map_id -> Array[Vector2i]。預設讀 GameState；測試可注入。
@@ -13,14 +12,10 @@ var opened_provider: Callable = Callable(GameState, "opened_for")
 
 var _regions: Dictionary = {}  # map_id -> Node3D 容器
 
-func rebuild(current_map: MapData) -> void:
-	if current_map == null:
-		return
-	var win := WorldStitch.window_for(current_map)
-	var placed := WorldStitch.place(current_map, loader, win["half"], win["center"])
-	# 新集合的 id
+func rebuild(regions: Array) -> void:
+	# regions = [{map, ox, oy}]（WorldGrid.regions()，單一 stitch 來源）。不再自算第二次 stitch。
 	var keep := {}
-	for node in placed:
+	for node in regions:
 		keep[node["map"].map_id] = true
 	# 清掉離開的區域
 	for id in _regions.keys():
@@ -28,7 +23,7 @@ func rebuild(current_map: MapData) -> void:
 			_regions[id].free()
 			_regions.erase(id)
 	# 沿用/新建 + 重定位（沿用者偏移也會隨目前區域改變）
-	for node in placed:
+	for node in regions:
 		var m: MapData = node["map"]
 		var container: Node3D
 		if _regions.has(m.map_id):
