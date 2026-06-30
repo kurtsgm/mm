@@ -231,3 +231,15 @@ func test_questgiver_entity_parsed():
 func test_questgiver_missing_dialogue_rejected():
 	var json := '{"grid":["@."],"entities":[{"type":"questgiver","pos":[1,0]}]}'
 	assert_null(MapImporter.parse(json))
+
+func test_questgiver_parses_sprite_field():
+	var json := '{"grid":["@."],"entities":[{"type":"questgiver","pos":[1,0],"dialogue":"qg_x","sprite":"oak_guard"}]}'
+	var map := MapImporter.parse(json)
+	assert_not_null(map)
+	assert_eq(map.quest_givers.size(), 1)
+	assert_eq(map.quest_givers[0]["sprite"], "oak_guard", "解析帶上 sprite")
+
+func test_questgiver_sprite_defaults_empty():
+	var json := '{"grid":["@."],"entities":[{"type":"questgiver","pos":[1,0],"dialogue":"qg_x"}]}'
+	var map := MapImporter.parse(json)
+	assert_eq(map.quest_givers[0]["sprite"], "", "缺 sprite → 空字串")

@@ -22,7 +22,7 @@ const LOCAL_SIZE := 10   # 每張 local map 一律 LOCAL_SIZE × LOCAL_SIZE（�
 @export var objects: Array = []            # [{ pos:Vector2i, items:Array, gold:int, model:String }]
 @export var scenes: Array = []             # [{ pos:Vector2i, dialogue:String, require, once:bool }]
 @export var vendors: Array = []            # [{ pos:Vector2i, id:String }]
-@export var quest_givers: Array = []       # [{ pos:Vector2i, dialogue:String }]
+@export var quest_givers: Array = []       # [{ pos:Vector2i, dialogue:String, sprite:String }]
 @export var buildings: Array = []          # [{ id:String, rect:[x,y,w,h], door:Vector2i, facing:int, interior:String, model:String }]
 
 func get_tile(pos: Vector2i) -> int:

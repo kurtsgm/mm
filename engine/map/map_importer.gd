@@ -175,7 +175,7 @@ static func _parse_entities(arr, width: int, height: int):
 			"questgiver":
 				if not e.has("dialogue"):
 					return null
-				quest_givers.append({"pos": pos, "dialogue": String(e["dialogue"])})
+				quest_givers.append({"pos": pos, "dialogue": String(e["dialogue"]), "sprite": String(e.get("sprite", ""))})
 			_:
 				return null
 	return {"encounters": encounters, "encounter_uids": encounter_uids, "links": links, "decorations": decorations, "objects": objects, "scenes": scenes, "vendors": vendors, "quest_givers": quest_givers, "buildings": buildings, "tile_overrides": tile_overrides, "extra_entries": extra_entries}
