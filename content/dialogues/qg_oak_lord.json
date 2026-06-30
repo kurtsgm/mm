@@ -1,0 +1,52 @@
+{
+  "id": "qg_oak_lord",
+  "start": "root",
+  "nodes": {
+    "root": {
+      "text": "一個披灰氅的老者背手立在告示板前，神色疲倦——橡境伯哈洛·灰木，這片邊地名義上的主人。",
+      "choices": [
+        { "text": "「哈爾說您有難處。」", "require": {"quest_done": "goblin_menace", "quest_inactive": "oak_levy"},
+          "effects": [{"op": "set_flag", "flag": "levy_leverage"}, {"op": "accept_quest", "quest": "oak_levy"}], "goto": "brief" },
+        { "text": "「我能幫上什麼？」", "require": {"quest_inactive": "goblin_menace"}, "goto": "brush" },
+        { "text": "「我能幫上什麼？」", "require": {"quest_active": "goblin_menace"}, "goto": "brush" },
+        { "text": "「稅吏的事我還在辦。」", "require": {"quest_stage": {"id": "oak_levy", "eq": 0}}, "goto": "nag" },
+        { "text": "「稅吏的事，我處理好了。」（智取）", "require": {"quest_stage": {"id": "oak_levy", "eq": 1}, "flag": "levy_outwitted"},
+          "effects": [{"op": "advance_quest", "quest": "oak_levy"}], "goto": "turn_outwit" },
+        { "text": "「稅吏的事，我處理好了。」（出錢打發）", "require": {"quest_stage": {"id": "oak_levy", "eq": 1}, "flag": "levy_bribed"},
+          "effects": [{"op": "advance_quest", "quest": "oak_levy"}], "goto": "turn_bribe" },
+        { "text": "「稅吏的事，我處理好了。」（拿把柄壓他）", "require": {"quest_stage": {"id": "oak_levy", "eq": 1}, "flag": "levy_bullied"},
+          "effects": [{"op": "advance_quest", "quest": "oak_levy"}], "goto": "turn_bully" },
+        { "text": "「再會。」（已完成）", "require": {"quest_done": "oak_levy"}, "goto": "done" },
+        { "text": "告辭。", "goto": null }
+      ]
+    },
+    "brush": {
+      "text": "哈洛聽見腳步也不太回頭：「你就是那個生面孔，哈爾提過你。先把東北野的事辦完吧——一件一件來。我這把年紀，學會的就是別急。」",
+      "choices": [ {"text": "「明白。」", "goto": null} ]
+    },
+    "brief": {
+      "text": "「難處？難處多得很。」他壓低聲，「帝國今年加派了徵糧——數目壓下來，鄉里就得有人餓肚子。偏巧上頭派了個姓葛的稅吏下來督收，多收的、私吞的，全算在我頭上。\n我不能跟帝國的人翻臉，那是給審判庭遞刀子。但你不是我的人——你去會會他，把這事『圓過去』，怎麼圓，你自己拿捏。\n對了，他多收的那一成，沒進帝國的庫，進了他自己的袋。這話，你聽見就好。」",
+      "choices": [ {"text": "「我去會會他。」", "goto": null} ]
+    },
+    "nag": {
+      "text": "「葛稅吏還在廣場上。」哈洛端詳著你，「記住，別動手——死一個帝國稅吏，來的就不是稅吏了。」",
+      "choices": [ {"text": "…", "goto": null} ]
+    },
+    "turn_outwit": {
+      "text": "「……你三言兩語就把他繞回去了？」哈洛挑眉，隨即低笑，「好。沒花一個銅板，沒落一句話柄。難得。\n鄉里這個冬天，能緩過來了。」他從袖中取出一領鎖甲遞給你，「我這把年紀用不上了，你拿去——邊地兇險，活著比什麼都強。\n再多嘴一句：審判庭的人這幾日要過境橡境。你若身上沾過什麼不乾淨的東西，別讓他們看見。離他們遠點。」",
+      "choices": [ {"text": "「我記下了。」", "goto": null} ]
+    },
+    "turn_bribe": {
+      "text": "「你自掏腰包打發了他？」哈洛搖頭，「這錢本不該你出。但——確實是最不留痕跡的法子。\n鄉里這個冬天，能緩過來了。」他從袖中取出一領鎖甲遞給你，「我這把年紀用不上了，你拿去——邊地兇險，活著比什麼都強。\n再多嘴一句：審判庭的人這幾日要過境橡境。你若身上沾過什麼不乾淨的東西，別讓他們看見。離他們遠點。」",
+      "choices": [ {"text": "「我記下了。」", "goto": null} ]
+    },
+    "turn_bully": {
+      "text": "「你拿那一成的事壓他？」哈洛眼神一沉，「險。不過他心虛，吃這套。但記著——拿把柄壓人的，自己也成了把柄。\n鄉里這個冬天，能緩過來了。」他從袖中取出一領鎖甲遞給你，「我這把年紀用不上了，你拿去——邊地兇險，活著比什麼都強。\n再多嘴一句：審判庭的人這幾日要過境橡境。你若身上沾過什麼不乾淨的東西，別讓他們看見。離他們遠點。」",
+      "choices": [ {"text": "「我記下了。」", "goto": null} ]
+    },
+    "done": {
+      "text": "「葛稅吏？昨兒個夾著尾巴走了。」哈洛望著鎮外，「帝國還會再派人來。年年如此。我能替橡境擋一年，是一年。」",
+      "choices": [ {"text": "…", "goto": null} ]
+    }
+  }
+}

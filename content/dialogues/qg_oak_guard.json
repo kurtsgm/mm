@@ -3,24 +3,31 @@
   "start": "root",
   "nodes": {
     "root": {
-      "text": "守衛打量著你。",
+      "text": "城門邊一個獨臂老兵正擦著佩刀，左手是一截鐵鉤。他抬眼打量你：「生面孔。哪來的，找活幹？——我是這兒的守衛隊長，哈爾。鎮上人叫我『鐵手』。」",
       "choices": [
         { "text": "「哥布林的事，我來幫忙。」", "require": {"quest_inactive": "goblin_menace"},
           "effects": [{"op": "accept_quest", "quest": "goblin_menace"}], "goto": "accepted" },
+        { "text": "「橡鎮是個什麼地方？」", "goto": "lore" },
         { "text": "「關於哥布林的事…」", "require": {"quest_stage": {"id": "goblin_menace", "eq": 0}}, "goto": "nag_kill" },
         { "text": "「哥布林清掉了。」", "require": {"quest_stage": {"id": "goblin_menace", "eq": 1}}, "goto": "nag_collect" },
         { "text": "「信物到手了。」", "require": {"quest_stage": {"id": "goblin_menace", "eq": 2}}, "goto": "nag_reach" },
         { "text": "「任務完成了，來回報。」", "require": {"quest_stage": {"id": "goblin_menace", "eq": 3}},
           "effects": [{"op": "advance_quest", "quest": "goblin_menace"}], "goto": "turned_in" },
+        { "text": "「領主在哪兒？」", "require": {"quest_done": "goblin_menace"}, "goto": "to_lord" },
         { "text": "「再會。」（已完成）", "require": {"quest_done": "goblin_menace"}, "goto": "thanks" },
         { "text": "離開", "goto": null }
       ]
     },
-    "accepted": { "text": "守衛：「感謝！哥布林在東北野的巢穴，先去清掉牠們吧。」", "choices": [ {"text": "…", "goto": null} ] },
-    "nag_kill": { "text": "守衛：「哥布林還在東北野的巢穴作亂，快去清掉牠們。」", "choices": [ {"text": "…", "goto": null} ] },
-    "nag_collect": { "text": "守衛：「找到哥布林的信物了嗎？帶回來給我看看。」", "choices": [ {"text": "…", "goto": null} ] },
-    "nag_reach": { "text": "守衛：「就差最後一步——去巢穴最深處確認清空了，再回來。」", "choices": [ {"text": "…", "goto": null} ] },
-    "turned_in": { "text": "守衛：「你做到了！這點謝禮請收下。」", "choices": [ {"text": "…", "goto": null} ] },
-    "thanks": { "text": "守衛：「橡鎮多虧有你。」", "choices": [ {"text": "…", "goto": null} ] }
+    "lore": {
+      "text": "「橡境，帝國最邊上的一塊。天高皇帝遠，好處是清靜，壞處是——出了事，沒人來救，只能靠自己。」他用鐵鉤指了指告示板，「東北野那窩哥布林鬧得兇，懸賞貼出去幾天了，沒人敢接。」",
+      "choices": [ {"text": "…", "goto": "root"} ]
+    },
+    "accepted": { "text": "哈爾：「痛快。哥布林在東北野紮了個巢，先去把牠們清了——別逞強，那地方越往裡越不對勁。清完，往巢穴最深處走一趟，確認沒有漏網的，再回來。」", "choices": [ {"text": "…", "goto": null} ] },
+    "nag_kill": { "text": "哈爾：「哥布林還在東北野的巢裡作亂，快去把牠們清了。鎮上的孩子都不敢出城撿柴了。」", "choices": [ {"text": "…", "goto": null} ] },
+    "nag_collect": { "text": "哈爾：「找到牠們的信物沒有？帶一件回來，我好跟領主交代——空口無憑，帝國那邊認的是東西。」", "choices": [ {"text": "…", "goto": null} ] },
+    "nag_reach": { "text": "哈爾：「就差最後一步。去巢穴最深處看一眼，確認清空了再回來。我不想下個月又收到同一張懸賞。」", "choices": [ {"text": "…", "goto": null} ] },
+    "turned_in": { "text": "他接過信物掂了掂，難得地咧嘴：「乾淨俐落。這點謝禮收著。——還有，領主哈洛大人聽說了你，想見見你。這年頭肯往邊陲跑、又靠得住的人不多。」", "choices": [ {"text": "…", "goto": null} ] },
+    "to_lord": { "text": "「橡境伯哈洛·灰木，就在鎮裡。你進城往井邊走，告示板那頭，他常在那兒。」他壓低了點聲，「大人是個明白人——也是個難人。帝國壓下來的擔子，全擱在他一個人肩上。你聽他說就是。」", "choices": [ {"text": "…", "goto": null} ] },
+    "thanks": { "text": "哈爾：「橡鎮多虧有你。出城當心，野地裡不只有哥布林。」", "choices": [ {"text": "…", "goto": null} ] }
   }
 }

@@ -1,0 +1,36 @@
+{
+  "id": "qg_oak_taxman",
+  "start": "root",
+  "nodes": {
+    "root": {
+      "text": "廣場上一個尖下巴的瘦子，腰間掛著帝國徵糧司的銅牌，正衝一個老婦提高嗓門。見你過來，斜眼一瞥：「干你何事？徵糧是帝國的法度。讓開。」",
+      "choices": [
+        { "text": "「帳是你做的，數也是你說了算——把『實收』寫漂亮點，大家都好看。」", "require": {"quest_stage": {"id": "oak_levy", "eq": 0}},
+          "effects": [{"op": "set_flag", "flag": "levy_outwitted"}, {"op": "advance_quest", "quest": "oak_levy"}], "goto": "opt_outwit" },
+        { "text": "「我替你出這筆差額，你結了帳就走。」", "require": {"quest_stage": {"id": "oak_levy", "eq": 0}, "gold_gte": 50},
+          "effects": [{"op": "gold", "value": -50}, {"op": "set_flag", "flag": "levy_bribed"}, {"op": "advance_quest", "quest": "oak_levy"}], "goto": "opt_bribe" },
+        { "text": "「你私吞的那一成，要我說給審判庭聽嗎？」", "require": {"quest_stage": {"id": "oak_levy", "eq": 0}, "flag": "levy_leverage"},
+          "effects": [{"op": "set_flag", "flag": "levy_bullied"}, {"op": "advance_quest", "quest": "oak_levy"}], "goto": "opt_bully" },
+        { "text": "「稅吏的事辦完了。」", "require": {"quest_stage": {"id": "oak_levy", "eq": 1}}, "goto": "done" },
+        { "text": "「再會。」（已完成）", "require": {"quest_done": "oak_levy"}, "goto": "done" },
+        { "text": "沒事。", "goto": null }
+      ]
+    },
+    "opt_outwit": {
+      "text": "你不跟他爭數目，只順著他的官腔往下繞——「實收」寫得體面，帝國的帳好看，他的功也好報，何必為難幾袋糧食壞了自己的前程？\n葛簍盤算半晌，眉頭鬆開：「……說得也是。橫豎帳面平了便成。」他大筆一揮，把督收的數壓回原額，自以為占了便宜，哼著小調走了。",
+      "choices": [ {"text": "…", "goto": null} ]
+    },
+    "opt_bribe": {
+      "text": "你把銀錢拍在他賬桌上。葛簍眼睛一亮，銅牌一翻就把數目劃了：「……既然差額補足了，本官的帳，自然就平了。」\n他收錢的手很快。「橡境，識相。」拎起賬冊，揚長而去。",
+      "choices": [ {"text": "…", "goto": null} ]
+    },
+    "opt_bully": {
+      "text": "你把那一成的事輕輕點破。葛簍臉色刷地白了，尖下巴抖了抖：「你——你血口噴人！」\n可他收賬冊的手已經慌了。「……今年，今年就照舊額。本官還有別的鎮要趕。」他幾乎是退著走的。",
+      "choices": [ {"text": "…", "goto": null} ]
+    },
+    "done": {
+      "text": "廣場上那個瘦子已經不見了。被他為難的老婦衝你連連道謝。",
+      "choices": [ {"text": "…", "goto": null} ]
+    }
+  }
+}
