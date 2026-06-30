@@ -24,6 +24,7 @@ static func run() -> Dictionary:
 	var refs := _scan_dialogues(quests, errors)   # { accept:{qid:true}, advance:{qid:true} }
 	_check_completable(quests, refs, warnings)
 	_check_maps(errors, warnings)
+	_check_questgiver_placement(errors)
 	return {"errors": errors, "warnings": warnings}
 
 # --- internal ---
@@ -92,6 +93,35 @@ static func _check_reach(qid: String, i: int, st: Dictionary, errors: Array) -> 
 		errors.append("[quest] %s 階段%d reach 目標 %s 超出 %s 邊界" % [qid, i, pos, map_id])
 	elif map.get_tile(pos) == MapData.TileType.WALL:
 		errors.append("[quest] %s 階段%d reach 目標 %s 是牆、走不到" % [qid, i, pos, map_id])
+
+static func _check_questgiver_placement(errors: Array) -> void:
+	for mid in _json_ids(MAPS_DIR):
+		var map = MapImporter.parse(FileAccess.get_file_as_string("%s/%s.json" % [MAPS_DIR, mid]))
+		if map == null:
+			continue
+		for e in questgiver_placement_errors(mid, map):
+			errors.append(e)
+
+# 任務 NPC 擺位規則（改實心擋路後）：(1) 不可壓在地圖入口格（否則玩家生成在實心 NPC 上→卡死），
+# (2) 至少一個相鄰格可走（否則撞不到、永遠談不了）。回該圖的 error 字串陣列。
+static func questgiver_placement_errors(map_id: String, map: MapData) -> Array:
+	var errs: Array = []
+	var entry_cells := {}
+	for name in map.entries:
+		entry_cells[map.entries[name]["pos"]] = true
+	for q in map.quest_givers:
+		var pos: Vector2i = q["pos"]
+		if entry_cells.has(pos):
+			errs.append("[map] %s questgiver@%s 壓在入口格（玩家會生成在實心 NPC 上）" % [map_id, pos])
+		var has_adj := false
+		for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+			var n: Vector2i = pos + d
+			if n.x >= 0 and n.x < map.width and n.y >= 0 and n.y < map.height and map.get_tile(n) != MapData.TileType.WALL:
+				has_adj = true
+				break
+		if not has_adj:
+			errs.append("[map] %s questgiver@%s 四鄰皆牆（撞不到、無法對話）" % [map_id, pos])
+	return errs
 
 static func _scan_dialogues(quests: Dictionary, errors: Array) -> Dictionary:
 	var accept := {}
