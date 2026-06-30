@@ -4,9 +4,9 @@ extends Object
 # 內容期把真圖加進來，例如 "shop_oak_interior": "res://content/scenes/shop_oak.png"。
 # 缺圖 → 由 id 衍生顏色的純色 placeholder（不崩、可先驗流程；美術屬委派流程）。
 const _IMAGES := {
-	"margo_clinic": "res://content/scenes/margo_clinic.png",
-	"marsh_swampherb": "res://content/scenes/marsh_swampherb.png",
-	"margo_portrait": "res://content/scenes/margo_portrait.png",
+	"margo_clinic": "res://content/scenes/margo_clinic.webp",
+	"marsh_swampherb": "res://content/scenes/marsh_swampherb.webp",
+	"margo_portrait": "res://content/scenes/margo_portrait.webp",
 }
 
 const _PLACEHOLDER_SIZE := Vector2i(320, 180)
