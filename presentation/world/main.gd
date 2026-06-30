@@ -21,6 +21,7 @@ var _world_grid: WorldGrid
 
 var _overworld_monsters: OverworldMonsters
 var _monster_layer: MonsterLayer
+var _npc_layer: NpcLayer
 var _combat_uid: String = ""
 
 var _hud: Hud
@@ -52,6 +53,9 @@ func _ready() -> void:
 	_monster_layer = MonsterLayer.new()
 	add_child(_monster_layer)
 	_rebuild_monsters_for_current_map()
+	_npc_layer = NpcLayer.new()
+	add_child(_npc_layer)
+	_rebuild_npcs_for_current_map()
 	_setup_environment()
 	_setup_fade()
 
@@ -60,6 +64,7 @@ func _ready() -> void:
 	_hud.setup(GameState, _player)            # 先連上 facing_changed
 	_player.entered_cell.connect(_on_entered_cell)
 	_player.facing_changed.connect(_on_facing_changed)
+	_player.bumped.connect(_on_player_bumped)
 
 	_mini_map = MiniMap.new()
 	add_child(_mini_map)
@@ -167,8 +172,6 @@ func _on_entered_cell(global: Vector2i) -> void:
 		return
 	if _try_scene(local):
 		return
-	if _try_quest_giver(local):
-		return
 	if _try_vendor(local):
 		return
 	var text := TileMessages.for_tile(MapManager.current_map.get_tile(local))
@@ -183,6 +186,7 @@ func _recenter_to(map_id: String, local: Vector2i, global: Vector2i) -> void:
 	_world_renderer.rebuild(MapManager.current_map)
 	_player.rebase(delta, _world_grid)
 	_rebuild_monsters_for_current_map()
+	_rebuild_npcs_for_current_map()
 	GameState.current_map_id = map_id
 
 func _on_facing_changed(facing: int) -> void:
@@ -217,6 +221,7 @@ func _enter_via_link(map_id: String, entry_name: String) -> void:
 	_world_renderer.rebuild(MapManager.current_map)
 	_build_world_grid()
 	_rebuild_monsters_for_current_map()
+	_rebuild_npcs_for_current_map()
 	_player.setup(_world_grid, pos, facing)
 	GameState.current_map_id = map_id
 	GameState.player_pos = pos
@@ -258,6 +263,9 @@ func _rebuild_monsters_for_current_map() -> void:
 	_overworld_monsters = OverworldMonsters.new()
 	_overworld_monsters.init_from_regions(_world_grid.regions(), Callable(GameState, "is_defeated"), Callable(self, "_saved_monster_state"))
 	_monster_layer.rebuild(_overworld_monsters.live())
+
+func _rebuild_npcs_for_current_map() -> void:
+	_npc_layer.build(MapManager.current_map.quest_givers)
 
 func _saved_monster_state(map_id) -> Dictionary:
 	return GameState.monster_state.get(map_id, {})
@@ -360,19 +368,19 @@ func _try_scene(pos: Vector2i) -> bool:
 	_dialogue_overlay.open(DialogueRunner.new(data, GameState))
 	return true
 
-func _try_quest_giver(pos: Vector2i) -> bool:
-	var map := MapManager.current_map
-	if not map.has_quest_giver(pos):
-		return false
-	var entry := map.get_quest_giver(pos)
-	var data := DialogueCatalog.load_dialogue(String(entry["dialogue"]))
+func _on_player_bumped(cell: Vector2i) -> void:
+	if _dialogue_overlay.is_open() or _vendor_overlay.is_open():
+		return
+	var occ := _world_grid.occupant_at(cell)
+	if String(occ.get("kind", "")) != "questgiver":
+		return
+	var data := DialogueCatalog.load_dialogue(String(occ["dialogue"]))
 	if data == null:
-		GameState.message_log.push("（對話 %s 遺失）" % entry["dialogue"])
-		return false
+		GameState.message_log.push("（對話 %s 遺失）" % occ["dialogue"])
+		return
 	_scene_once = false
 	_player.set_enabled(false)
 	_dialogue_overlay.open(DialogueRunner.new(data, GameState))
-	return true
 
 func _try_vendor(pos: Vector2i) -> bool:
 	var map := MapManager.current_map
@@ -528,6 +536,7 @@ func _on_loaded() -> void:
 	_world_renderer.refresh_objects(MapManager.current_map)
 	_build_world_grid()
 	_rebuild_monsters_for_current_map()
+	_rebuild_npcs_for_current_map()
 	_player.setup(_world_grid, GameState.player_pos, GameState.player_facing)
 	GameState.mark_explored(GameState.current_map_id, GameState.player_pos, MapManager.current_map.width, MapManager.current_map.height)
 	_mini_map.refresh()
