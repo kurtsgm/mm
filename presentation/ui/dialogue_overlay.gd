@@ -8,6 +8,8 @@ signal advanced(descriptions: Array)
 signal finished
 
 var _runner: DialogueRunner
+var _parchment_rect: TextureRect
+const PARCHMENT_PATH := "res://content/ui/parchment_dialogue.png"
 var _image_rect: TextureRect
 var _text_label: Label
 var _choice_box: VBoxContainer
@@ -19,27 +21,43 @@ func _ready() -> void:
 	layer = 10
 	visible = false
 
+	# 近滿版羊皮紙底（四周留 ~4% 邊）。
+	_parchment_rect = TextureRect.new()
+	if ResourceLoader.exists(PARCHMENT_PATH):
+		_parchment_rect.texture = load(PARCHMENT_PATH)
+	_parchment_rect.anchor_left = 0.04
+	_parchment_rect.anchor_right = 0.96
+	_parchment_rect.anchor_top = 0.04
+	_parchment_rect.anchor_bottom = 0.96
+	_parchment_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_parchment_rect.stretch_mode = TextureRect.STRETCH_SCALE
+	add_child(_parchment_rect)
+
+	# 上 ~70%：情境圖（說話者表情或對話場景）。
 	_image_rect = TextureRect.new()
-	_image_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_image_rect.anchor_left = 0.09
+	_image_rect.anchor_right = 0.91
+	_image_rect.anchor_top = 0.09
+	_image_rect.anchor_bottom = 0.66
 	_image_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	_image_rect.stretch_mode = TextureRect.STRETCH_SCALE
+	_image_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	add_child(_image_rect)
 
-	var box := Panel.new()
-	# 底部約 30% 高的對話框，左右各留 5% 邊。
-	box.anchor_left = 0.05
-	box.anchor_right = 0.95
-	box.anchor_top = 0.68
-	box.anchor_bottom = 0.97
+	# 下 ~30%：對話框（文字 + 數字鍵選項）。
+	var box := Control.new()
+	box.anchor_left = 0.09
+	box.anchor_right = 0.91
+	box.anchor_top = 0.66
+	box.anchor_bottom = 0.92
 	add_child(box)
 
 	var vb := VBoxContainer.new()
 	vb.set_anchors_preset(Control.PRESET_FULL_RECT)
-	vb.offset_left = 16
-	vb.offset_top = 12
-	vb.offset_right = -16
-	vb.offset_bottom = -12
 	vb.add_theme_constant_override("separation", 6)
+	# 羊皮紙是淺米色，預設白字看不清 → 用 Theme 讓 vb 底下所有 Label（含 _render 動態建的選項/提示）統一深棕字。
+	var parchment_theme := Theme.new()
+	parchment_theme.set_color("font_color", "Label", Color(0.18, 0.12, 0.06))
+	vb.theme = parchment_theme
 	box.add_child(vb)
 
 	_text_label = Label.new()
