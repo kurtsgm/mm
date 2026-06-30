@@ -54,6 +54,14 @@ blurry, deformed face, extra limbs, extra fingers, text, watermark, signature, l
 
 **狀態變體**：固定前綴尾端 Subject 後再加 `, wincing in pain`（受擊/重傷）／`, eyes closed, unconscious, pale skin`（暈倒）／`, lifeless, grey skin, eyes shut`（死亡）。
 
+**情境圖（場景）變體**：用於對話視窗（羊皮紙上 ~70%）的全幅情境圖（非角色頭像）。沿用一致性錨點（CRPG 寫實 BG3/Solasta、左上暖 key light＋冷補光、半寫實厚塗材質、無文字/邊框/浮水印），構圖改為 establishing scene（可多人或純環境）。**角色半身像仍用上面的角色配方（1:1）**；場景用下列前綴：
+
+```
+semi-realistic CRPG scene illustration in the style of Baldur's Gate 3 and Solasta, [mood], warm cinematic key light from upper-left with cool fill, detailed realistic skin and material texturing, no text, no watermark, no border, [aspect]. Scene: <場景描述>
+```
+
+`[mood]` 例：`heroic high-fantasy` / `tender and somber` / `eerie unsettling`。`[aspect]`：情境圖用 `16:9` 或 `3:2`（橫幅）。Negative prompt 沿用角色版那串。完整範例見 `docs/script/quests/oak-antidote.md` §情境圖。
+
 **預設隊伍 Subject 範例**（接在 `Subject:` 後）：
 - Gerard / 騎士：weathered middle-aged human man, short greying hair, polished steel plate armor, stern
 - Cordelia / 聖騎士：noble human woman, golden hair, ornate silver-and-gold armor, serene

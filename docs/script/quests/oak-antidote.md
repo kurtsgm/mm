@@ -105,3 +105,19 @@
 - 把老農具名、給一兩句台詞（讓「苛政害人」更具體）。
 - 採集途中毒蛛遭遇的難度/數量。
 - 與 B4 苛政線勾連（老農之病＝徵糧後營養不良＋被迫去危險的毒澤討生活）。
+
+---
+
+## § 情境圖（對話 `qg_margo`）
+
+3 張 base，接法見 `content/dialogues/qg_margo.json` 各節點 `image`（root/turned_in→margo_clinic、accepted→marsh_swampherb、money/nag/thanks→margo_portrait）。真圖已壓成 WebP 放入 `content/scenes/<id>.webp`（換圖後跑 `godot --headless --path . --import`）；缺圖自動 placeholder。資產壓縮政策見 `docs/art-style-guide.md`「資產處理」。對話視窗已用羽化 shader 把圖融入羊皮紙。共用 negative：`blurry, deformed face, extra limbs, extra fingers, text, watermark, signature, logo, frame, ui, multiple characters, full body crop errors, cartoon, cel shading, flat shading, anime, low-res, washed out`
+
+### margo_clinic（節點 root, turned_in；16:9 場景）
+> semi-realistic CRPG scene illustration in the style of Baldur's Gate 3 and Solasta, tender and somber, warm cinematic key light from upper-left with cool fill, detailed realistic skin and material texturing, no text, no watermark, no border, 16:9. Scene: inside a dim apothecary corner of a small frontier town's temple, a weathered middle-aged village healer woman in a washed-out herbalist robe with an herb satchel leans over a pale, blue-tinged old farmer lying on a cot, gently wiping his sweating brow, bundles of dried herbs and a mortar and pestle nearby, warm lamplight, quiet compassionate mood
+
+### marsh_swampherb（節點 accepted；16:9 環境）
+> semi-realistic CRPG scene illustration in the style of Baldur's Gate 3 and Solasta, eerie unsettling, cool misty light with a warm sky glow from upper-left, detailed realistic textures, no text, no watermark, no border, 16:9. Scene: a fog-wreathed poison marsh in the frontier wilds, foreground clusters of a low marsh herb with purple-undersided leaves growing against still dark water, in the misty background a large unsettling venom spider (a 'made' arthropod creature) lurks among reeds, ominous but not gory, muted greens and violets with warm highlights
+
+### margo_portrait（節點 money, nag, thanks；1:1 角色配方）
+固定角色前綴（見 art-style-guide「生圖 Prompt 配方」）＋ Subject：
+> weathered middle-aged village healer woman, kind tired eyes that have seen much suffering, washed-out herbalist robe of a mercy order, herb satchel, hands stained with herb juice and worn from years of care, calm practical demeanor
