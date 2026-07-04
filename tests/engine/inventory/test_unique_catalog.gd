@@ -27,3 +27,14 @@ func test_artifact_names_unique():
 		var nm := String(UniqueCatalog.entry(aid)["name"])
 		assert_false(names.has(nm), "神器名重複：%s" % nm)
 		names[nm] = true
+
+func test_eligible_excludes_artifacts():
+	var elig := UniqueCatalog.eligible(100)
+	assert_true(elig.has("dawnblade"), "一般 unique 仍在池內")
+	assert_false(elig.has("starender_blade"), "神器不入隨機池")
+	assert_false(elig.has("choir_crown"), "神器不入隨機池")
+
+func test_is_artifact_and_list():
+	assert_true(UniqueCatalog.is_artifact("eternal_lamp"))
+	assert_false(UniqueCatalog.is_artifact("dawnblade"))
+	assert_eq(UniqueCatalog.artifacts().size(), 7)

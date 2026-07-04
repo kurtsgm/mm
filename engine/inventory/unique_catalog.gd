@@ -37,9 +37,21 @@ const _U := {
 static func entry(id: String) -> Dictionary:
 	return _U.get(id, {})
 
+static func is_artifact(id: String) -> bool:
+	return bool(entry(id).get("is_artifact", false))
+
+static func artifacts() -> Array:
+	var out: Array = []
+	for id in _U:
+		if bool(_U[id].get("is_artifact", false)):
+			out.append(id)
+	return out
+
 static func eligible(ilvl: int) -> Array:
 	var out: Array = []
 	for id in _U:
+		if bool(_U[id].get("is_artifact", false)):
+			continue   # 神器只從固定來源進場，永不入隨機掉落池
 		if int(_U[id]["min_ilvl"]) <= ilvl:
 			out.append(id)
 	return out
