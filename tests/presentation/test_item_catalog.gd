@@ -28,3 +28,14 @@ func test_all_ids_load():
 	assert_true(ids.size() >= 6)
 	for id in ids:
 		assert_not_null(ItemCatalog.get_item(id), "id %s 應可載入" % id)
+
+func test_unique_base_ids_exist():
+	for uid in UniqueCatalog.eligible(100):
+		var base_id: String = String(UniqueCatalog.entry(uid)["base_id"])
+		assert_true(ItemCatalog.has_item(base_id), "unique base 必須存在：%s" % base_id)
+
+func test_loot_pool_nonempty_and_all_droppable():
+	var bases := LootPool.equipment_bases()
+	assert_true(bases.size() >= 10)
+	for d in bases:
+		assert_true(d.drop_weight > 0)

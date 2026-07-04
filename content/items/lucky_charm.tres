@@ -9,3 +9,6 @@ display_name = "幸運護符"
 category = 2
 armor = 1
 value = 40
+min_level = 1
+max_level = 60
+drop_weight = 5

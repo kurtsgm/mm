@@ -9,3 +9,6 @@ display_name = "鐵劍"
 category = 0
 attack = 10
 value = 70
+min_level = 8
+max_level = 35
+drop_weight = 8

@@ -9,3 +9,6 @@ display_name = "圓盾"
 category = 1
 armor = 2
 value = 30
+min_level = 1
+max_level = 25
+drop_weight = 8

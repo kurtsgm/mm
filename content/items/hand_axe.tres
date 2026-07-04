@@ -4,11 +4,11 @@
 
 [resource]
 script = ExtResource("1_item")
-id = "leather"
-display_name = "皮甲"
-category = 1
-armor = 3
-value = 25
-min_level = 1
-max_level = 18
-drop_weight = 10
+id = "hand_axe"
+display_name = "手斧"
+category = 0
+attack = 8
+value = 55
+min_level = 5
+max_level = 25
+drop_weight = 8

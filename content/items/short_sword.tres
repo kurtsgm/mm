@@ -9,3 +9,6 @@ display_name = "短劍"
 category = 0
 attack = 6
 value = 30
+min_level = 1
+max_level = 20
+drop_weight = 10

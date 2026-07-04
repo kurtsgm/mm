@@ -9,3 +9,6 @@ display_name = "鎖子甲"
 category = 1
 armor = 6
 value = 60
+min_level = 12
+max_level = 40
+drop_weight = 8
