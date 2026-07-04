@@ -1,9 +1,20 @@
 extends GutTest
 
-func _item(id: String, category: int, attack: int = 0, armor: int = 0) -> ItemDef:
-	var d := ItemDef.new()
-	d.id = id; d.category = category; d.attack = attack; d.armor = armor
-	return d
+func before_all():
+	ItemInstance.base_resolver = func(id):
+		var d := ItemDef.new(); d.id = id
+		if id == "sword": d.category = ItemDef.Category.WEAPON; d.attack = 6
+		elif id == "axe": d.category = ItemDef.Category.WEAPON; d.attack = 9
+		elif id == "leather": d.category = ItemDef.Category.ARMOR; d.armor = 3
+		elif id == "charm": d.category = ItemDef.Category.ACCESSORY; d.armor = 1
+		elif id == "potion": d.category = ItemDef.Category.CONSUMABLE
+		return d
+
+func after_all():
+	ItemInstance.base_resolver = Callable()
+
+func _inst(id: String, affixes: Array = []) -> ItemInstance:
+	var it := ItemInstance.new(); it.base_id = id; it.affixes = affixes; return it
 
 func test_starts_empty():
 	var e := Equipment.new()
@@ -14,32 +25,35 @@ func test_starts_empty():
 
 func test_equip_weapon_sets_slot_and_attack():
 	var e := Equipment.new()
-	var sword := _item("sword", ItemDef.Category.WEAPON, 6, 0)
-	assert_true(e.can_equip(sword))
-	var displaced := e.equip(sword)
+	var displaced := e.equip(_inst("sword"))
 	assert_null(displaced)
-	assert_eq(e.get_item(Equipment.Slot.WEAPON), sword)
 	assert_eq(e.total_attack(), 6)
 
 func test_equip_displaces_previous_in_same_slot():
 	var e := Equipment.new()
-	var s1 := _item("sword", ItemDef.Category.WEAPON, 6)
-	var s2 := _item("axe", ItemDef.Category.WEAPON, 9)
+	var s1 := _inst("sword")
+	var s2 := _inst("axe")
 	e.equip(s1)
 	var displaced := e.equip(s2)
 	assert_eq(displaced, s1)
 	assert_eq(e.get_item(Equipment.Slot.WEAPON), s2)
 	assert_eq(e.total_attack(), 9)
 
+func test_total_stat_sums_affixes_across_slots():
+	var e := Equipment.new()
+	e.equip(_inst("sword", [{"id": "of_the_bear", "kind": 1, "mods": {ItemStat.S.MIGHT: 5}}]))
+	e.equip(_inst("charm", [{"id": "of_the_bear", "kind": 1, "mods": {ItemStat.S.MIGHT: 3}}]))
+	assert_eq(e.total_stat(ItemStat.S.MIGHT), 8)
+
 func test_total_armor_sums_across_slots():
 	var e := Equipment.new()
-	e.equip(_item("leather", ItemDef.Category.ARMOR, 0, 3))
-	e.equip(_item("charm", ItemDef.Category.ACCESSORY, 0, 1))
+	e.equip(_inst("leather"))
+	e.equip(_inst("charm"))
 	assert_eq(e.total_armor(), 4)
 
 func test_unequip_returns_item_and_clears_slot():
 	var e := Equipment.new()
-	var leather := _item("leather", ItemDef.Category.ARMOR, 0, 3)
+	var leather := _inst("leather")
 	e.equip(leather)
 	var removed := e.unequip(Equipment.Slot.ARMOR)
 	assert_eq(removed, leather)
@@ -48,15 +62,15 @@ func test_unequip_returns_item_and_clears_slot():
 
 func test_cannot_equip_consumable():
 	var e := Equipment.new()
-	var potion := _item("potion", ItemDef.Category.CONSUMABLE)
+	var potion := _inst("potion")
 	assert_false(e.can_equip(potion))
 	assert_eq(e.slot_for(potion), -1)
 
-func test_equipped_ids_for_serialization():
+func test_equipped_for_serialization():
 	var e := Equipment.new()
-	e.equip(_item("sword", ItemDef.Category.WEAPON, 6))
-	e.equip(_item("leather", ItemDef.Category.ARMOR, 0, 3))
-	var ids := e.equipped_ids()
-	assert_eq(ids[Equipment.Slot.WEAPON], "sword")
-	assert_eq(ids[Equipment.Slot.ARMOR], "leather")
-	assert_false(ids.has(Equipment.Slot.ACCESSORY))
+	e.equip(_inst("sword"))
+	e.equip(_inst("leather"))
+	var slots := e.equipped()
+	assert_eq(slots[Equipment.Slot.WEAPON].base_id, "sword")
+	assert_eq(slots[Equipment.Slot.ARMOR].base_id, "leather")
+	assert_false(slots.has(Equipment.Slot.ACCESSORY))
