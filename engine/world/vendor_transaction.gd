@@ -54,15 +54,15 @@ static func _apply_effect(effect: String, targets: Array) -> Array:
 					events.append("%s 被救醒了。" % t.name)
 			"heal_full":
 				if t.condition != Character.Condition.DEAD:
-					t.hp = t.hp_max
+					t.hp = t.effective_hp_max()
 					if t.condition == Character.Condition.UNCONSCIOUS:
 						t.condition = Character.Condition.OK
 					t.statuses.clear()   # 全補一併清除狀態異常
 					events.append("%s 回復滿血。" % t.name)
 			"rest":
 				if t.condition != Character.Condition.DEAD:
-					t.hp = t.hp_max
-					t.sp = t.sp_max
+					t.hp = t.effective_hp_max()
+					t.sp = t.effective_sp_max()
 					if t.condition == Character.Condition.UNCONSCIOUS:
 						t.condition = Character.Condition.OK
 					t.statuses.clear()   # 休息一併清除狀態異常

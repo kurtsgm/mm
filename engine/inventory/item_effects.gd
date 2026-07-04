@@ -13,8 +13,8 @@ static func can_use(item: ItemDef, target: Character) -> bool:
 		return true
 	if not target.is_alive():
 		return false                        # 非復活類對死亡無效
-	var hp_room := item.heal_hp > 0 and target.hp < target.hp_max
-	var sp_room := item.heal_sp > 0 and target.sp < target.sp_max
+	var hp_room := item.heal_hp > 0 and target.hp < target.effective_hp_max()
+	var sp_room := item.heal_sp > 0 and target.sp < target.effective_sp_max()
 	return hp_room or sp_room
 
 static func apply(item: ItemDef, target: Character) -> Array:
@@ -23,7 +23,7 @@ static func apply(item: ItemDef, target: Character) -> Array:
 		return events
 	if item.revive:
 		target.condition = Character.Condition.OK
-		target.hp = maxi(1, mini(item.heal_hp, target.hp_max))
+		target.hp = maxi(1, mini(item.heal_hp, target.effective_hp_max()))
 		events.append("%s 被救醒了。" % target.name)
 		return events
 	if not item.cure_kinds.is_empty():
@@ -40,11 +40,11 @@ static func apply(item: ItemDef, target: Character) -> Array:
 		return events
 	if item.heal_hp > 0:
 		var before := target.hp
-		target.hp = mini(target.hp_max, target.hp + item.heal_hp)
+		target.hp = mini(target.effective_hp_max(), target.hp + item.heal_hp)
 		events.append("%s 回復了 %d 點 HP。" % [target.name, target.hp - before])
 	if item.heal_sp > 0:
 		var before_sp := target.sp
-		target.sp = mini(target.sp_max, target.sp + item.heal_sp)
+		target.sp = mini(target.effective_sp_max(), target.sp + item.heal_sp)
 		events.append("%s 回復了 %d 點 SP。" % [target.name, target.sp - before_sp])
 	return events
 

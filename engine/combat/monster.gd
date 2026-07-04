@@ -6,6 +6,7 @@ var name: String
 var level: int
 var hp: int
 var hp_max: int
+var sp_max: int = 0
 var might: int
 var armor: int
 var speed: int
@@ -42,6 +43,12 @@ func effective_speed() -> int:
 
 func effective_luck() -> int:
 	return luck
+
+func effective_hp_max() -> int:
+	return hp_max
+
+func effective_sp_max() -> int:
+	return sp_max
 
 static func from_def(def: MonsterDef) -> Monster:
 	var m := Monster.new()

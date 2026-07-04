@@ -10,7 +10,7 @@ static func can_cast(spell: SpellDef, caster: Character, target: Character) -> b
 	if spell.effect == SpellDef.Effect.REVIVE:
 		return not target.is_conscious()       # 復活：對昏迷/死亡才有意義
 	if spell.effect == SpellDef.Effect.HEAL:
-		return target.is_alive() and target.hp < target.hp_max
+		return target.is_alive() and target.hp < target.effective_hp_max()
 	return false
 
 static func apply(spell: SpellDef, caster: Character, target: Character) -> Array:
@@ -20,11 +20,11 @@ static func apply(spell: SpellDef, caster: Character, target: Character) -> Arra
 	var amount := SpellPower.magnitude(spell, caster)
 	if spell.effect == SpellDef.Effect.REVIVE:
 		target.condition = Character.Condition.OK
-		target.hp = maxi(1, mini(amount, target.hp_max))
+		target.hp = maxi(1, mini(amount, target.effective_hp_max()))
 		events.append("%s 被救醒了。" % target.name)
 		return events
 	# HEAL
 	var before := target.hp
-	target.hp = mini(target.hp_max, target.hp + amount)
+	target.hp = mini(target.effective_hp_max(), target.hp + amount)
 	events.append("%s 回復了 %d 點 HP。" % [target.name, target.hp - before])
 	return events

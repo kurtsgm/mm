@@ -59,6 +59,11 @@ func party_attack(monster_index: int) -> Array:
 		var dmg := CombatFormulas.roll_damage(actor.attack_power(), target.effective_armor(), false, crit, _rng)
 		target.hp -= dmg
 		target.statuses = StatusRules.cleared_on_hit(target.statuses)
+		if actor is Character:
+			var oh: Dictionary = _weapon_on_hit(actor)
+			if not oh.is_empty() and _rng.randf() <= float(oh["chance"]):
+				target.statuses.append(StatusCatalog.from_data(int(oh["kind"]), -1, 0, int(oh["potency"]), int(oh["duration"])))
+				events.append("%s 的武器使 %s 陷入異常！" % [actor.name, target.name])
 		events.append("%s 攻擊 %s，造成 %d 傷害%s。" % [actor.name, target.name, dmg, "（爆擊！）" if crit else ""])
 		if not target.is_alive():
 			events.append("%s 被擊倒了！" % target.name)
@@ -209,6 +214,10 @@ func _cast_status(spell: SpellDef, target_index: int) -> Array:
 		else:
 			events.append("%s 抵抗了 %s。" % [t.name, spell.display_name])
 	return events
+
+func _weapon_on_hit(c: Character) -> Dictionary:
+	var w = c.equipment.get_item(Equipment.Slot.WEAPON)
+	return w.weapon_on_hit() if w != null else {}
 
 func is_defending(c) -> bool:
 	return _defending.has(c)

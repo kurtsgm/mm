@@ -11,6 +11,6 @@ static func for_character(c: Character) -> int:
 		return Face.DEAD
 	if c.condition == Character.Condition.UNCONSCIOUS:
 		return Face.UNCONSCIOUS
-	if c.hp_max > 0 and float(c.hp) <= float(c.hp_max) * HURT_RATIO:
+	if c.effective_hp_max() > 0 and float(c.hp) <= float(c.effective_hp_max()) * HURT_RATIO:
 		return Face.HURT
 	return Face.OK

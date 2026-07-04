@@ -1,5 +1,14 @@
 extends GutTest
 
+var _defs := {}
+var _n := 0
+
+func before_all():
+	ItemInstance.base_resolver = func(id): return _defs.get(id, null)
+
+func after_all():
+	ItemInstance.base_resolver = Callable()
+
 func _char(name: String, hp: int, might: int, acc: int, speed: int) -> Character:
 	var c := Character.new()
 	c.name = name
@@ -149,15 +158,17 @@ func test_run_outcome_is_consistent():
 		assert_eq(cs.result(), CombatSystem.Result.ONGOING)
 		assert_false(cs.is_party_turn())  # 逃跑失敗也消耗回合
 
-func _weapon(attack: int) -> ItemDef:
-	var d := ItemDef.new()
-	d.category = ItemDef.Category.WEAPON; d.attack = attack
-	return d
+func _weapon(attack: int) -> ItemInstance:
+	_n += 1; var id := "w%d" % _n
+	var d := ItemDef.new(); d.id = id; d.category = ItemDef.Category.WEAPON; d.attack = attack
+	_defs[id] = d
+	var it := ItemInstance.new(); it.base_id = id; return it
 
-func _armor_item(armor: int) -> ItemDef:
-	var d := ItemDef.new()
-	d.category = ItemDef.Category.ARMOR; d.armor = armor
-	return d
+func _armor_item(armor: int) -> ItemInstance:
+	_n += 1; var id := "a%d" % _n
+	var d := ItemDef.new(); d.id = id; d.category = ItemDef.Category.ARMOR; d.armor = armor
+	_defs[id] = d
+	var it := ItemInstance.new(); it.base_id = id; return it
 
 func _step_n(cs: CombatSystem, n: int) -> void:
 	var i := 0
@@ -228,3 +239,22 @@ func test_party_attack_marks_crit_over_many_seeds():
 			if String(e).find("爆擊") != -1:
 				saw_crit = true
 	assert_true(saw_crit, "luck=50 多種子下應至少出現一次爆擊訊息")
+
+func test_party_attack_applies_weapon_on_hit_status():
+	_n += 1; var id := "w%d" % _n
+	var d := ItemDef.new(); d.id = id; d.category = ItemDef.Category.WEAPON; d.attack = 50
+	_defs[id] = d
+	var wep := ItemInstance.new(); wep.base_id = id
+	wep.affixes = [{"id": "venom", "kind": 0, "mods": {}, "on_hit": {"kind": StatusEffect.Kind.POISON, "potency": 2, "duration": 3, "chance": 1.0}}]
+	var hero := Character.new()
+	hero.name = "H"; hero.might = 50; hero.accuracy = 99; hero.speed = 20; hero.hp = 30; hero.hp_max = 30; hero.condition = Character.Condition.OK
+	hero.equipment.equip(wep)
+	var mon := Monster.new(); mon.name = "M"; mon.hp = 999; mon.hp_max = 999; mon.speed = 1
+	# seed 2：命中率上限 95%，seed 1 落在那 5% miss（會使測試失效）；seed 2 穩定命中。
+	var cs := CombatSystem.new(_party([hero]), _monsters([mon]), _rng(2))
+	cs.party_attack(0)
+	var has_poison := false
+	for s in mon.statuses:
+		if s.kind == StatusEffect.Kind.POISON:
+			has_poison = true
+	assert_true(has_poison, "命中後目標中毒")
