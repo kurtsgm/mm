@@ -42,8 +42,11 @@ func test_lint_flags_missing_artifact_base() -> void:
 # 正向守關：base 齊全時不應有任何神器問題
 func test_artifacts_pass_lint() -> void:
 	var issues := LootLint.check(_bases_with_all_ids())
+	var artifact_issues := 0
 	for msg in issues:
-		assert_false(String(msg).find("神器") != -1, "不應有神器問題：%s" % msg)
+		if String(msg).find("神器") != -1:
+			artifact_issues += 1
+	assert_eq(artifact_issues, 0, "base 齊全時不應有神器問題：%s" % str(issues))
 
 func test_artifact_count_is_seven() -> void:
 	assert_eq(UniqueCatalog.artifacts().size(), ArtifactSet.SET_SIZE)
