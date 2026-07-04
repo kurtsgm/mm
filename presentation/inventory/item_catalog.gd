@@ -26,3 +26,6 @@ static func get_item(id: String) -> ItemDef:
 
 static func all_ids() -> Array:
 	return _ITEMS.keys()
+
+static func install_resolver() -> void:
+	ItemInstance.base_resolver = func(id): return ItemCatalog.get_item(id)

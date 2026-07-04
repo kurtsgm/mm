@@ -437,14 +437,22 @@ func _grant_rewards() -> void:
 	if leveled:
 		GameState.message_log.push("有隊員升級了！")
 
+func _combat_source() -> int:
+	var theme: String = MapManager.current_map.theme_id if MapManager.current_map != null else ""
+	return LootRoller.Source.DUNGEON if theme == "dungeon" else LootRoller.Source.OVERWORLD
+
 func _grant_drops() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
-	for id in LootSystem.roll_drops(_combat.monsters, rng):
+	var res: Dictionary = LootSystem.roll_drops(_combat.monsters, _combat_source(), LootPool.equipment_bases(), rng)
+	for id in res["item_ids"]:
 		GameState.inventory.add(id, 1)
 		var item := ItemCatalog.get_item(id)
 		var label: String = item.display_name if item != null else String(id)
 		GameState.message_log.push("獲得道具：%s" % label)
+	for inst in res["instances"]:
+		GameState.inventory.add_instance(inst)
+		GameState.message_log.push("獲得裝備：[%s] %s (ilvl%d)" % [Quality.display_name(inst.quality), inst.display_name(), inst.ilvl])
 
 func _show_game_over() -> void:
 	var layer := CanvasLayer.new()

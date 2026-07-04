@@ -28,6 +28,7 @@ signal quests_changed
 signal quest_event(text: String)   # 接取/推進/完成的瞬間提示文字（給 popup）
 
 func _ready() -> void:
+	ItemCatalog.install_resolver()
 	if party == null:
 		party = Party.create_default()
 		_seed_starting_spells()
