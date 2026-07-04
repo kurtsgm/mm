@@ -16,6 +16,7 @@ var xp_reward: int
 var gold_reward: int
 var drop_item_id: String = ""
 var drop_chance: float = 0.0
+var gear_drop_chance: float = -1.0
 var statuses: Array[StatusEffect] = []
 var resistances: Dictionary = {}
 var inflict_kind: int = -1
@@ -66,6 +67,7 @@ static func from_def(def: MonsterDef) -> Monster:
 	m.gold_reward = def.gold_reward
 	m.drop_item_id = def.drop_item_id
 	m.drop_chance = def.drop_chance
+	m.gear_drop_chance = def.gear_drop_chance
 	m.resistances = def.resistances.duplicate()
 	m.inflict_kind = def.inflict_kind
 	m.inflict_potency = def.inflict_potency
