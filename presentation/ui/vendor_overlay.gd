@@ -81,6 +81,9 @@ func _goods_rows() -> Array:
 				continue
 			rows.append({"id": item.id, "name": item.display_name,
 						 "price": int(floor(item.value * factor)), "count": int(s["count"])})
+		# 裝備實例（ItemInstance）：全額 sell_value()（已含品質倍率），不受 sell_factor 影響。
+		for inst in _state.inventory.instances():
+			rows.append({"inst": inst, "name": inst.display_name(), "price": inst.sell_value()})
 	return rows
 
 func _render() -> void:
@@ -176,14 +179,25 @@ func _input_goods(event: InputEventKey) -> void:
 		KEY_ENTER:
 			if _cursor < 0 or _cursor >= rows.size():
 				return
-			var id := String(rows[_cursor]["id"])
-			var item := ItemCatalog.get_item(id)
-			if item == null:
-				return
+			var row: Dictionary = rows[_cursor]
 			var res: Dictionary
 			if _buy_mode:
-				res = VendorTransaction.buy_goods(_state, item)
+				# 可裝備的 stock 走 buy_equipment（生成 COMMON 實例）；消耗品走 buy_goods。
+				var item := ItemCatalog.get_item(String(row["id"]))
+				if item == null:
+					return
+				if item.is_equippable():
+					res = VendorTransaction.buy_equipment(_state, item.id)
+				else:
+					res = VendorTransaction.buy_goods(_state, item)
+			elif row.has("inst"):
+				# 裝備實例列：走 sell_equipment（全額 sell_value、移出實例）。
+				var inst: ItemInstance = row["inst"]
+				res = VendorTransaction.sell_equipment(_state, inst)
 			else:
+				var item := ItemCatalog.get_item(String(row["id"]))
+				if item == null:
+					return
 				res = VendorTransaction.sell_goods(_state, item, float(_vendor.get("sell_factor", 0.5)))
 			_set_status(res)
 			if res["ok"]:
