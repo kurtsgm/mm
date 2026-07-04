@@ -31,3 +31,17 @@ func test_equipped_instance_roundtrip():
 	var w = back.party.members[0].equipment.get_item(Equipment.Slot.WEAPON)
 	assert_not_null(w)
 	assert_eq(w.quality, Quality.Q.RARE)
+
+# 神器（MYTHIC unique）存檔往返：unique_id/quality 存活，且 ArtifactSet 仍計入
+# （capstone 觸發全靠 unique_id 序列化後仍在 → 鎖住此契約）。
+func test_mythic_artifact_survives_roundtrip_and_stays_counted():
+	var data := SaveData.new()
+	data.party = Party.new(); data.party.members = []
+	data.inventory = Inventory.new()
+	data.inventory.add_instance(UniqueCatalog.make("eternal_lamp"))
+	var back := SaveSerializer.from_dict(SaveSerializer.to_dict(data))
+	assert_eq(back.inventory.instances().size(), 1)
+	var reloaded := back.inventory.instances()[0] as ItemInstance
+	assert_eq(reloaded.unique_id, "eternal_lamp")
+	assert_eq(reloaded.quality, Quality.Q.MYTHIC)
+	assert_eq(ArtifactSet.owned_count(back.inventory, null), 1)
