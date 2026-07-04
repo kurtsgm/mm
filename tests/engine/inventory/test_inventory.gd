@@ -53,3 +53,20 @@ func test_load_stacks_rebuilds():
 	inv.load_stacks([{"id": "potion", "count": 2}, {"id": "sword", "count": 1}])
 	assert_eq(inv.count_of("potion"), 2)
 	assert_eq(inv.count_of("sword"), 1)
+
+func test_instances_add_remove():
+	var inv := Inventory.new()
+	var a := ItemInstance.new(); a.base_id = "iron_sword"
+	var b := ItemInstance.new(); b.base_id = "leather"
+	inv.add_instance(a); inv.add_instance(b)
+	assert_eq(inv.instances().size(), 2)
+	assert_true(inv.remove_instance(a))
+	assert_eq(inv.instances().size(), 1)
+	assert_false(inv.remove_instance(a))   # 已移除，回 false
+
+func test_instances_independent_from_consumable_stacks():
+	var inv := Inventory.new()
+	inv.add("potion", 3)
+	inv.add_instance(ItemInstance.new())
+	assert_eq(inv.count_of("potion"), 3)
+	assert_eq(inv.instances().size(), 1)

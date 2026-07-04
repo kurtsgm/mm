@@ -4,6 +4,7 @@ extends RefCounted
 # 共享隊伍背包：以 id 計數的多重集合，每個 distinct id 一個堆疊 {"id","count"}。
 # 引擎純邏輯：只認 id 與數量，不載入 ItemDef（內容解析交給呈現層的 ItemCatalog）。
 var _stacks: Array = []   # Array[Dictionary]
+var _instances: Array = []   # Array[ItemInstance]（裝備，不可堆疊）
 
 func add(item_id: String, count: int = 1) -> void:
 	if item_id == "" or count <= 0:
@@ -49,3 +50,17 @@ func load_stacks(arr) -> void:
 	_stacks = []
 	for s in arr:
 		add(String(s.get("id", "")), int(s.get("count", 0)))
+
+func add_instance(inst: ItemInstance) -> void:
+	if inst != null:
+		_instances.append(inst)
+
+func remove_instance(inst: ItemInstance) -> bool:
+	var i := _instances.find(inst)
+	if i == -1:
+		return false
+	_instances.remove_at(i)
+	return true
+
+func instances() -> Array:
+	return _instances
