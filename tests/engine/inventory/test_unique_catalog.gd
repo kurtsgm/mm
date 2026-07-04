@@ -38,3 +38,20 @@ func test_is_artifact_and_list():
 	assert_true(UniqueCatalog.is_artifact("eternal_lamp"))
 	assert_false(UniqueCatalog.is_artifact("dawnblade"))
 	assert_eq(UniqueCatalog.artifacts().size(), 7)
+
+func test_make_artifact_instance():
+	var it := UniqueCatalog.make("starender_blade")
+	assert_not_null(it)
+	assert_eq(it.unique_id, "starender_blade")
+	assert_eq(it.base_id, "dragonbone_sword")
+	assert_eq(it.quality, Quality.Q.MYTHIC)
+	assert_eq(it.ilvl, 65)
+	assert_eq(it.display_name(), "弒星之刃")
+	assert_eq(it.total_stat(ItemStat.S.ATTACK), 28)
+
+func test_make_regular_unique_is_legendary():
+	var it := UniqueCatalog.make("dawnblade")
+	assert_eq(it.quality, Quality.Q.LEGENDARY)
+
+func test_make_unknown_returns_null():
+	assert_null(UniqueCatalog.make("nope"))

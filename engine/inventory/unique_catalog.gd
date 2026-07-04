@@ -37,6 +37,17 @@ const _U := {
 static func entry(id: String) -> Dictionary:
 	return _U.get(id, {})
 
+static func make(id: String, ilvl: int = -1) -> ItemInstance:
+	var e := entry(id)
+	if e.is_empty():
+		return null
+	var it := ItemInstance.new()
+	it.unique_id = id
+	it.base_id = String(e["base_id"])
+	it.ilvl = ilvl if ilvl > 0 else int(e.get("min_ilvl", 1))
+	it.quality = Quality.Q.MYTHIC if bool(e.get("is_artifact", false)) else Quality.Q.LEGENDARY
+	return it
+
 static func is_artifact(id: String) -> bool:
 	return bool(entry(id).get("is_artifact", false))
 

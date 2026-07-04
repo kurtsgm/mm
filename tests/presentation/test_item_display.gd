@@ -21,3 +21,9 @@ func test_detail_lines_list_affixes():
 	var joined := "\n".join(lines)
 	assert_true(joined.find("力量 +5") != -1)
 	assert_true(joined.find("ilvl 20") != -1)
+
+func test_artifact_colored_name_uses_mythic_color():
+	var it := UniqueCatalog.make("choir_crown")
+	var s := ItemDisplay.colored_name(it)
+	assert_true(s.find("e53935") != -1, "神器名應以神話色 #e53935 標記")
+	assert_true(s.find("聖言之冕") != -1)
