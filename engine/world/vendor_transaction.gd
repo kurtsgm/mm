@@ -20,6 +20,37 @@ static func sell_goods(ctx, item: ItemDef, sell_factor: float) -> Dictionary:
 	ctx.gold += price
 	return {"ok": true, "reason": "ok", "events": ["賣出 %s（+%d 金）" % [item.display_name, price]]}
 
+# --- 裝備實例（ItemInstance）買賣 ---
+# 消耗品走 buy_goods/sell_goods（以 id 計數）；裝備走這裡（生成/移除 ItemInstance）。
+
+# 生成一件基礎裝備實例：COMMON 品質、ilvl 1、無詞綴。
+static func make_base_instance(base_id: String) -> ItemInstance:
+	var it := ItemInstance.new()
+	it.base_id = base_id
+	it.quality = Quality.Q.COMMON
+	it.ilvl = 1
+	return it
+
+# 買基礎裝備：售價＝base ItemDef.value（經 base_resolver 解析）；成功則扣金、加實例進背包。
+static func buy_equipment(ctx, base_id: String) -> Dictionary:
+	var it := make_base_instance(base_id)
+	var def := it.base_def()
+	var cost: int = def.value if def != null else 0
+	if ctx.gold < cost:
+		return {"ok": false, "reason": "no_gold", "events": []}
+	ctx.gold -= cost
+	ctx.inventory.add_instance(it)
+	return {"ok": true, "reason": "ok", "events": ["買下 %s（-%d 金）" % [it.display_name(), cost]]}
+
+# 賣裝備實例：依 sell_value()（含品質倍率）給金、移出背包；不在背包則失敗。
+static func sell_equipment(ctx, inst: ItemInstance) -> Dictionary:
+	if not ctx.inventory.instances().has(inst):
+		return {"ok": false, "reason": "not_owned", "events": []}
+	var price := inst.sell_value()
+	ctx.inventory.remove_instance(inst)
+	ctx.gold += price
+	return {"ok": true, "reason": "ok", "events": ["賣出 %s（+%d 金）" % [inst.display_name(), price]]}
+
 static func learn_spell(ctx, spell: SpellDef, character) -> Dictionary:
 	var elig: Dictionary = SpellEligibility.can_learn(character, spell)
 	if not elig["ok"]:

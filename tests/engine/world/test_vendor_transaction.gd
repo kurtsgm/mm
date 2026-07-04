@@ -154,3 +154,70 @@ func test_buy_service_heal_full_clears_ailments_at_full_hp():
 	assert_true(res["ok"])                           # 滿血仍應成功（清異常）
 	assert_eq(c.statuses.size(), 0)                  # 狀態異常清空
 	assert_false(res["events"].is_empty())           # 帶回非空事件
+
+# --- 裝備買賣（ItemInstance 分支）---
+
+func test_buy_base_equipment_adds_common_instance():
+	ItemInstance.base_resolver = func(id):
+		var d := ItemDef.new(); d.id = id; d.category = ItemDef.Category.WEAPON; d.attack = 6; d.value = 30; return d
+	var inv := Inventory.new()
+	var it := VendorTransaction.make_base_instance("iron_sword")
+	inv.add_instance(it)
+	assert_eq(it.quality, Quality.Q.COMMON)
+	assert_eq(inv.instances().size(), 1)
+	ItemInstance.base_resolver = Callable()
+
+func test_sell_instance_gives_quality_scaled_gold():
+	ItemInstance.base_resolver = func(id):
+		var d := ItemDef.new(); d.id = id; d.category = ItemDef.Category.WEAPON; d.value = 30; return d
+	var it := ItemInstance.new(); it.base_id = "iron_sword"; it.quality = Quality.Q.RARE
+	assert_eq(it.sell_value(), 105)   # 30 * 3.5
+	ItemInstance.base_resolver = Callable()
+
+func test_buy_equipment_deducts_gold_and_adds_instance():
+	ItemInstance.base_resolver = func(id):
+		var d := ItemDef.new(); d.id = id; d.display_name = id; d.category = ItemDef.Category.WEAPON; d.value = 30; return d
+	var ctx := Ctx.new()
+	ctx.gold = 100
+	var res := VendorTransaction.buy_equipment(ctx, "iron_sword")
+	assert_true(res["ok"])
+	assert_eq(ctx.gold, 70)                          # 100 - 30
+	assert_eq(ctx.inventory.instances().size(), 1)
+	var inst: ItemInstance = ctx.inventory.instances()[0]
+	assert_eq(inst.base_id, "iron_sword")
+	assert_eq(inst.quality, Quality.Q.COMMON)
+	ItemInstance.base_resolver = Callable()
+
+func test_buy_equipment_no_gold():
+	ItemInstance.base_resolver = func(id):
+		var d := ItemDef.new(); d.id = id; d.display_name = id; d.value = 30; return d
+	var ctx := Ctx.new()
+	ctx.gold = 10
+	var res := VendorTransaction.buy_equipment(ctx, "iron_sword")
+	assert_false(res["ok"])
+	assert_eq(res["reason"], "no_gold")
+	assert_eq(ctx.gold, 10)
+	assert_eq(ctx.inventory.instances().size(), 0)
+	ItemInstance.base_resolver = Callable()
+
+func test_sell_equipment_adds_gold_and_removes_instance():
+	ItemInstance.base_resolver = func(id):
+		var d := ItemDef.new(); d.id = id; d.display_name = id; d.category = ItemDef.Category.WEAPON; d.value = 30; return d
+	var ctx := Ctx.new()
+	ctx.gold = 0
+	var inst := ItemInstance.new(); inst.base_id = "iron_sword"; inst.quality = Quality.Q.RARE
+	ctx.inventory.add_instance(inst)
+	var res := VendorTransaction.sell_equipment(ctx, inst)
+	assert_true(res["ok"])
+	assert_eq(ctx.gold, 105)                         # 30 * 3.5
+	assert_eq(ctx.inventory.instances().size(), 0)
+	ItemInstance.base_resolver = Callable()
+
+func test_sell_equipment_not_owned():
+	var ctx := Ctx.new()
+	var inst := ItemInstance.new(); inst.base_id = "iron_sword"
+	var res := VendorTransaction.sell_equipment(ctx, inst)
+	assert_false(res["ok"])
+	assert_eq(res["reason"], "not_owned")
+	assert_eq(ctx.gold, 0)
+	ItemInstance.base_resolver = Callable()
