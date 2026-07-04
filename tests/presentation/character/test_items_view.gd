@@ -64,3 +64,43 @@ func test_category_label_mapping():
 	assert_eq(CharacterItemsView.category_label(ItemDef.Category.ARMOR), "甲")
 	assert_eq(CharacterItemsView.category_label(ItemDef.Category.ACCESSORY), "飾")
 	assert_eq(CharacterItemsView.category_label(ItemDef.Category.CONSUMABLE), "用")
+
+# 品質色名：rows() 應在裝備列（已裝備槽 / 背包裝備實例）帶 quality，消耗品列不帶。
+func test_rows_puts_quality_on_equipped_instance_row():
+	var m := _member()
+	var it := ItemInstance.new(); it.base_id = "short_sword"; it.quality = Quality.Q.RARE
+	m.equipment.equip(it)
+	var rows := CharacterItemsTab.rows(m, _inv({}))
+	var wr: Dictionary = {}
+	for r in rows:
+		if String(r.get("kind", "")) == "equip" and int(r.get("slot", -1)) == Equipment.Slot.WEAPON:
+			wr = r
+	assert_true(wr.has("quality"), "已裝備武器列帶 quality")
+	assert_eq(int(wr["quality"]), Quality.Q.RARE)
+
+func test_rows_puts_quality_on_bag_instance_row():
+	var inv := Inventory.new()
+	var it := ItemInstance.new(); it.base_id = "short_sword"; it.quality = Quality.Q.FINE
+	inv.add_instance(it)
+	var rows := CharacterItemsTab.rows(_member(), inv)
+	var br: Dictionary = {}
+	for r in rows:
+		if r.has("inst"):
+			br = r
+	assert_true(br.has("quality"), "背包裝備實例列帶 quality")
+	assert_eq(int(br["quality"]), Quality.Q.FINE)
+
+func test_rows_no_quality_on_consumable_row():
+	var rows := CharacterItemsTab.rows(_member(), _inv({"potion": 2}))
+	var cr: Dictionary = {}
+	for r in rows:
+		if String(r.get("kind", "")) == "item" and r.has("id"):
+			cr = r
+	assert_false(cr.is_empty(), "有消耗品列")
+	assert_false(cr.has("quality"), "消耗品列不帶 quality")
+
+func test_name_color_uses_quality_color_when_present():
+	var v := CharacterItemsView.new()
+	add_child_autofree(v)
+	assert_eq(v._name_color({"quality": Quality.Q.RARE}), Quality.color(Quality.Q.RARE), "帶 quality 用品質色")
+	assert_eq(v._name_color({}), PanelSkin.TEXT, "無 quality 退回 TEXT")

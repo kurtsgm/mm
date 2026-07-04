@@ -9,11 +9,14 @@ static func rows(member: Character, inventory) -> Array:
 	var out: Array = []
 	for slot in _SLOTS:
 		var it: ItemInstance = member.equipment.get_item(slot)
-		out.append({
+		var row: Dictionary = {
 			"kind": "equip", "slot": slot,
 			"name": (it.display_name() if it != null else "-"),
 			"stat": (_equip_stat(slot, it) if it != null else ""),
-		})
+		}
+		if it != null:
+			row["quality"] = it.quality
+		out.append(row)
 	# 背包：可堆疊消耗品（id 列）
 	for s in inventory.stacks():
 		var item := ItemCatalog.get_item(String(s["id"]))
@@ -27,6 +30,7 @@ static func rows(member: Character, inventory) -> Array:
 			"kind": "item", "inst": inst, "count": 1,
 			"name": inst.display_name(),
 			"category": (int(idef.category) if idef != null else int(ItemDef.Category.WEAPON)),
+			"quality": inst.quality,
 		})
 	return out
 

@@ -335,6 +335,22 @@ func test_rail_selection_follows_member_switch():
 	panel._unhandled_input(_key(KEY_3))
 	assert_eq(rail.selected(), 2, "1-6 切換時直欄同步高亮")
 
+# 確認裝備動作時，說明區附上該裝備的明細（ItemDisplay.detail_lines）。
+func test_confirm_prompt_includes_equipment_detail_lines():
+	var panel := _panel(1)
+	var it := ItemInstance.new(); it.base_id = "short_sword"; it.quality = Quality.Q.FINE
+	panel._confirm_row = {"kind": "item", "inst": it, "count": 1, "name": it.display_name(), "quality": it.quality}
+	panel._confirm_action = "裝備"
+	var prompt := panel._confirm_prompt()
+	assert_true(prompt.contains("ilvl"), "確認說明含裝備明細")
+
+func test_confirm_prompt_no_detail_for_consumable():
+	var panel := _panel(1)
+	panel._confirm_row = {"kind": "item", "id": "potion", "count": 2, "name": "藥水"}
+	panel._confirm_action = "使用"
+	var prompt := panel._confirm_prompt()
+	assert_false(prompt.contains("ilvl"), "消耗品確認不含裝備明細")
+
 func _find_node(n: Node, cls: String) -> Node:
 	if n.get_class() == cls or (n.get_script() != null and n.get_script().get_global_name() == cls):
 		return n

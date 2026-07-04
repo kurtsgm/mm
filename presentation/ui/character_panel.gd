@@ -349,14 +349,29 @@ func confirm_options() -> Array:
 func _confirm_prompt() -> String:
 	var m := _selected_member()
 	var nm := String(_confirm_row.get("name", ""))
+	var base := ""
 	match _confirm_action:
 		"使用":
-			return "對 %s 使用 %s？" % [m.name, nm] if _confirm_actionable() else "%s 現在用不到 %s。" % [m.name, nm]
+			base = "對 %s 使用 %s？" % [m.name, nm] if _confirm_actionable() else "%s 現在用不到 %s。" % [m.name, nm]
 		"裝備":
-			return "讓 %s 裝備 %s？" % [m.name, nm]
+			base = "讓 %s 裝備 %s？" % [m.name, nm]
 		"卸下":
-			return "卸下 %s 的 %s？" % [m.name, nm]
-	return ""
+			base = "卸下 %s 的 %s？" % [m.name, nm]
+	# 裝備動作附上該件明細（消耗品/無實例則不附）。
+	var inst := _confirm_instance()
+	if inst != null:
+		var det := ItemDisplay.detail_lines(inst)
+		if not det.is_empty():
+			base += "\n\n" + "\n".join(det)
+	return base
+
+# 目前確認中的裝備實例：背包裝備列（inst）或已裝備槽（卸下）；消耗品/空槽 → null。
+func _confirm_instance() -> ItemInstance:
+	if _confirm_row.has("inst"):
+		return _confirm_row["inst"]
+	if String(_confirm_row.get("kind", "")) == "equip":
+		return _selected_member().equipment.get_item(int(_confirm_row.get("slot", -1)))
+	return null
 
 func _input_item_confirm(key: int) -> void:
 	var options := confirm_options()

@@ -103,7 +103,7 @@ func _equip_row(r: Dictionary, active: bool) -> Control:
 	var hb := _row_container(active)
 	hb.add_child(PanelSkin.make_chip(category_label(cat), category_color(cat)))
 	hb.add_child(_slot_label_node(_slot_text(cat)))
-	hb.add_child(_grow_label(_equip_name(r), PanelSkin.TEXT))
+	hb.add_child(_grow_label(_equip_name(r), _name_color(r)))
 	hb.add_child(_fixed_label(String(r.get("stat", "")), PanelSkin.TITLE))
 	return _wrap(hb, active)
 
@@ -112,7 +112,7 @@ func _bag_row(r: Dictionary, active: bool) -> Control:
 	var cat := int(r.get("category", ItemDef.Category.CONSUMABLE))
 	var hb := _row_container(active)
 	hb.add_child(PanelSkin.make_chip(category_label(cat), category_color(cat)))
-	hb.add_child(_grow_label(String(r.get("name", "")), PanelSkin.TEXT))
+	hb.add_child(_grow_label(String(r.get("name", "")), _name_color(r)))
 	hb.add_child(_fixed_label("×%d" % int(r.get("count", 0)), PanelSkin.TITLE))
 	return _wrap(hb, active)
 
@@ -133,6 +133,12 @@ func _wrap(inner: Control, active: bool) -> Control:
 func _equip_name(r: Dictionary) -> String:
 	var nm := String(r.get("name", "-"))
 	return "—" if nm == "-" else nm
+
+# 名稱顏色：裝備實例列帶 quality → 用品質色；空槽/消耗品無 quality → 退回內文色。
+func _name_color(r: Dictionary) -> Color:
+	if r.has("quality"):
+		return Quality.color(int(r["quality"]))
+	return PanelSkin.TEXT
 
 func _slot_label_node(text: String) -> Label:
 	var l := _fixed_label(text, PanelSkin.SECTION)
