@@ -318,7 +318,7 @@ func _avg_party_speed() -> float:
 	var n := 0
 	for m in party.members:
 		if m.is_conscious():
-			total += m.speed
+			total += m.effective_speed()
 			n += 1
 	return float(total) / n if n > 0 else 0.0
 
@@ -328,7 +328,7 @@ func _avg_monster_speed() -> float:
 		return 0.0
 	var total := 0
 	for m in living:
-		total += m.speed
+		total += m.effective_speed()
 	return float(total) / living.size()
 
 func _enemy_targets(spell: SpellDef, target_index: int) -> Array:
