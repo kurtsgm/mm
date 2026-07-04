@@ -1,8 +1,8 @@
 class_name Quality
 extends Object
 
-# 品質階常數表（4 階）。仿 MonsterTiers 風格；數值由模擬器調校。
-enum Q { COMMON, FINE, RARE, LEGENDARY }
+# 品質階常數表（5 階）。仿 MonsterTiers 風格；數值由模擬器調校。
+enum Q { COMMON, FINE, RARE, LEGENDARY, MYTHIC }
 
 # idx → {id, name, color(hex), affix_min, affix_max, value_mult}
 const _Q := [
@@ -10,6 +10,7 @@ const _Q := [
 	{"id": "fine",      "name": "精良", "color": "#4caf50", "amin": 1, "amax": 1, "mult": 1.5},
 	{"id": "rare",      "name": "稀有", "color": "#9c27b0", "amin": 2, "amax": 3, "mult": 3.5},
 	{"id": "legendary", "name": "傳說", "color": "#ff9800", "amin": 4, "amax": 5, "mult": 10.0},
+	{"id": "mythic",    "name": "神話", "color": "#e53935", "amin": 0, "amax": 0, "mult": 25.0},
 ]
 
 static func affix_count(q: int, rng: RandomNumberGenerator) -> int:

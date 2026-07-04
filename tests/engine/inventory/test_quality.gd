@@ -18,3 +18,11 @@ func test_meta():
 	assert_eq(Quality.id(Quality.Q.LEGENDARY), "legendary")
 	assert_eq(Quality.from_id("fine"), Quality.Q.FINE)
 	assert_almost_eq(Quality.value_mult(Quality.Q.LEGENDARY), 10.0, 0.001)
+
+func test_mythic_tier():
+	assert_eq(Quality.display_name(Quality.Q.MYTHIC), "神話")
+	assert_eq(Quality.id(Quality.Q.MYTHIC), "mythic")
+	assert_eq(Quality.from_id("mythic"), Quality.Q.MYTHIC)
+	assert_almost_eq(Quality.value_mult(Quality.Q.MYTHIC), 25.0, 0.001)
+	assert_eq(Quality.color(Quality.Q.MYTHIC), Color("#e53935"))
+	assert_eq(Quality.affix_count(Quality.Q.MYTHIC, _rng(3)), 0)
