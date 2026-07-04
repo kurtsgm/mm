@@ -23,7 +23,7 @@ const _A := {
 	"of_fortune":  {"name": "·幸運",   "kind": SUFFIX, "applies_to": [0, 1, 2], "min_ilvl": 10, "mods": {ItemStat.S.LUCK: [2, 6]}},
 	"of_vigor":    {"name": "·活力",   "kind": SUFFIX, "applies_to": [1, 2],    "min_ilvl": 8,  "mods": {ItemStat.S.HP_MAX: [6, 15]}},
 	"of_the_mind": {"name": "·心智",   "kind": SUFFIX, "applies_to": [2],       "min_ilvl": 8,  "mods": {ItemStat.S.INTELLECT: [2, 6], ItemStat.S.SP_MAX: [3, 8]}},
-	"of_warding":  {"name": "·守護",   "kind": SUFFIX, "applies_to": [1, 2],    "min_ilvl": 14, "mods": {}, "resist": {}},  # resist 元素於 Phase 7 補
+	"of_warding":  {"name": "·守護",   "kind": SUFFIX, "applies_to": [1, 2],    "min_ilvl": 14, "mods": {ItemStat.S.ARMOR: [3, 7]}},
 }
 
 static func entry(id: String) -> Dictionary:
