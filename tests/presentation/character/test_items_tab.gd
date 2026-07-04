@@ -1,5 +1,17 @@
 extends GutTest
 
+func before_all():
+	# 裝備實例需 base_resolver 解析 base_def（display_name/total_attack…）。
+	ItemCatalog.install_resolver()
+
+func after_all():
+	ItemInstance.base_resolver = Callable()
+
+func _sword_inst() -> ItemInstance:
+	var it := ItemInstance.new()
+	it.base_id = "short_sword"   # .tres attack 6
+	return it
+
 func _member() -> Character:
 	var c := Character.new()
 	c.name = "亞爾"
@@ -35,7 +47,7 @@ func test_lines_mark_cursor_and_sections():
 
 func test_equip_row_includes_weapon_stat():
 	var m := _member()
-	m.equipment.equip(ItemCatalog.get_item("short_sword"))  # attack 6
+	m.equipment.equip(_sword_inst())  # attack 6
 	var rows := CharacterItemsTab.rows(m, _inv({}))
 	assert_eq(String(rows[0]["stat"]), "+6", "武器槽顯示攻擊加成")
 
@@ -58,19 +70,21 @@ func test_activate_consumable_uses_and_decrements():
 
 func test_activate_equippable_equips_and_removes_from_inv():
 	var m := _member()
-	var inv := _inv({"short_sword": 1})
+	var inv := Inventory.new()
+	inv.add_instance(_sword_inst())
 	var rows := CharacterItemsTab.rows(m, inv)
-	CharacterItemsTab.activate(rows[3], m, inv)  # short_sword
+	# rows = 3 裝備槽 + 1 背包裝備實例列（index 3）
+	CharacterItemsTab.activate(rows[3], m, inv)  # short_sword 實例
 	assert_true(m.equipment.is_equipped(Equipment.Slot.WEAPON), "武器槽已裝備")
-	assert_eq(inv.count_of("short_sword"), 0, "背包扣除")
+	assert_eq(inv.instances().size(), 0, "背包實例扣除")
 
 func test_activate_equipped_slot_unequips_back_to_inv():
 	var m := _member()
-	var inv := _inv({})   # 背包起始為空；下面直接裝備一把短劍，卸下後背包才會恰好 1 把
-	m.equipment.equip(ItemCatalog.get_item("short_sword"))
+	var inv := Inventory.new()   # 背包起始為空；下面直接裝備一把短劍，卸下後背包才會恰好 1 件實例
+	m.equipment.equip(_sword_inst())
 	var rows := CharacterItemsTab.rows(m, inv)
 	# rows[0] = 武器槽（已裝 short_sword）
 	var events := CharacterItemsTab.activate(rows[0], m, inv)
 	assert_false(events.is_empty(), "卸下回傳事件")
 	assert_false(m.equipment.is_equipped(Equipment.Slot.WEAPON), "武器槽已空")
-	assert_eq(inv.count_of("short_sword"), 1, "回到背包")
+	assert_eq(inv.instances().size(), 1, "回到背包（實例）")

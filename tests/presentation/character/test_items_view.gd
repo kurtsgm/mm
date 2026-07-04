@@ -1,5 +1,12 @@
 extends GutTest
 
+func before_all():
+	# 背包裝備實例需 base_resolver 解析 base_def。
+	ItemCatalog.install_resolver()
+
+func after_all():
+	ItemInstance.base_resolver = Callable()
+
 func _member() -> Character:
 	var c := Character.new()
 	c.name = "亞爾"
@@ -23,6 +30,17 @@ func test_renders_three_equip_and_n_bag_rows():
 	var v := _view(rows, 0)
 	assert_eq(v.equip_count(), 3, "三個裝備槽")
 	assert_eq(v.bag_count(), 2, "兩種背包道具")
+
+func test_renders_equipment_instance_in_bag():
+	# 背包裝備實例（inst 列，無 id）也應被算進背包並渲染。
+	var inv := Inventory.new()
+	var it := ItemInstance.new(); it.base_id = "short_sword"
+	inv.add_instance(it)
+	var rows := CharacterItemsTab.rows(_member(), inv)
+	var v := _view(rows, 3)
+	assert_eq(v.equip_count(), 3, "三個裝備槽")
+	assert_eq(v.bag_count(), 1, "背包含一件裝備實例")
+	assert_true(v.active_in_bag(), "作用列在背包欄")
 
 func test_empty_bag_shows_placeholder():
 	var rows := CharacterItemsTab.rows(_member(), _inv({}))

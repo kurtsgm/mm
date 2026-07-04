@@ -98,8 +98,13 @@ func explored_for(map_id: String) -> Dictionary:
 
 func _seed_starting_items() -> void:
 	# 骨架起始道具：讓背包/裝備系統開局即可操演。正式起始裝備屬內容期。
-	inventory.add("short_sword", 1)
-	inventory.add("leather", 1)
+	# 裝備為不可堆疊 ItemInstance（resolver 已於 _ready 安裝）；消耗品仍走可堆疊 id。
+	var sword := ItemInstance.new()
+	sword.base_id = "short_sword"
+	inventory.add_instance(sword)
+	var armor := ItemInstance.new()
+	armor.base_id = "leather"
+	inventory.add_instance(armor)
 	inventory.add("potion", 2)
 
 # --- 任務 ---

@@ -320,13 +320,15 @@ func _item_action_for(row: Dictionary) -> String:
 	var m := _selected_member()
 	if String(row.get("kind", "")) == "equip":
 		return "卸下" if m.equipment.is_equipped(int(row["slot"])) else ""
+	# 背包裝備實例：可裝備則「裝備」
+	if row.has("inst"):
+		return "裝備" if m.equipment.can_equip(row["inst"]) else ""
+	# 背包消耗品（id 列）：可用則「使用」
 	var item := ItemCatalog.get_item(String(row.get("id", "")))
 	if item == null:
 		return ""
 	if item.is_consumable():
 		return "使用"
-	if m.equipment.can_equip(item):
-		return "裝備"
 	return ""
 
 # 主動作此刻是否可執行（使用類要 can_use；裝備/卸下恆可）。

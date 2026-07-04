@@ -10,6 +10,13 @@ class FakeState:
 	var inventory: Inventory
 	var message_log
 
+func before_all():
+	# 背包裝備實例需 base_resolver 解析 base_def。
+	ItemCatalog.install_resolver()
+
+func after_all():
+	ItemInstance.base_resolver = Callable()
+
 func _state(n: int) -> FakeState:
 	var st := FakeState.new()
 	st.message_log = FakeLog.new()
@@ -245,19 +252,21 @@ func test_unusable_consumable_offers_dismiss_only():
 	assert_eq(st.inventory.count_of("potion"), 1, "未消耗")
 
 func test_confirm_equips_then_unequips():
-	var st := _state_with_inv({"short_sword": 1})
+	var st := _state(1)
+	var it := ItemInstance.new(); it.base_id = "short_sword"
+	st.inventory.add_instance(it)
 	var panel := _items_panel(st)
-	panel._unhandled_input(_key(KEY_RIGHT))   # 背包 short_sword
+	panel._unhandled_input(_key(KEY_RIGHT))   # 背包 short_sword 實例
 	panel._unhandled_input(_key(KEY_ENTER))   # modal「裝備」
 	panel._unhandled_input(_key(KEY_ENTER))   # 確認裝備
 	var m: Character = st.party.members[0]
 	assert_true(m.equipment.is_equipped(Equipment.Slot.WEAPON), "已裝備")
-	assert_eq(st.inventory.count_of("short_sword"), 0, "背包扣除")
+	assert_eq(st.inventory.instances().size(), 0, "背包實例扣除")
 	assert_eq(panel.item_zone(), 0, "背包空後退回裝備欄")
 	panel._unhandled_input(_key(KEY_ENTER))   # modal「卸下」
 	panel._unhandled_input(_key(KEY_ENTER))   # 確認卸下
 	assert_false(m.equipment.is_equipped(Equipment.Slot.WEAPON), "已卸下")
-	assert_eq(st.inventory.count_of("short_sword"), 1, "回到背包")
+	assert_eq(st.inventory.instances().size(), 1, "回到背包（實例）")
 
 func _caster_state(spells: Array, sp: int) -> FakeState:
 	var st := _state(2)

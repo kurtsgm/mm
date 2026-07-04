@@ -58,7 +58,12 @@ func test_capture_from_includes_inventory():
 	gs.inventory.add("ether", 3)
 	var data = _sys.capture_from(gs)
 	assert_true(data.inventory.has("ether"))
-	assert_true(data.inventory.has("short_sword"))
+	# 起始短劍改以裝備實例種入背包（非可堆疊 id）。
+	var has_sword := false
+	for inst in data.inventory.instances():
+		if inst.base_id == "short_sword":
+			has_sword = true
+	assert_true(has_sword, "起始短劍以實例保留於背包")
 
 func test_apply_to_restores_inventory():
 	var gs = _gs()

@@ -37,9 +37,14 @@ func test_mark_and_query_cleared_encounters():
 func test_ready_seeds_starting_inventory():
 	var gs = _fresh_gs()
 	assert_not_null(gs.inventory)
-	assert_eq(gs.inventory.count_of("short_sword"), 1)
-	assert_eq(gs.inventory.count_of("leather"), 1)
+	# 消耗品仍走可堆疊 id；起始裝備改為不可堆疊實例。
 	assert_eq(gs.inventory.count_of("potion"), 2)
+	var base_ids := []
+	for inst in gs.inventory.instances():
+		base_ids.append(inst.base_id)
+	assert_eq(gs.inventory.instances().size(), 2, "短劍/皮甲以裝備實例種入背包")
+	assert_true(base_ids.has("short_sword"), "起始短劍為實例")
+	assert_true(base_ids.has("leather"), "起始皮甲為實例")
 
 func test_ready_seeds_starting_spells():
 	var gs = _fresh_gs()
