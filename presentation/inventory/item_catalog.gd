@@ -21,6 +21,7 @@ const _ITEMS := {
 	"dragon_scale": "res://content/items/dragon_scale.tres",
 	"iron_ring": "res://content/items/iron_ring.tres",
 	"amulet_of_power": "res://content/items/amulet_of_power.tres",
+	"ring_of_kings": "res://content/items/ring_of_kings.tres",
 	"potion": "res://content/items/potion.tres",
 	"ether": "res://content/items/ether.tres",
 	"revive": "res://content/items/revive_herb.tres",

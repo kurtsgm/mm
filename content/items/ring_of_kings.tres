@@ -4,10 +4,10 @@
 
 [resource]
 script = ExtResource("1_item")
-id = "amulet_of_power"
-display_name = "力量護符"
+id = "ring_of_kings"
+display_name = "王者之戒"
 category = 2
-value = 200
-min_level = 20
+value = 600
+min_level = 60
 max_level = 100
-drop_weight = 4
+drop_weight = 3
