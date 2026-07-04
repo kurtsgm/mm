@@ -1,7 +1,7 @@
 class_name SaveSerializer
 extends Object
 
-const VERSION := 11
+const VERSION := 12
 
 static func to_dict(data: SaveData) -> Dictionary:
 	return {
@@ -13,7 +13,7 @@ static func to_dict(data: SaveData) -> Dictionary:
 			"player_pos": _vec(data.player_pos),
 			"player_facing": data.player_facing,
 			"party": _party_to_array(data.party),
-			"inventory": _inventory_to_array(data.inventory),
+			"inventory": _inventory_to_dict(data.inventory),
 			"cleared_encounters": _cleared_to_dict(data.cleared_encounters),
 			"explored": _explored_to_dict(data.explored),
 			"opened_objects": _opened_to_dict(data.opened_objects),
@@ -26,8 +26,8 @@ static func to_dict(data: SaveData) -> Dictionary:
 		},
 	}
 
-# resolver: 可選 Callable，func(id: String) -> ItemDef，把裝備 id 解析回 ItemDef。
-# 不傳（純單元測試）時裝備欄留空；背包不需 resolver（只存 id+count）。
+# resolver: 保留參數（呼叫端相容），現已不用於裝備還原——裝備/背包實例改走 inline
+# ItemInstance dict + ItemInstance.base_resolver 解析 base_def。未設 base_resolver 時裝備留空。
 static func from_dict(raw: Dictionary, resolver := Callable()) -> SaveData:
 	var v := int(raw.get("version", -1))
 	if v != VERSION:   # 不需向後相容：只接受目前版本，舊檔不再載入
@@ -44,7 +44,7 @@ static func from_dict(raw: Dictionary, resolver := Callable()) -> SaveData:
 	data.player_pos = _to_vec(pp)
 	data.player_facing = int(s.get("player_facing", 0))
 	data.party = _party_from_array(s.get("party", []), resolver)
-	data.inventory = _inventory_from_array(s.get("inventory", []))
+	data.inventory = _inventory_from_dict(s.get("inventory", {}))
 	data.cleared_encounters = _cleared_from_dict(s.get("cleared_encounters", {}))
 	data.explored = _explored_from_dict(s.get("explored", {}))
 	data.opened_objects = _opened_from_dict(s.get("opened_objects", {}))
@@ -100,13 +100,17 @@ static func _party_from_array(arr, resolver: Callable) -> Party:
 	return p
 
 static func _char_to_dict(c: Character) -> Dictionary:
+	var eq := c.equipment.equipped()
+	var equip_out: Dictionary = {}
+	for slot in eq:
+		equip_out[slot] = eq[slot].to_dict()
 	return {
 		"name": c.name, "char_class": c.char_class, "level": c.level,
 		"hp": c.hp, "hp_max": c.hp_max, "sp": c.sp, "sp_max": c.sp_max,
 		"might": c.might, "intellect": c.intellect, "personality": c.personality,
 		"endurance": c.endurance, "speed": c.speed, "accuracy": c.accuracy,
 		"luck": c.luck, "condition": c.condition, "experience": c.experience,
-		"equipment": c.equipment.equipped_ids(),
+		"equipment": equip_out,
 		"known_spells": c.known_spells.duplicate(),
 		"statuses": _statuses_to_array(c.statuses),
 	}
@@ -134,15 +138,16 @@ static func _char_from_dict(d: Dictionary, resolver: Callable) -> Character:
 	_apply_equipment(c, d.get("equipment", {}), resolver)
 	return c
 
-# 裝備還原：只用 dict 的 value（item_id），slot 由 ItemDef.category 經 equip() 重新推導，
-# 故不受 JSON 把 key 變字串影響。無 resolver 時跳過（裝備留空）。
-static func _apply_equipment(c: Character, raw, resolver: Callable) -> void:
-	if not resolver.is_valid() or typeof(raw) != TYPE_DICTIONARY:
+# 裝備還原：value 為 inline ItemInstance dict，重建成實例後 equip；
+# slot 由 base_def().category 經 equip() 重新推導，故不受 JSON 把 key 變字串影響。
+# can_equip 需 ItemInstance.base_resolver 已設；未設則裝備留空。
+static func _apply_equipment(c: Character, raw, _resolver: Callable) -> void:
+	if typeof(raw) != TYPE_DICTIONARY:
 		return
 	for slot_key in raw:
-		var item: ItemDef = resolver.call(String(raw[slot_key]))
-		if item != null and c.equipment.can_equip(item):
-			c.equipment.equip(item)
+		var inst := ItemInstance.from_dict(raw[slot_key])
+		if c.equipment.can_equip(inst):
+			c.equipment.equip(inst)
 
 static func _statuses_to_array(statuses: Array) -> Array:
 	var out: Array = []
@@ -158,14 +163,20 @@ static func _statuses_from_array(arr) -> Array[StatusEffect]:
 				out.append(StatusCatalog.from_data(int(d.get("kind", 0)), int(d.get("stat", -1)), int(d.get("amount", 0)), int(d.get("potency", 0)), int(d.get("remaining", 0))))
 	return out
 
-static func _inventory_to_array(inv: Inventory) -> Array:
+static func _inventory_to_dict(inv: Inventory) -> Dictionary:
 	if inv == null:
-		return []
-	return inv.stacks()
+		return {"stacks": [], "instances": []}
+	var insts: Array = []
+	for it in inv.instances():
+		insts.append(it.to_dict())
+	return {"stacks": inv.stacks(), "instances": insts}
 
-static func _inventory_from_array(arr) -> Inventory:
+static func _inventory_from_dict(raw) -> Inventory:
 	var inv := Inventory.new()
-	inv.load_stacks(arr)
+	if typeof(raw) == TYPE_DICTIONARY:
+		inv.load_stacks(raw.get("stacks", []))
+		for d in raw.get("instances", []):
+			inv.add_instance(ItemInstance.from_dict(d))
 	return inv
 
 static func _cleared_to_dict(cleared: Dictionary) -> Dictionary:

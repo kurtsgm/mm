@@ -11,9 +11,11 @@ func before_each():
 	_sys = SaveSystemScript.new()
 	add_child_autofree(_sys)
 	_sys.item_resolver = Callable(ItemCatalog, "get_item")
+	ItemInstance.base_resolver = Callable(ItemCatalog, "get_item")
 
 func after_each():
 	_sys.delete_slot(TEST_SLOT)
+	ItemInstance.base_resolver = Callable()
 
 func _gs() -> Node:
 	var g = GameStateScript.new()
@@ -29,8 +31,8 @@ func _save_with_items() -> SaveData:
 	var c := Character.new()
 	c.name = "Gerard"; c.might = 15; c.hp = 20; c.hp_max = 30
 	c.condition = Character.Condition.OK
-	c.equipment.equip(ItemCatalog.get_item("short_sword"))
-	c.equipment.equip(ItemCatalog.get_item("leather"))
+	var sword := ItemInstance.new(); sword.base_id = "short_sword"; c.equipment.equip(sword)
+	var leather := ItemInstance.new(); leather.base_id = "leather"; c.equipment.equip(leather)
 	var p := Party.new()
 	p.members = [c]
 	var inv := Inventory.new()

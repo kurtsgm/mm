@@ -32,6 +32,6 @@ func test_statuses_absent_is_empty():
 	var back := SaveSerializer.from_dict(raw)
 	assert_eq(back.party.members[0].statuses.size(), 0)
 
-func test_version_is_11():
-	assert_eq(SaveSerializer.VERSION, 11)
-	assert_eq(SaveSerializer.to_dict(_party_data())["version"], 11)
+func test_version_is_12():
+	assert_eq(SaveSerializer.VERSION, 12)
+	assert_eq(SaveSerializer.to_dict(_party_data())["version"], 12)
