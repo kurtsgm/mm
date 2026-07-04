@@ -15,6 +15,7 @@ godot --headless --path . --script res://tools/<name>.gd
 | `combat_sim_cli.gd` | 戰鬥模擬器 CLI：跑「遭遇 × 等級」難度表，輸出 markdown + csv 到 `docs/balance/`。 |
 | `progression_cli.gd` | 升級節奏模擬器 CLI：輸出 `docs/balance/progression.md`。 |
 | `quest_lint.gd` / `quest_lint_cli.gd` | 任務內容靜態驗證器（`/check-quest` 用）；交叉檢查 quests/dialogues/maps。 |
+| `loot_lint.gd` / `loot_lint_cli.gd` | 掉落內容一致性檢查：每 10 級帶至少一個 droppable base 覆蓋、unique 的 base_id 存在於掉落池。CLI 有問題退出碼 1。 |
 
 ## gen_parchment.gd — 羊皮 UI 貼圖生成器
 
