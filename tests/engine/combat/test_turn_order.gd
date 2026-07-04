@@ -6,6 +6,8 @@ class FakeCombatant:
 	func _init(s: int, t: String):
 		speed = s
 		tag = t
+	func effective_speed() -> int:
+		return speed
 
 func _tags(arr: Array) -> Array:
 	var out: Array = []

@@ -54,8 +54,8 @@ func party_attack(monster_index: int) -> Array:
 	if monster_index < 0 or monster_index >= living.size():
 		return events
 	var target: Monster = living[monster_index]
-	if CombatFormulas.roll_hit(actor.effective_accuracy(), target.speed, _rng):
-		var crit := CombatFormulas.roll_crit(actor.luck, _rng)
+	if CombatFormulas.roll_hit(actor.effective_accuracy(), target.effective_speed(), _rng):
+		var crit := CombatFormulas.roll_crit(actor.effective_luck(), _rng)
 		var dmg := CombatFormulas.roll_damage(actor.attack_power(), target.effective_armor(), false, crit, _rng)
 		target.hp -= dmg
 		target.statuses = StatusRules.cleared_on_hit(target.statuses)
@@ -82,8 +82,8 @@ func monster_act() -> Array:
 		return events
 	var target: Character = targets[_rng.randi_range(0, targets.size() - 1)]
 	var defending := _defending.has(target)
-	if CombatFormulas.roll_hit(actor.effective_accuracy(), target.speed, _rng):
-		var crit := CombatFormulas.roll_crit(actor.luck, _rng)
+	if CombatFormulas.roll_hit(actor.effective_accuracy(), target.effective_speed(), _rng):
+		var crit := CombatFormulas.roll_crit(actor.effective_luck(), _rng)
 		var dmg := CombatFormulas.roll_damage(actor.effective_attack(), target.armor_value(), defending, crit, _rng)
 		target.take_damage(dmg)
 		target.statuses = StatusRules.cleared_on_hit(target.statuses)

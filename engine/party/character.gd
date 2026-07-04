@@ -53,11 +53,40 @@ func take_damage(amount: int) -> void:
 	hp = maxi(hp - amount, 0)
 	damaged.emit(amount)
 
+# ItemStat.S → 對應的 Character base 欄位值
+func _base_attr(stat: int) -> int:
+	match stat:
+		ItemStat.S.MIGHT: return might
+		ItemStat.S.INTELLECT: return intellect
+		ItemStat.S.PERSONALITY: return personality
+		ItemStat.S.ENDURANCE: return endurance
+		ItemStat.S.SPEED: return speed
+		ItemStat.S.ACCURACY: return accuracy
+		ItemStat.S.LUCK: return luck
+		ItemStat.S.HP_MAX: return hp_max
+		ItemStat.S.SP_MAX: return sp_max
+		_: return 0
+
+func effective_attr(stat: int) -> int:
+	return _base_attr(stat) + equipment.total_stat(stat)
+
+func effective_speed() -> int:
+	return effective_attr(ItemStat.S.SPEED)
+
+func effective_luck() -> int:
+	return effective_attr(ItemStat.S.LUCK)
+
+func effective_hp_max() -> int:
+	return hp_max + equipment.total_stat(ItemStat.S.HP_MAX)
+
+func effective_sp_max() -> int:
+	return sp_max + equipment.total_stat(ItemStat.S.SP_MAX)
+
 func attack_power() -> int:
-	return might + equipment.total_attack() + StatusRules.stat_total(statuses, StatusEffect.Stat.ATTACK)
+	return effective_attr(ItemStat.S.MIGHT) + equipment.total_attack() + StatusRules.stat_total(statuses, StatusEffect.Stat.ATTACK)
 
 func armor_value() -> int:
-	return equipment.total_armor() + StatusRules.stat_total(statuses, StatusEffect.Stat.ARMOR) + CombatFormulas.defense_from_endurance(endurance)
+	return equipment.total_armor() + StatusRules.stat_total(statuses, StatusEffect.Stat.ARMOR) + CombatFormulas.defense_from_endurance(effective_attr(ItemStat.S.ENDURANCE))
 
 func effective_accuracy() -> int:
-	return accuracy + StatusRules.stat_total(statuses, StatusEffect.Stat.ACCURACY)
+	return effective_attr(ItemStat.S.ACCURACY) + StatusRules.stat_total(statuses, StatusEffect.Stat.ACCURACY)

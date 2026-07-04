@@ -37,6 +37,12 @@ func effective_armor() -> int:
 func effective_accuracy() -> int:
 	return accuracy + StatusRules.stat_total(statuses, StatusEffect.Stat.ACCURACY)
 
+func effective_speed() -> int:
+	return speed
+
+func effective_luck() -> int:
+	return luck
+
 static func from_def(def: MonsterDef) -> Monster:
 	var m := Monster.new()
 	m.monster_id = def.id

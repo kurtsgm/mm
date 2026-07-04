@@ -1,5 +1,16 @@
 extends GutTest
 
+# 檔案級 ItemInstance base resolver：以 _defs 註冊表回填 base_def。
+# 各 helper/test 註冊自己的 ItemDef 進 _defs，共用同一個 resolver（不逐測 inline 設）。
+var _defs := {}
+var _n := 0
+
+func before_all():
+	ItemInstance.base_resolver = func(id): return _defs.get(id, null)
+
+func after_all():
+	ItemInstance.base_resolver = Callable()
+
 func test_defaults_to_ok_alive_conscious():
 	var c := Character.new()
 	assert_eq(c.condition, Character.Condition.OK)
@@ -44,15 +55,17 @@ func test_holds_full_stat_block():
 	assert_eq(c.might, 18)
 	assert_eq(c.luck, 10)
 
-func _weapon(attack: int) -> ItemDef:
-	var d := ItemDef.new()
-	d.category = ItemDef.Category.WEAPON; d.attack = attack
-	return d
+func _weapon(attack: int) -> ItemInstance:
+	_n += 1; var id := "w%d" % _n
+	var d := ItemDef.new(); d.id = id; d.category = ItemDef.Category.WEAPON; d.attack = attack
+	_defs[id] = d
+	var it := ItemInstance.new(); it.base_id = id; return it
 
-func _armor(armor: int) -> ItemDef:
-	var d := ItemDef.new()
-	d.category = ItemDef.Category.ARMOR; d.armor = armor
-	return d
+func _armor(armor: int) -> ItemInstance:
+	_n += 1; var id := "a%d" % _n
+	var d := ItemDef.new(); d.id = id; d.category = ItemDef.Category.ARMOR; d.armor = armor
+	_defs[id] = d
+	var it := ItemInstance.new(); it.base_id = id; return it
 
 func test_attack_power_without_equipment_equals_might():
 	var c := Character.new()
@@ -106,10 +119,22 @@ func test_effective_accuracy_includes_status():
 
 func test_status_and_equipment_stack_on_attack():
 	var c := Character.new(); c.might = 10
-	var w := ItemDef.new(); w.category = ItemDef.Category.WEAPON; w.attack = 6
-	c.equipment.equip(w)
+	c.equipment.equip(_weapon(6))
 	c.statuses.append(StatusEffect.new(StatusEffect.Stat.ATTACK, 2, 2))
 	assert_eq(c.attack_power(), 18)   # 10 + 6 + 2
+
+# 詞綴 MIGHT 經 effective_attr 流入 attack_power；SPEED 詞綴流入 effective_speed。
+func test_affix_might_flows_into_attack_power():
+	var d := ItemDef.new(); d.id = "w_affix"; d.category = ItemDef.Category.WEAPON; d.attack = 5
+	_defs["w_affix"] = d
+	var c := Character.new()
+	c.might = 10; c.speed = 8; c.luck = 3
+	var it := ItemInstance.new(); it.base_id = "w_affix"
+	it.affixes = [{"id": "of_the_bear", "kind": 1, "mods": {ItemStat.S.MIGHT: 4}},
+		{"id": "of_haste", "kind": 1, "mods": {ItemStat.S.SPEED: 2}}]
+	c.equipment.equip(it)
+	assert_eq(c.attack_power(), 19)          # (10+4 might) + 5 attack
+	assert_eq(c.effective_speed(), 10)       # 8 + 2
 
 func test_take_damage_reduces_hp():
 	var c := Character.new()

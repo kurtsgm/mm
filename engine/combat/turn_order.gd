@@ -7,8 +7,8 @@ static func build(combatants: Array) -> Array:
 	for i in combatants.size():
 		indexed.append({"c": combatants[i], "i": i})
 	indexed.sort_custom(func(a, b):
-		if a["c"].speed != b["c"].speed:
-			return a["c"].speed > b["c"].speed
+		if a["c"].effective_speed() != b["c"].effective_speed():
+			return a["c"].effective_speed() > b["c"].effective_speed()
 		return a["i"] < b["i"])
 	var out: Array = []
 	for entry in indexed:
