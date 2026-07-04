@@ -237,11 +237,14 @@ func _start_combat_with_group(group: String) -> void:
 	_combat = CombatSystem.new(GameState.party, grp, rng)
 	_player.set_enabled(false)
 	GameState.message_log.push("遭遇怪物！")
-	_set_overworld_hud_visible(false)
+	_set_overworld_visible(false)
 	_combat_layer.begin(_combat, _camera)
 
-func _set_overworld_hud_visible(on: bool) -> void:
+# 大地圖呈現（HUD/小地圖/任務追蹤 + 會走動的怪 billboard）整批切換；戰鬥進出時呼叫。
+# 開戰即隱藏大地圖怪叢，避免與戰鬥顯示重複；FLED 結束恢復顯示，VICTORY 由 rebuild 移除被打的那叢。
+func _set_overworld_visible(on: bool) -> void:
 	_hud.visible = on
+	_monster_layer.visible = on
 	if _mini_map != null:
 		_mini_map.visible = on
 	if _quest_tracker != null:
@@ -291,7 +294,7 @@ func _on_combat_item_consumed(item_id: String) -> void:
 	GameState.inventory.remove(item_id, 1)
 
 func _on_combat_finished(result: int) -> void:
-	_set_overworld_hud_visible(true)
+	_set_overworld_visible(true)
 	if result == CombatSystem.Result.VICTORY:
 		_grant_rewards()
 		_grant_drops()
