@@ -1,7 +1,7 @@
 extends GutTest
 
 # 整合：城鎮每棟「可進入建築」與它的室內地圖要形成完整來回閉環。
-# 守住：外觀模型解析 / 室內存在且 10×10 / 室內出口連回 town 的衍生入口 / 室內有 from_town。
+# 守住：外觀模型解析 / 室內存在且 16×16 / 室內出口連回 town 的衍生入口 / 室內有 from_town。
 
 func _parse(path: String) -> MapData:
 	return MapImporter.parse(FileAccess.get_file_as_string(path))
@@ -24,8 +24,8 @@ func test_every_town_building_round_trips_with_its_interior():
 		assert_not_null(inner, "室內 %s 應可載入" % interior_id)
 		if inner == null:
 			continue
-		assert_eq(inner.width, 10, "%s 寬應為 10" % interior_id)
-		assert_eq(inner.height, 10, "%s 高應為 10" % interior_id)
+		assert_eq(inner.width, 16, "%s 寬應為 16" % interior_id)
+		assert_eq(inner.height, 16, "%s 高應為 16" % interior_id)
 		assert_true(inner.has_entry("from_town"), "%s 應有 from_town 入口" % interior_id)
 		var found_back := false
 		for cell in inner.links:

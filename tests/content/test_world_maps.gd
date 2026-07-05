@@ -40,12 +40,12 @@ func test_all_content_maps_are_local_size():
 
 func test_town_link_roundtrip():
 	var nw := _load("wild_nw")
-	assert_eq(nw.get_link(Vector2i(6, 6)), {"map": "town_oak", "entry": "gate"})
+	assert_eq(nw.get_link(Vector2i(9, 9)), {"map": "town_oak", "entry": "gate"})
 	assert_true(nw.has_entry("from_town"))
-	assert_eq(nw.get_entry("from_town"), {"pos": Vector2i(4, 6), "facing": GridDirection.Dir.NORTH})
+	assert_eq(nw.get_entry("from_town"), {"pos": Vector2i(7, 9), "facing": GridDirection.Dir.NORTH})
 	var town := _load("town_oak")
-	assert_eq(town.get_entry("gate"), {"pos": Vector2i(4, 7), "facing": GridDirection.Dir.NORTH})
-	assert_eq(town.get_link(Vector2i(4, 8)), {"map": "wild_nw", "entry": "from_town"})
+	assert_eq(town.get_entry("gate"), {"pos": Vector2i(7, 10), "facing": GridDirection.Dir.NORTH})
+	assert_eq(town.get_link(Vector2i(7, 11)), {"map": "wild_nw", "entry": "from_town"})
 
 func test_town_oak_uses_town_theme():
 	assert_eq(_load("town_oak").theme_id, "town")
@@ -57,13 +57,13 @@ func test_wilderness_maps_use_grassland_theme():
 func test_wild_nw_has_town_decoration():
 	var nw := _load("wild_nw")
 	assert_eq(nw.decorations.size(), 1)
-	assert_eq(nw.decorations[0]["pos"], Vector2i(6, 6))
+	assert_eq(nw.decorations[0]["pos"], Vector2i(9, 9))
 	assert_eq(nw.decorations[0]["model"], "town_oak_ext")
 
 func test_wild_ne_has_wandering_merchant():
 	var ne := _load("wild_ne")
-	assert_true(ne.has_vendor(Vector2i(4, 4)), "流浪商人在 (4,4)")
-	assert_eq(ne.get_vendor(Vector2i(4, 4))["id"], "wandering_merchant")
+	assert_true(ne.has_vendor(Vector2i(7, 7)), "流浪商人在 (7,7)")
+	assert_eq(ne.get_vendor(Vector2i(7, 7))["id"], "wandering_merchant")
 
 func _building_by_id(town: MapData, id: String) -> Dictionary:
 	for b in town.buildings:
@@ -81,11 +81,11 @@ func test_town_buildings_door_is_walkable_and_links_interior():
 	var town := _load("town_oak")
 	# 每間店的門那格 = 可走 + 連到自己的室內地圖；衍生回程入口存在
 	var cases := {
-		"oak_smithy": {"door": Vector2i(2, 2), "interior": "int_oak_smithy"},
-		"oak_temple": {"door": Vector2i(5, 2), "interior": "int_oak_temple"},
-		"oak_mage": {"door": Vector2i(7, 2), "interior": "int_oak_mage"},
-		"oak_general_store": {"door": Vector2i(2, 5), "interior": "int_oak_general"},
-		"oak_inn": {"door": Vector2i(7, 5), "interior": "int_oak_inn"},
+		"oak_smithy": {"door": Vector2i(5, 5), "interior": "int_oak_smithy"},
+		"oak_temple": {"door": Vector2i(8, 5), "interior": "int_oak_temple"},
+		"oak_mage": {"door": Vector2i(10, 5), "interior": "int_oak_mage"},
+		"oak_general_store": {"door": Vector2i(5, 8), "interior": "int_oak_general"},
+		"oak_inn": {"door": Vector2i(10, 8), "interior": "int_oak_inn"},
 	}
 	for id in cases:
 		var door: Vector2i = cases[id]["door"]
@@ -96,23 +96,23 @@ func test_town_buildings_door_is_walkable_and_links_interior():
 
 func test_town_building_footprint_tiles_are_walls():
 	var town := _load("town_oak")
-	# 鐵匠舖 [1,1,2,2] 除門 (2,2) 外都是牆
-	assert_eq(town.get_tile(Vector2i(1, 1)), MapData.TileType.WALL)
-	assert_eq(town.get_tile(Vector2i(2, 1)), MapData.TileType.WALL)
-	assert_eq(town.get_tile(Vector2i(1, 2)), MapData.TileType.WALL)
-	# 水井 (4,4) = 實心牆（紀念碑）
+	# 鐵匠舖 [4,4,2,2] 除門 (5,5) 外都是牆
 	assert_eq(town.get_tile(Vector2i(4, 4)), MapData.TileType.WALL)
+	assert_eq(town.get_tile(Vector2i(5, 4)), MapData.TileType.WALL)
+	assert_eq(town.get_tile(Vector2i(4, 5)), MapData.TileType.WALL)
+	# 水井 (7,7) = 實心牆（紀念碑）
+	assert_eq(town.get_tile(Vector2i(7, 7)), MapData.TileType.WALL)
 
 func test_town_oak_has_questgivers_and_no_combat():
 	var town := _load("town_oak")
-	assert_true(town.has_quest_giver(Vector2i(3, 7)), "守衛隊長在城門邊")
-	assert_eq(town.get_quest_giver(Vector2i(3, 7))["dialogue"], "qg_oak_guard")
-	assert_true(town.has_quest_giver(Vector2i(5, 5)), "瑪歌在廣場")
-	assert_eq(town.get_quest_giver(Vector2i(5, 5))["dialogue"], "qg_margo")
+	assert_true(town.has_quest_giver(Vector2i(6, 10)), "守衛隊長在城門邊")
+	assert_eq(town.get_quest_giver(Vector2i(6, 10))["dialogue"], "qg_oak_guard")
+	assert_true(town.has_quest_giver(Vector2i(8, 8)), "瑪歌在廣場")
+	assert_eq(town.get_quest_giver(Vector2i(8, 8))["dialogue"], "qg_margo")
 	assert_eq(town.encounters.size(), 0, "安全城鎮內不該有遭遇")
 
 func test_wild_sw_has_dream_wisp_encounter():
 	var sw := _load("wild_sw")
-	assert_true(sw.has_encounter(Vector2i(2, 2)), "夢魘妖遭遇在 (2,2)")
-	assert_eq(sw.get_encounter(Vector2i(2, 2)), "dw")
-	assert_ne(sw.get_encounter_uid(Vector2i(2, 2)), "", "遭遇需有持久 uid")
+	assert_true(sw.has_encounter(Vector2i(5, 5)), "夢魘妖遭遇在 (5,5)")
+	assert_eq(sw.get_encounter(Vector2i(5, 5)), "dw")
+	assert_ne(sw.get_encounter_uid(Vector2i(5, 5)), "", "遭遇需有持久 uid")

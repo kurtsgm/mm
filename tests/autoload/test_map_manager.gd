@@ -19,22 +19,22 @@ func test_load_by_id_loads_map_and_sets_id():
 	assert_eq(map.map_id, "wild_ne")
 	assert_eq(mm.current_map, map)
 	assert_gt(mm.current_map.width, 0)
-	assert_true(mm.current_map.has_encounter(Vector2i(2, 2)), "wild_ne (2,2) 應有遭遇")
+	assert_true(mm.current_map.has_encounter(Vector2i(5, 5)), "wild_ne (5,5) 應有遭遇")
 
 func test_enter_map_clears_given_encounters():
 	var mm = MapManagerScript.new()
 	add_child_autofree(mm)
-	var map := mm.enter_map("wild_ne", [Vector2i(2, 2)])
+	var map := mm.enter_map("wild_ne", [Vector2i(5, 5)])
 	assert_not_null(map)
 	assert_eq(map.map_id, "wild_ne")
-	assert_false(map.has_encounter(Vector2i(2, 2)), "已清座標不應再有遭遇")
+	assert_false(map.has_encounter(Vector2i(5, 5)), "已清座標不應再有遭遇")
 	assert_eq(mm.current_map, map)
 
 func test_enter_map_without_cleared_keeps_encounters():
 	var mm = MapManagerScript.new()
 	add_child_autofree(mm)
 	var map := mm.enter_map("wild_ne")
-	assert_true(map.has_encounter(Vector2i(2, 2)))
+	assert_true(map.has_encounter(Vector2i(5, 5)))
 
 func test_peek_map_loads_without_changing_current():
 	var mm = MapManagerScript.new()

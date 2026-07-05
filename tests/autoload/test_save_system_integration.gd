@@ -8,7 +8,7 @@ func after_each():
 func test_save_then_load_restores_global_state_and_emits_loaded():
 	GameState.gold = 321
 	GameState.current_map_id = "wild_ne"
-	GameState.player_pos = Vector2i(2, 1)
+	GameState.player_pos = Vector2i(5, 4)
 	GameState.player_facing = GridDirection.Dir.EAST
 	GameState.cleared_encounters = {}
 	assert_true(SaveSystem.save_to_slot(TEST_SLOT))
@@ -18,7 +18,7 @@ func test_save_then_load_restores_global_state_and_emits_loaded():
 	watch_signals(SaveSystem)
 	assert_true(SaveSystem.load_from_slot(TEST_SLOT))
 	assert_eq(GameState.gold, 321)
-	assert_eq(GameState.player_pos, Vector2i(2, 1))
+	assert_eq(GameState.player_pos, Vector2i(5, 4))
 	assert_eq(GameState.current_map_id, "wild_ne")
 	assert_signal_emitted(SaveSystem, "loaded")
 

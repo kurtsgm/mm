@@ -84,5 +84,5 @@ func test_quest_giver_accessors():
 	assert_eq(m.get_quest_giver(Vector2i(1, 1))["dialogue"], "qg_x")
 	assert_eq(m.get_quest_giver(Vector2i(0, 0)), {})
 
-func test_local_size_constant_is_10():
-	assert_eq(MapData.LOCAL_SIZE, 10, "每張 local map 邊長常數應為 10")
+func test_local_size_constant_is_16():
+	assert_eq(MapData.LOCAL_SIZE, 16, "每張 local map 邊長常數應為 16")
