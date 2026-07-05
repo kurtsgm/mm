@@ -3,7 +3,7 @@ extends CanvasLayer
 
 # 統一角色面板：status / items / spells 三分頁，取代舊 InventoryMenu / SpellMenu。
 # 版面比例式（參考 VendorOverlay）。輸入：[←→]分頁/道具左右欄 [Tab/Shift+Tab]切分頁 [1-6]換隊員 [↑↓]清單 [Enter]動作 [Esc]關。
-# C/I/M（開啟與直跳分頁）由 main.gd 處理（面板不攔 C/I/M，避免雙重處理）。
+# C/I/B（開啟與直跳分頁）由 main.gd 處理（面板不攔 C/I/B，避免雙重處理）。
 # 道具分頁：分頁與左右欄排成同一水平軸，←→ 連續貫穿、邊界外溢切分頁；Tab 則直接循環分頁。
 
 signal closed
@@ -502,7 +502,7 @@ func _rebuild_tabbar() -> void:
 	for c in _tabbar.get_children():
 		c.queue_free()
 		_tabbar.remove_child(c)
-	var names := ["狀態 (C)", "道具 (I)", "法術 (M)"]
+	var names := ["狀態 (C)", "道具 (I)", "法術 (B)"]
 	for i in names.size():
 		var t := Label.new()
 		t.text = names[i]

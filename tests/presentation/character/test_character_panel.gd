@@ -182,7 +182,7 @@ func test_tab_labels_show_hotkeys():
 	var panel := _panel(2)
 	assert_true(_find_label_containing(panel, "道具").text.contains("(I)"), "道具分頁標籤顯示 (I)")
 	assert_true(_find_label_containing(panel, "狀態").text.contains("(C)"), "狀態分頁標籤顯示 (C)")
-	assert_true(_find_label_containing(panel, "法術").text.contains("(M)"), "法術分頁標籤顯示 (M)")
+	assert_true(_find_label_containing(panel, "法術").text.contains("(B)"), "法術分頁標籤顯示 (B)")
 
 func _find_label_containing(n: Node, sub: String) -> Label:
 	if n is Label and (n as Label).text.contains(sub):

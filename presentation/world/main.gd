@@ -38,6 +38,7 @@ var _dialogue_overlay: DialogueOverlay
 var _vendor_overlay: VendorOverlay
 var _travel_overlay: TravelOverlay
 var _quest_log: QuestLog
+var _world_map: WorldMapScreen
 var _quest_toast: QuestToast
 var _quest_tracker: QuestTracker
 var _scene_pos: Vector2i
@@ -116,7 +117,11 @@ func _ready() -> void:
 	_quest_tracker = QuestTracker.new()
 	add_child(_quest_tracker)
 
-	_menus = [_save_menu, _character_panel, _quest_log]
+	_world_map = WorldMapScreen.new()
+	add_child(_world_map)
+	_world_map.closed.connect(_on_menu_closed)
+
+	_menus = [_save_menu, _character_panel, _quest_log, _world_map]
 
 	_player.setup(_world_grid, map.start_pos, map.start_facing)
 
@@ -506,10 +511,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		_character_tab_key(CharacterPanel.Tab.STATUS)
 	elif event.keycode == KEY_I:
 		_character_tab_key(CharacterPanel.Tab.ITEMS)
-	elif event.keycode == KEY_M:
+	elif event.keycode == KEY_B:
 		_character_tab_key(CharacterPanel.Tab.SPELLS)
 	elif event.keycode == KEY_J:
 		_toggle_menu(_quest_log)
+	elif event.keycode == KEY_M:
+		_toggle_menu(_world_map)
 
 func _toggle_menu(menu) -> void:
 	if menu.is_open():
@@ -521,8 +528,8 @@ func _toggle_menu(menu) -> void:
 	_player.set_enabled(false)
 	menu.open()
 
-# C/I/M：未開→開到該分頁；已開→切到該分頁；已開且已在該分頁→關閉。
-# 面板不自行攔 C/I/M（避免與此處雙重處理），但會攔 ←→/Tab/↑↓/Enter/Esc。
+# C/I/B：未開→開到該分頁；已開→切到該分頁；已開且已在該分頁→關閉。
+# 面板不自行攔 C/I/B（避免與此處雙重處理），但會攔 ←→/Tab/↑↓/Enter/Esc。
 func _character_tab_key(tab: int) -> void:
 	if _character_panel.is_open():
 		if _character_panel.current_tab() == tab:
