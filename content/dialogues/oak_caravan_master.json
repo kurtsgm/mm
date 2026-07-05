@@ -1,0 +1,18 @@
+{
+  "id": "oak_caravan_master",
+  "start": "root",
+  "nodes": {
+    "root": {
+      "text": "車隊長靠在貨車旁，用炭筆在木板上勾著路線。「要搭車？橡境這幾條道，我閉著眼都走得。」",
+      "choices": [
+        { "text": "「毒澤那頭有落腳處嗎？」", "require": {"flag": "travel_se_camp", "is": false},
+          "effects": [{"op": "set_flag", "flag": "travel_se_camp"}], "goto": "unlocked" },
+        { "text": "「沒事，看看。」", "goto": null }
+      ]
+    },
+    "unlocked": {
+      "text": "車隊長在木板上多畫了一個叉：「毒澤東緣有個獵人營地，車能到。想去，就到旁邊的車隊點跟夥計說一聲。」",
+      "choices": [ { "text": "…", "goto": null } ]
+    }
+  }
+}

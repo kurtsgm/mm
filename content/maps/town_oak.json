@@ -31,9 +31,12 @@
     {"type": "questgiver", "pos": [8, 8], "dialogue": "qg_margo", "sprite": "margo"},
     {"type": "questgiver", "pos": [7, 6], "dialogue": "qg_oak_lord", "sprite": "oak_lord"},
     {"type": "questgiver", "pos": [9, 6], "dialogue": "qg_oak_taxman", "sprite": "oak_taxman"},
-    {"type": "scene", "pos": [7, 9], "dialogue": "oak_inquisitor_omen", "require": {"quest_done": "oak_levy"}, "once": true}
+    {"type": "scene", "pos": [7, 9], "dialogue": "oak_inquisitor_omen", "require": {"quest_done": "oak_levy"}, "once": true},
+    {"type": "travel", "pos": [10, 11], "node": "oak_caravan"},
+    {"type": "questgiver", "pos": [11, 11], "dialogue": "oak_caravan_master", "sprite": "oak_guard"}
   ],
   "entries": {
-    "gate": {"pos": [7, 10], "facing": "N"}
+    "gate": {"pos": [7, 10], "facing": "N"},
+    "caravan": {"pos": [9, 11], "facing": "E"}
   }
 }

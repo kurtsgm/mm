@@ -1,0 +1,6 @@
+{
+  "nodes": [
+    { "id": "oak_caravan", "name": "橡鎮車隊點", "continent": "oak", "map": "town_oak", "entry": "caravan", "unlock": "" },
+    { "id": "oak_se_camp", "name": "毒澤營地", "continent": "oak", "map": "wild_se", "entry": "camp", "unlock": "travel_se_camp" }
+  ]
+}
