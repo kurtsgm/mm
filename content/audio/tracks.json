@@ -1,0 +1,6 @@
+{
+  "oak_wild": { "path": "res://content/audio/placeholder/bgm_oak_wild.wav" },
+  "oak_town": { "path": "res://content/audio/placeholder/bgm_oak_town.wav" },
+  "interior": { "path": "res://content/audio/placeholder/bgm_interior.wav" },
+  "combat":   { "path": "res://content/audio/placeholder/bgm_combat.wav" }
+}
