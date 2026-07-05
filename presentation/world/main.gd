@@ -36,6 +36,7 @@ var _chest_prompt: ChestPrompt
 var _chest_pos: Vector2i
 var _dialogue_overlay: DialogueOverlay
 var _vendor_overlay: VendorOverlay
+var _travel_overlay: TravelOverlay
 var _quest_log: QuestLog
 var _quest_toast: QuestToast
 var _quest_tracker: QuestTracker
@@ -98,6 +99,11 @@ func _ready() -> void:
 	add_child(_vendor_overlay)
 	_vendor_overlay.transacted.connect(_on_vendor_transacted)
 	_vendor_overlay.finished.connect(_on_vendor_finished)
+
+	_travel_overlay = TravelOverlay.new()
+	add_child(_travel_overlay)
+	_travel_overlay.travel_chosen.connect(_on_travel_chosen)
+	_travel_overlay.finished.connect(_on_travel_finished)
 
 	_quest_log = QuestLog.new()
 	add_child(_quest_log)
@@ -170,6 +176,8 @@ func _on_entered_cell(global: Vector2i) -> void:
 	if _try_scene(local):
 		return
 	if _try_vendor(local):
+		return
+	if _try_travel(local):
 		return
 	var text := TileMessages.for_tile(MapManager.current_map.get_tile(local))
 	if text != "":
@@ -419,6 +427,23 @@ func _on_vendor_finished() -> void:
 	_player.set_enabled(true)
 	_hud.refresh()
 
+# 踩到 travel 格 → 開旅行選單（比照 _try_vendor：停玩家、開 overlay、短路後續觸發）。
+func _try_travel(pos: Vector2i) -> bool:
+	var map := MapManager.current_map
+	if not map.has_travel(pos):
+		return false
+	var node_id := String(map.get_travel(pos)["node"])
+	_player.set_enabled(false)
+	_travel_overlay.open(TravelCatalog.unlocked_destinations(GameState, node_id))
+	return true
+
+func _on_travel_finished() -> void:
+	_player.set_enabled(true)
+
+func _on_travel_chosen(node: Dictionary) -> void:
+	await _enter_via_link(String(node["map"]), String(node["entry"]))
+	# _enter_via_link 已推「你來到…」訊息並重新啟用玩家
+
 func _grant_rewards() -> void:
 	var total_xp := 0
 	var total_gold := 0
@@ -473,8 +498,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		return  # 戰鬥中禁用選單
 	if _chest_prompt.is_open():
 		return  # 開箱確認中，不開其他選單
-	if _dialogue_overlay.is_open() or _vendor_overlay.is_open():
-		return  # 對話/商店中，不開其他選單
+	if _dialogue_overlay.is_open() or _vendor_overlay.is_open() or _travel_overlay.is_open():
+		return  # 對話/商店/旅行選單中，不開其他選單
 	if event.keycode == KEY_TAB:
 		_toggle_menu(_save_menu)
 	elif event.keycode == KEY_C:
