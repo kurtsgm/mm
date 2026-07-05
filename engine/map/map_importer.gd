@@ -35,6 +35,7 @@ static func parse(json_text: String) -> MapData:
 	map.theme_id = theme if theme != "" else "default"
 	map.display_name = String(root.get("name", ""))
 	map.continent = String(root.get("continent", ""))
+	map.bgm = String(root.get("bgm", ""))
 	map.neighbors = _parse_neighbors(root.get("neighbors", {}))
 
 	var entries := _parse_entries(root.get("entries", {}))

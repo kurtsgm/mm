@@ -1,6 +1,7 @@
 {
   "name": "鐵匠舖",
   "continent": "oak",
+  "bgm": "interior",
   "theme": "town",
   "grid": [
     "################",

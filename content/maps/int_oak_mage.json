@@ -1,6 +1,7 @@
 {
   "name": "橡鎮法師塔",
   "continent": "oak",
+  "bgm": "interior",
   "theme": "town",
   "grid": [
     "################",

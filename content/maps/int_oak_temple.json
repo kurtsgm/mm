@@ -1,6 +1,7 @@
 {
   "name": "橡鎮神殿",
   "continent": "oak",
+  "bgm": "interior",
   "theme": "town",
   "grid": [
     "################",

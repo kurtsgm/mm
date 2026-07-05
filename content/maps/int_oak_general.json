@@ -1,6 +1,7 @@
 {
   "name": "橡鎮雜貨舖",
   "continent": "oak",
+  "bgm": "interior",
   "theme": "town",
   "grid": [
     "################",

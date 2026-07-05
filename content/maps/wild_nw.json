@@ -1,6 +1,7 @@
 {
   "name": "西北野",
   "continent": "oak",
+  "bgm": "oak_wild",
   "theme": "grassland",
   "grid": [
     "................",

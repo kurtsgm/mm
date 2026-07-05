@@ -1,6 +1,7 @@
 {
   "name": "旅店「醉橡」",
   "continent": "oak",
+  "bgm": "interior",
   "theme": "town",
   "grid": [
     "################",

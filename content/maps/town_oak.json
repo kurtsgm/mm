@@ -1,6 +1,7 @@
 {
   "name": "橡鎮",
   "continent": "oak",
+  "bgm": "oak_town",
   "theme": "town",
   "grid": [
     "################",

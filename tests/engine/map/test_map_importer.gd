@@ -252,6 +252,14 @@ func test_continent_defaults_to_empty() -> void:
 	var m := MapImporter.parse('{"grid":["@."]}')
 	assert_eq(m.continent, "")
 
+func test_parses_bgm_field() -> void:
+	var m := MapImporter.parse('{"grid":["@."],"bgm":"oak_wild"}')
+	assert_eq(m.bgm, "oak_wild")
+
+func test_bgm_defaults_to_empty() -> void:
+	var m := MapImporter.parse('{"grid":["@."]}')
+	assert_eq(m.bgm, "")
+
 func test_parses_travel_entity() -> void:
 	var m := MapImporter.parse('{"grid":["@..."],"entities":[{"type":"travel","pos":[2,0],"node":"oak_caravan"}]}')
 	assert_true(m.has_travel(Vector2i(2, 0)))
