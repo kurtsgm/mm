@@ -303,6 +303,7 @@ func _animate_from(before: Dictionary) -> void:
 	for mon in before:
 		var delta: int = before[mon] - mon.hp
 		if delta > 0:
+			AudioManager.play_sfx("hit")
 			_stage.flash(mon)
 			_enemy.flash_damage(mon, delta)
 

@@ -114,6 +114,7 @@ func _ready() -> void:
 	_quest_toast = QuestToast.new()
 	add_child(_quest_toast)
 	GameState.quest_event.connect(_quest_toast.show_notice)
+	GameState.quest_event.connect(_on_quest_event_sfx)
 	_quest_tracker = QuestTracker.new()
 	add_child(_quest_tracker)
 
@@ -130,6 +131,7 @@ func _ready() -> void:
 	GameState.player_facing = map.start_facing
 	GameState.mark_explored(START_MAP_ID, map.start_pos, map.width, map.height)
 	_mini_map.refresh()
+	AudioManager.play_map_bgm(MapManager.current_map.bgm)
 
 func _setup_environment() -> void:
 	# 背景天空：真實 HDRI 全景（Poly Haven, CC0）。換別張改 SKY_PANORAMA。
@@ -195,6 +197,7 @@ func _recenter_to(map_id: String, local: Vector2i, global: Vector2i) -> void:
 	_rebuild_world()
 	_player.rebase(delta, _world_grid)
 	GameState.current_map_id = map_id
+	AudioManager.play_map_bgm(MapManager.current_map.bgm)   # 同曲時內部 no-op，無縫跨圖不重啟
 
 func _on_facing_changed(facing: int) -> void:
 	GameState.player_facing = facing
@@ -228,6 +231,7 @@ func _enter_via_link(map_id: String, entry_name: String) -> void:
 	_rebuild_world()
 	_player.setup(_world_grid, pos, facing)
 	GameState.current_map_id = map_id
+	AudioManager.play_map_bgm(MapManager.current_map.bgm)
 	GameState.player_pos = pos
 	GameState.player_facing = facing
 	GameState.mark_explored(map_id, pos, MapManager.current_map.width, MapManager.current_map.height)
@@ -251,6 +255,7 @@ func _start_combat_with_group(group: String) -> void:
 	_player.set_enabled(false)
 	GameState.message_log.push("遭遇怪物！")
 	_set_overworld_visible(false)
+	AudioManager.push_combat_bgm()
 	_combat_layer.begin(_combat, _camera)
 
 # 大地圖呈現（HUD/小地圖/任務追蹤 + 會走動的怪 billboard）整批切換；戰鬥進出時呼叫。
@@ -307,6 +312,10 @@ func _on_combat_item_consumed(item_id: String) -> void:
 	GameState.inventory.remove(item_id, 1)
 
 func _on_combat_finished(result: int) -> void:
+	if result == CombatSystem.Result.DEFEAT:
+		AudioManager.stop_music()
+	else:
+		AudioManager.pop_combat_bgm()
 	_set_overworld_visible(true)
 	if result == CombatSystem.Result.VICTORY:
 		_grant_rewards()
@@ -317,6 +326,7 @@ func _on_combat_finished(result: int) -> void:
 		_overworld_monsters.remove(_combat_uid)
 		_monster_layer.rebuild(_overworld_monsters.live())
 		_write_monster_state(_overworld_monsters.to_save())
+		AudioManager.play_sfx("victory")
 		GameState.message_log.push("戰鬥勝利！")
 		# 戰鬥身分錨在原生 (origin_map, home_local)；怪可能從鄰圖被引來、或在別圖被打死。
 		# 只有「原生圖＝玩家所在圖 且 home_local＝玩家格」才在當下提示開箱（引離/跨界擊殺不遠端開箱）。
@@ -328,6 +338,7 @@ func _on_combat_finished(result: int) -> void:
 		GameState.message_log.push("你們逃離了戰鬥。")
 		_player.set_enabled(true)
 	else:  # DEFEAT
+		AudioManager.play_sfx("defeat")
 		GameState.message_log.push("全隊覆滅……")
 		_show_game_over()
 	_hud.refresh()
@@ -349,6 +360,7 @@ func _on_chest_confirmed() -> void:
 	var map := MapManager.current_map
 	var chest := map.get_object(_chest_pos)
 	var res := ChestLoot.grant(chest, GameState.inventory)
+	AudioManager.play_sfx("chest")
 	var gold := int(res["gold"])
 	GameState.gold += gold
 	GameState.mark_object_opened(map.map_id, _chest_pos)
@@ -412,6 +424,7 @@ func _try_vendor(pos: Vector2i) -> bool:
 	return true
 
 func _on_dialogue_advanced(descriptions: Array) -> void:
+	AudioManager.play_sfx("dialogue")
 	for d in descriptions:
 		GameState.message_log.push(String(d))
 	_hud.refresh()
@@ -468,6 +481,7 @@ func _grant_rewards() -> void:
 			leveled = true
 	GameState.gold += total_gold
 	if leveled:
+		AudioManager.play_sfx("levelup")
 		GameState.message_log.push("有隊員升級了！")
 
 func _combat_source() -> int:
@@ -520,12 +534,14 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _toggle_menu(menu) -> void:
 	if menu.is_open():
+		AudioManager.play_sfx("menu_close")
 		menu.close()
 		return
 	for other in _menus:
 		if other != menu and other.is_open():
 			return  # 另一選單開著時不切換
 	_player.set_enabled(false)
+	AudioManager.play_sfx("menu_open")
 	menu.open()
 
 # C/I/B：未開→開到該分頁；已開→切到該分頁；已開且已在該分頁→關閉。
@@ -547,6 +563,9 @@ func _on_menu_closed() -> void:
 	if not _transitioning:
 		_player.set_enabled(true)
 	_hud.refresh()
+
+func _on_quest_event_sfx(_e) -> void:
+	AudioManager.play_sfx("dialogue")
 
 func _on_quests_changed() -> void:
 	_quest_tracker.refresh()
@@ -583,4 +602,5 @@ func _on_loaded() -> void:
 	GameState.retrack()
 	_quest_tracker.refresh()
 	_hud.refresh()
+	AudioManager.play_map_bgm(MapManager.current_map.bgm)
 	GameState.message_log.push("讀檔完成。")
