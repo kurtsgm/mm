@@ -50,3 +50,12 @@ func test_unknown_ids_do_not_crash() -> void:
 	m.play_map_bgm("nope")
 	m.play_sfx("nope")
 	assert_eq(m.current_track_id(), "nope")
+
+func test_rapid_double_switch_keeps_music_playing() -> void:
+	var m = _mgr()
+	m.play_map_bgm("oak_town")
+	m.play_map_bgm("oak_wild")  # 換圖切曲：播放中的 player 開始淡出（帶 stop callback）
+	m.push_combat_bgm()  # crossfade 視窗內第二次切換：重用淡出中的 player 當 incoming
+	await wait_seconds(1.3)  # 讓殘留淡出 tween 跑完
+	assert_eq(m.current_track_id(), "combat")
+	assert_true(m._active.playing, "殘留淡出 tween 不得停掉新啟用的 player")

@@ -14,6 +14,7 @@ var _map_track := ""
 var _in_combat := false
 var _sfx_pool: Array = []
 var _sfx_next := 0
+var _fades := {}  # AudioStreamPlayer -> Tween（進行中的 fade，切換時先殺掉殘留）
 
 func _ready() -> void:
 	_ensure_buses()
@@ -66,6 +67,8 @@ func pop_combat_bgm() -> void:
 func stop_music() -> void:
 	_in_combat = false
 	_current_track = ""
+	_kill_fade(_music_a)
+	_kill_fade(_music_b)
 	_music_a.stop()
 	_music_b.stop()
 
@@ -86,6 +89,8 @@ func _switch_to(track_id: String) -> void:
 	var outgoing := _active
 	var incoming := _music_b if _active == _music_a else _music_a
 	_active = incoming
+	_kill_fade(incoming)  # 殺掉上一輪殘留的淡出（含 stop callback），避免停掉新啟用的 player
+	_kill_fade(outgoing)
 	incoming.stop()
 	incoming.stream = stream
 	if stream != null:
@@ -93,10 +98,18 @@ func _switch_to(track_id: String) -> void:
 		incoming.play()
 		var t := create_tween()
 		t.tween_property(incoming, "volume_db", 0.0, CROSSFADE)
+		_fades[incoming] = t
 	if outgoing.playing:
 		var t2 := create_tween()
 		t2.tween_property(outgoing, "volume_db", SILENT_DB, CROSSFADE)
 		t2.tween_callback(outgoing.stop)
+		_fades[outgoing] = t2
+
+func _kill_fade(p: AudioStreamPlayer) -> void:
+	var t: Variant = _fades.get(p)
+	if t is Tween and (t as Tween).is_valid():
+		(t as Tween).kill()
+	_fades.erase(p)
 
 func _on_music_finished(p: AudioStreamPlayer) -> void:
 	# 佔位/一般曲用 finished 重播成 loop（不依賴 import loop 參數）
