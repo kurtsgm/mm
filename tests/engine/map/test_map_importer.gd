@@ -243,3 +243,20 @@ func test_questgiver_sprite_defaults_empty():
 	var json := '{"grid":["@."],"entities":[{"type":"questgiver","pos":[1,0],"dialogue":"qg_x"}]}'
 	var map := MapImporter.parse(json)
 	assert_eq(map.quest_givers[0]["sprite"], "", "缺 sprite → 空字串")
+
+func test_parses_continent_field() -> void:
+	var m := MapImporter.parse('{"grid":["@."],"continent":"oak"}')
+	assert_eq(m.continent, "oak")
+
+func test_continent_defaults_to_empty() -> void:
+	var m := MapImporter.parse('{"grid":["@."]}')
+	assert_eq(m.continent, "")
+
+func test_parses_travel_entity() -> void:
+	var m := MapImporter.parse('{"grid":["@..."],"entities":[{"type":"travel","pos":[2,0],"node":"oak_caravan"}]}')
+	assert_true(m.has_travel(Vector2i(2, 0)))
+	assert_eq(String(m.get_travel(Vector2i(2, 0))["node"]), "oak_caravan")
+	assert_false(m.has_travel(Vector2i(1, 0)))
+
+func test_travel_entity_without_node_fails_parse() -> void:
+	assert_null(MapImporter.parse('{"grid":["@."],"entities":[{"type":"travel","pos":[1,0]}]}'))

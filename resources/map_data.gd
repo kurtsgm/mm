@@ -22,6 +22,8 @@ const LOCAL_SIZE := 16   # 每張 local map 一律 LOCAL_SIZE × LOCAL_SIZE（�
 @export var objects: Array = []            # [{ pos:Vector2i, items:Array, gold:int, model:String }]
 @export var scenes: Array = []             # [{ pos:Vector2i, dialogue:String, require, once:bool }]
 @export var vendors: Array = []            # [{ pos:Vector2i, id:String }]
+@export var continent: String = ""         # 所屬大陸 id（content/world/continents.json）
+@export var travels: Array = []            # [{ pos:Vector2i, node:String }]
 @export var quest_givers: Array = []       # [{ pos:Vector2i, dialogue:String, sprite:String }]
 @export var buildings: Array = []          # [{ id:String, rect:[x,y,w,h], door:Vector2i, facing:int, interior:String, model:String }]
 
@@ -94,6 +96,18 @@ func get_vendor(pos: Vector2i) -> Dictionary:
 	for v in vendors:
 		if v["pos"] == pos:
 			return v
+	return {}
+
+func has_travel(pos: Vector2i) -> bool:
+	for t in travels:
+		if t["pos"] == pos:
+			return true
+	return false
+
+func get_travel(pos: Vector2i) -> Dictionary:
+	for t in travels:
+		if t["pos"] == pos:
+			return t
 	return {}
 
 func has_quest_giver(pos: Vector2i) -> bool:

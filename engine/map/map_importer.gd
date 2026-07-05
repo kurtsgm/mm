@@ -34,6 +34,7 @@ static func parse(json_text: String) -> MapData:
 	var theme := String(root.get("theme", ""))
 	map.theme_id = theme if theme != "" else "default"
 	map.display_name = String(root.get("name", ""))
+	map.continent = String(root.get("continent", ""))
 	map.neighbors = _parse_neighbors(root.get("neighbors", {}))
 
 	var entries := _parse_entries(root.get("entries", {}))
@@ -49,6 +50,7 @@ static func parse(json_text: String) -> MapData:
 	map.objects = entities["objects"]
 	map.scenes = entities["scenes"]
 	map.vendors = entities["vendors"]
+	map.travels = entities["travels"]
 	map.quest_givers = entities["quest_givers"]
 	map.buildings = entities["buildings"]
 	return map
@@ -98,6 +100,7 @@ static func _parse_entities(arr, width: int, height: int):
 	var objects := []
 	var scenes := []
 	var vendors := []
+	var travels := []
 	var quest_givers := []
 	var buildings := []
 	var tile_overrides := {}   # Vector2i -> TileType（建築蓋牆/門地板，事後套用到 tiles）
@@ -172,13 +175,17 @@ static func _parse_entities(arr, width: int, height: int):
 				if not e.has("id"):
 					return null
 				vendors.append({"pos": pos, "id": String(e["id"])})
+			"travel":
+				if not e.has("node"):
+					return null
+				travels.append({"pos": pos, "node": String(e["node"])})
 			"questgiver":
 				if not e.has("dialogue"):
 					return null
 				quest_givers.append({"pos": pos, "dialogue": String(e["dialogue"]), "sprite": String(e.get("sprite", ""))})
 			_:
 				return null
-	return {"encounters": encounters, "encounter_uids": encounter_uids, "links": links, "decorations": decorations, "objects": objects, "scenes": scenes, "vendors": vendors, "quest_givers": quest_givers, "buildings": buildings, "tile_overrides": tile_overrides, "extra_entries": extra_entries}
+	return {"encounters": encounters, "encounter_uids": encounter_uids, "links": links, "decorations": decorations, "objects": objects, "scenes": scenes, "vendors": vendors, "travels": travels, "quest_givers": quest_givers, "buildings": buildings, "tile_overrides": tile_overrides, "extra_entries": extra_entries}
 
 # `building` entity 展開：蓋牆/門地板（tile_overrides）、門→室內 link、衍生 <id>_out 入口、
 # 選擇性 model 裝飾、記錄到 buildings。違規 → false（呼叫端回 null）。
