@@ -15,6 +15,8 @@ var _in_combat := false
 var _sfx_pool: Array = []
 var _sfx_next := 0
 var _fades := {}  # AudioStreamPlayer -> Tween（進行中的 fade，切換時先殺掉殘留）
+var _settings_path := "user://settings.cfg"
+var _volumes := { "Master": 1.0, "Music": 1.0, "SFX": 1.0 }
 
 func _ready() -> void:
 	_ensure_buses()
@@ -25,6 +27,7 @@ func _ready() -> void:
 	_active = _music_a
 	for i in SFX_POOL_SIZE:
 		_sfx_pool.append(_make_player("SFX"))
+	_load_settings()
 
 func _make_player(bus_name: String) -> AudioStreamPlayer:
 	var p := AudioStreamPlayer.new()
@@ -121,3 +124,33 @@ func _load_stream(entry: Dictionary) -> AudioStream:
 	if path == "" or not ResourceLoader.exists(path):
 		return null
 	return load(path) as AudioStream
+
+func set_volume(bus_name: String, v: float) -> void:
+	_apply_volume(bus_name, clampf(v, 0.0, 1.0))
+	_save_settings()
+
+func volume(bus_name: String) -> float:
+	return float(_volumes.get(bus_name, 1.0))
+
+func _apply_volume(bus_name: String, v: float) -> void:
+	if not _volumes.has(bus_name):
+		return
+	_volumes[bus_name] = v
+	var idx := AudioServer.get_bus_index(bus_name)
+	if idx != -1:
+		AudioServer.set_bus_volume_db(idx, linear_to_db(maxf(v, 0.0001)))
+		AudioServer.set_bus_mute(idx, v <= 0.0)
+
+func _load_settings() -> void:
+	var cfg := ConfigFile.new()
+	if cfg.load(_settings_path) != OK:
+		return
+	for b in _volumes.keys():
+		_apply_volume(b, clampf(float(cfg.get_value("audio", b, _volumes[b])), 0.0, 1.0))
+
+func _save_settings() -> void:
+	var cfg := ConfigFile.new()
+	cfg.load(_settings_path)  # 保留他區段；失敗＝新檔
+	for b in _volumes.keys():
+		cfg.set_value("audio", b, _volumes[b])
+	cfg.save(_settings_path)
