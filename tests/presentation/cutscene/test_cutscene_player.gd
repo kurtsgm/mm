@@ -41,3 +41,35 @@ func test_is_playing_true_during_play():
 	p.play(_data([ { "type": "wait", "duration": 0.3 } ]))
 	await get_tree().process_frame
 	assert_true(p.is_playing())
+
+func test_fade_black_sets_overlay_opaque():
+	var p := _player(FakeCtx.new())
+	await p.play(_data([ { "type": "fade", "to": "black", "duration": 0.05 } ]))
+	assert_almost_eq(p._fade_rect.color.a, 1.0, 0.01)
+
+func test_fade_clear_sets_overlay_transparent():
+	var p := _player(FakeCtx.new())
+	await p.play(_data([
+		{ "type": "fade", "to": "black", "duration": 0.05 },
+		{ "type": "fade", "to": "clear", "duration": 0.05 },
+	]))
+	assert_almost_eq(p._fade_rect.color.a, 0.0, 0.01)
+
+func test_cg_sets_texture_then_finishes():
+	var p := _player(FakeCtx.new())
+	await p.play(_data([ { "type": "cg", "image": "nav_echo_relic", "hold": 0.05 } ]))
+	assert_not_null(p._cg_rect.texture)
+
+func test_title_card_shows_content():
+	var p := _player(FakeCtx.new())
+	await p.play(_data([ { "type": "title_card", "title": "第一章", "subtitle": "邊陲", "hold": 0.05 } ]))
+	# 播完標題卡不再可見，但曾設過內容（用 title label 驗）。
+	assert_eq(p._title_card._title_label.text, "第一章")
+
+func test_shake_restores_camera_transform():
+	var p := _player(FakeCtx.new())
+	var before := p._camera.position
+	await p.play(_data([ { "type": "shake", "intensity": 4.0, "duration": 0.05 } ]))
+	assert_almost_eq(p._camera.position.x, before.x, 0.001)
+	assert_almost_eq(p._camera.position.y, before.y, 0.001)
+	assert_almost_eq(p._camera.position.z, before.z, 0.001)
