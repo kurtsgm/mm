@@ -15,6 +15,7 @@ enabled=PackedStringArray("res://addons/gut/plugin.cfg")
 MapManager="*res://autoload/map_manager.gd"
 GameState="*res://autoload/game_state.gd"
 SaveSystem="*res://autoload/save_system.gd"
+AudioManager="*res://autoload/audio_manager.gd"
 
 [display]
 
