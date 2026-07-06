@@ -32,3 +32,6 @@ mono_crash.*.json
 
 # 產出報表的 Godot import 旁生檔（非遊戲資產）
 docs/balance/*.import
+
+# 測試用暫存 fixture（cutscene catalog 測試每跑產生）
+tests/presentation/cutscene/_tmp/

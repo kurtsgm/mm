@@ -412,10 +412,11 @@ func _play_scene_cutscene(pos: Vector2i, scene: Dictionary) -> void:
 	if data == null:
 		GameState.message_log.push("（過場 %s 遺失）" % scene["cutscene"])
 		return
+	var map_id := MapManager.current_map.map_id   # await 前捕捉：若未來過場改地圖，once 仍標在原圖
 	_player.set_enabled(false)
 	await _cutscene_player.play(data)
 	if bool(scene.get("once", false)):
-		GameState.mark_scene_triggered(MapManager.current_map.map_id, pos)
+		GameState.mark_scene_triggered(map_id, pos)
 	GameState.refresh_collect()
 	_player.set_enabled(true)
 	_hud.refresh()

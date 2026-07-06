@@ -39,7 +39,7 @@ func _ready() -> void:
 
 func set_content(title: String, subtitle: String) -> void:
 	if _title_label == null:
-		# 尚未 _ready（純資料測試前設值）→ 進 tree 後補；此處直接建最小節點避免 null。
+		# 尚未 _ready → 忽略此次設值（進 tree 後 _ready 才建節點）。
 		return
 	_title_label.text = title
 	_subtitle_label.text = subtitle
