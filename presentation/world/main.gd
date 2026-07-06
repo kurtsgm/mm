@@ -187,6 +187,8 @@ func _on_entered_cell(global: Vector2i) -> void:
 	if _has_unopened_chest(local):
 		_prompt_chest(local)
 		return
+	if _try_questgiver(global):
+		return
 	if _try_scene(local):
 		return
 	if _try_vendor(local):
@@ -437,6 +439,20 @@ func _on_player_bumped(cell: Vector2i) -> void:
 	_scene_once = false
 	_player.set_enabled(false)
 	_dialogue_overlay.open(DialogueRunner.new(data, GameState))
+
+# 踩進可穿越 NPC 格 → 開對話（擋路 NPC 走 _on_player_bumped 的 bump 分支）。
+func _try_questgiver(global: Vector2i) -> bool:
+	var occ := _world_grid.occupant_at(global)
+	if String(occ.get("kind", "")) != "questgiver":
+		return false
+	var data := DialogueCatalog.load_dialogue(String(occ["dialogue"]))
+	if data == null:
+		GameState.message_log.push("（對話 %s 遺失）" % occ["dialogue"])
+		return false
+	_scene_once = false
+	_player.set_enabled(false)
+	_dialogue_overlay.open(DialogueRunner.new(data, GameState))
+	return true
 
 func _try_vendor(pos: Vector2i) -> bool:
 	var map := MapManager.current_map
