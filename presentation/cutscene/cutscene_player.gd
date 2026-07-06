@@ -14,6 +14,7 @@ var _playing: bool = false
 var _fade_rect: ColorRect
 var _cg_rect: TextureRect
 var _title_card: TitleCard
+var _dialogue_overlay: DialogueOverlay
 var _skip_dwell: bool = false
 
 func _init() -> void:
@@ -40,6 +41,14 @@ func _ready() -> void:
 	_title_card = TitleCard.new()
 	_title_card.visible = false
 	add_child(_title_card)
+
+	# 自擁 DialogueOverlay（layer 95 > 本 player 的 90 → 對話框顯示在黑幕之上）。
+	# 刻意不接 main 的 _on_dialogue_finished：其會 set_enabled(true)/標 once，會在過場中途誤觸。
+	# 只把 overlay 的 advanced 以本 player 的 dialogue_advanced 轉出（main 再路由到訊息列）。
+	_dialogue_overlay = DialogueOverlay.new()
+	add_child(_dialogue_overlay)
+	_dialogue_overlay.layer = 95
+	_dialogue_overlay.advanced.connect(func(descs): dialogue_advanced.emit(descs))
 
 	set_process_unhandled_input(false)
 
@@ -86,8 +95,14 @@ func _play_step(step: Dictionary) -> void:
 			_title_card.visible = false
 		"shake":
 			await _shake(float(step["intensity"]), float(step["duration"]))
+		"dialogue":
+			var data := DialogueCatalog.load_dialogue(String(step["dialogue"]))
+			if data == null:
+				return
+			_dialogue_overlay.open(DialogueRunner.new(data, _ctx))
+			await _dialogue_overlay.finished
 		_:
-			pass  # dialogue 由後續 Task 補；未知型別略過
+			pass  # 未知型別略過
 
 func _play_audio(step: Dictionary) -> void:
 	match String(step["op"]):
