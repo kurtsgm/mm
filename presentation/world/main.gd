@@ -35,6 +35,7 @@ var _mini_map: MiniMap
 var _chest_prompt: ChestPrompt
 var _chest_pos: Vector2i
 var _dialogue_overlay: DialogueOverlay
+var _cutscene_player: CutscenePlayer
 var _vendor_overlay: VendorOverlay
 var _travel_overlay: TravelOverlay
 var _quest_log: QuestLog
@@ -105,6 +106,12 @@ func _ready() -> void:
 	add_child(_travel_overlay)
 	_travel_overlay.travel_chosen.connect(_on_travel_chosen)
 	_travel_overlay.finished.connect(_on_travel_finished)
+
+	_cutscene_player = CutscenePlayer.new()
+	add_child(_cutscene_player)
+	_cutscene_player.setup(_camera, GameState)
+	_cutscene_player.dialogue_advanced.connect(_on_dialogue_advanced)
+	_cutscene_player.finished.connect(_on_cutscene_finished)
 
 	_quest_log = QuestLog.new()
 	add_child(_quest_log)
@@ -386,6 +393,9 @@ func _try_scene(pos: Vector2i) -> bool:
 	var triggered := GameState.is_scene_triggered(map.map_id, pos)
 	if not SceneTrigger.should_trigger(scene, GameState, triggered):
 		return false
+	if scene.has("cutscene"):
+		_play_scene_cutscene(pos, scene)
+		return true
 	var data := DialogueCatalog.load_dialogue(String(scene["dialogue"]))
 	if data == null:
 		GameState.message_log.push("（對話 %s 遺失）" % scene["dialogue"])
@@ -395,6 +405,23 @@ func _try_scene(pos: Vector2i) -> bool:
 	_player.set_enabled(false)
 	_dialogue_overlay.open(DialogueRunner.new(data, GameState))
 	return true
+
+# 過場分支：閘玩家 → await 播放 → 依 once 標記 → 復原玩家。
+func _play_scene_cutscene(pos: Vector2i, scene: Dictionary) -> void:
+	var data := CutsceneCatalog.load(String(scene["cutscene"]))
+	if data == null:
+		GameState.message_log.push("（過場 %s 遺失）" % scene["cutscene"])
+		return
+	_player.set_enabled(false)
+	await _cutscene_player.play(data)
+	if bool(scene.get("once", false)):
+		GameState.mark_scene_triggered(MapManager.current_map.map_id, pos)
+	GameState.refresh_collect()
+	_player.set_enabled(true)
+	_hud.refresh()
+
+func _on_cutscene_finished() -> void:
+	pass  # 收尾由 _play_scene_cutscene 的 await 之後處理；此處預留給未來非格子觸發
 
 func _on_player_bumped(cell: Vector2i) -> void:
 	if _dialogue_overlay.is_open() or _vendor_overlay.is_open():
@@ -517,8 +544,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		return  # 戰鬥中禁用選單
 	if _chest_prompt.is_open():
 		return  # 開箱確認中，不開其他選單
-	if _dialogue_overlay.is_open() or _vendor_overlay.is_open() or _travel_overlay.is_open():
-		return  # 對話/商店/旅行選單中，不開其他選單
+	if _dialogue_overlay.is_open() or _vendor_overlay.is_open() or _travel_overlay.is_open() or _cutscene_player.is_playing():
+		return  # 對話/商店/旅行/過場中，不開其他選單
 	if event.keycode == KEY_TAB:
 		_toggle_menu(_save_menu)
 	elif event.keycode == KEY_C:
