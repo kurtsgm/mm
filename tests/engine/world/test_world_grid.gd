@@ -82,12 +82,18 @@ func _qg_map(id: String, w: int, h: int, qgs: Array, neighbors := {}) -> MapData
 	m.quest_givers = qgs
 	return m
 
-func test_questgiver_cell_not_walkable_and_occupant():
+func test_default_questgiver_walkable_and_occupant():
 	var a := _qg_map("a", 3, 3, [{"pos": Vector2i(1, 1), "dialogue": "qg_x"}])
 	var wg := WorldGrid.new(a, Callable(self, "_null_loader"))
-	assert_false(wg.is_walkable(Vector2i(1, 1)), "questgiver 格實心不可走")
-	assert_eq(wg.occupant_at(Vector2i(1, 1)), {"kind": "questgiver", "dialogue": "qg_x"})
+	assert_true(wg.is_walkable(Vector2i(1, 1)), "預設 NPC 可穿越（可走）")
+	assert_eq(wg.occupant_at(Vector2i(1, 1)), {"kind": "questgiver", "dialogue": "qg_x", "blocks": false})
 	assert_eq(wg.resolve(Vector2i(1, 1)), {"map_id": "a", "local": Vector2i(1, 1)}, "仍可反查")
+
+func test_blocking_questgiver_not_walkable():
+	var a := _qg_map("a", 3, 3, [{"pos": Vector2i(1, 1), "dialogue": "qg_g", "blocks": true}])
+	var wg := WorldGrid.new(a, Callable(self, "_null_loader"))
+	assert_false(wg.is_walkable(Vector2i(1, 1)), "門衛 NPC 實心不可走")
+	assert_eq(wg.occupant_at(Vector2i(1, 1)), {"kind": "questgiver", "dialogue": "qg_g", "blocks": true})
 
 func test_no_occupant_returns_empty():
 	var a := _floor_map("a", 3, 3)
@@ -100,5 +106,5 @@ func test_questgiver_in_neighbor_region_occupant_resolved():
 	_world = {"a": a, "e": e}
 	var wg := WorldGrid.new(a, Callable(self, "_loader"))
 	# e 在 ox=3 → 其 local (0,1) = global (3,1)
-	assert_eq(wg.occupant_at(Vector2i(3, 1)), {"kind": "questgiver", "dialogue": "qg_e"})
-	assert_false(wg.is_walkable(Vector2i(3, 1)), "鄰圖 questgiver 也實心")
+	assert_eq(wg.occupant_at(Vector2i(3, 1)), {"kind": "questgiver", "dialogue": "qg_e", "blocks": false})
+	assert_true(wg.is_walkable(Vector2i(3, 1)), "鄰圖預設 NPC 可穿越")

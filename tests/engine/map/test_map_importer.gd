@@ -244,6 +244,17 @@ func test_questgiver_sprite_defaults_empty():
 	var map := MapImporter.parse(json)
 	assert_eq(map.quest_givers[0]["sprite"], "", "缺 sprite → 空字串")
 
+func test_questgiver_parses_blocks_field():
+	var json := '{"grid":["@."],"entities":[{"type":"questgiver","pos":[1,0],"dialogue":"qg_x","blocks":true}]}'
+	var map := MapImporter.parse(json)
+	assert_not_null(map)
+	assert_eq(map.quest_givers[0]["blocks"], true, "解析帶上 blocks")
+
+func test_questgiver_blocks_defaults_false():
+	var json := '{"grid":["@."],"entities":[{"type":"questgiver","pos":[1,0],"dialogue":"qg_x"}]}'
+	var map := MapImporter.parse(json)
+	assert_eq(map.quest_givers[0]["blocks"], false, "缺 blocks → false")
+
 func test_parses_continent_field() -> void:
 	var m := MapImporter.parse('{"grid":["@."],"continent":"oak"}')
 	assert_eq(m.continent, "oak")

@@ -32,8 +32,10 @@ func _init(focus_map: MapData, loader: Callable) -> void:
 			var qg: Vector2i = q["pos"] + Vector2i(ox, oy)
 			if _occupants.has(qg):
 				continue   # 第一寫入者勝（與 _owner 同確定性規則）
-			_occupants[qg] = {"kind": "questgiver", "dialogue": String(q["dialogue"])}
-			_walkable.erase(qg)   # NPC 實心擋路：占用格不可走（牆格 erase 為 no-op）
+			var blocks := bool(q.get("blocks", false))
+			_occupants[qg] = {"kind": "questgiver", "dialogue": String(q["dialogue"]), "blocks": blocks}
+			if blocks:
+				_walkable.erase(qg)   # 門衛：占用格不可走（牆格 erase 為 no-op）；預設可穿越故不 erase
 
 func is_walkable(global: Vector2i) -> bool:
 	return _walkable.has(global)
