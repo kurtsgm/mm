@@ -7,6 +7,7 @@ const _IMAGES := {
 	"margo_clinic": "res://content/scenes/margo_clinic.webp",
 	"marsh_swampherb": "res://content/scenes/marsh_swampherb.webp",
 	"margo_portrait": "res://content/scenes/margo_portrait.webp",
+	"nav_echo_relic": "res://content/scenes/nav_echo_relic.webp",
 }
 
 const _PLACEHOLDER_SIZE := Vector2i(320, 180)

@@ -161,17 +161,21 @@ static func _parse_entities(arr, width: int, height: int):
 					model = String(e["model"])
 				objects.append({"pos": pos, "items": items, "gold": gold, "model": model})
 			"scene":
-				if not e.has("dialogue"):
+				if not e.has("dialogue") and not e.has("cutscene"):
 					return null
 				var once := false
 				if e.has("once"):
 					once = bool(e["once"])
-				scenes.append({
+				var scene_entry := {
 					"pos": pos,
-					"dialogue": String(e["dialogue"]),
 					"require": e.get("require", null),
 					"once": once,
-				})
+				}
+				if e.has("dialogue"):
+					scene_entry["dialogue"] = String(e["dialogue"])
+				if e.has("cutscene"):
+					scene_entry["cutscene"] = String(e["cutscene"])
+				scenes.append(scene_entry)
 			"vendor":
 				if not e.has("id"):
 					return null

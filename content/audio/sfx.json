@@ -6,5 +6,6 @@
   "menu_open":  { "path": "res://content/audio/placeholder/sfx_menu_open.wav" },
   "menu_close": { "path": "res://content/audio/placeholder/sfx_menu_close.wav" },
   "dialogue":   { "path": "res://content/audio/placeholder/sfx_dialogue.wav" },
-  "levelup":    { "path": "res://content/audio/placeholder/sfx_levelup.wav" }
+  "levelup":    { "path": "res://content/audio/placeholder/sfx_levelup.wav" },
+  "nav_echo_sting": { "path": "" }
 }

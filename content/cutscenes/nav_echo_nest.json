@@ -1,0 +1,11 @@
+{
+  "id": "nav_echo_nest",
+  "steps": [
+    { "type": "fade", "to": "black", "duration": 0.7 },
+    { "type": "cg", "image": "nav_echo_relic", "hold": 3.0 },
+    { "type": "shake", "intensity": 6.0, "duration": 0.5 },
+    { "type": "audio", "op": "sfx", "id": "nav_echo_sting" },
+    { "type": "dialogue", "dialogue": "nav_echo_nest" },
+    { "type": "fade", "to": "clear", "duration": 0.7 }
+  ]
+}
