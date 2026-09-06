@@ -1,8 +1,8 @@
 class_name CombatStage
 extends Node3D
 
-# 戰鬥怪物 3D billboard（placeholder 純色貼圖，真美術另案）。掛在相機前方一排。
-# 名牌/血條/狀態/編號改由 2D EnemyPanel 呈現；本元件只管 billboard 與受擊紅閃。
+# 戰鬥怪物：優先使用完整 3D 模型，尚未製作模型的種類保留 billboard。掛在相機前方一排。
+# 名牌/血條/狀態/編號由 2D EnemyPanel 呈現。
 const FLASH_MS := 250
 const IDLE_PERIOD := 2.0
 const IDLE_AMP := 0.03
@@ -16,7 +16,7 @@ const DISPLAY_HEIGHT := 2.0   # billboard 目標世界高度（unit）；pixel_s
 const _STATE_TEXTURE_KEY := {"idle": "idle", "attack": "attack", "hit": "hurt"}
 
 var _camera: Camera3D
-var _sprites: Dictionary = {}     # Monster -> Sprite3D
+var _sprites: Dictionary = {}     # Monster -> Node3D (MonsterModel or Sprite3D)
 var _flash_until: Dictionary = {} # Sprite3D -> msec
 var _base_pos: Dictionary = {} # Sprite3D -> Vector3（建構排位，所有位移以此為基準）
 var _textures: Dictionary = {} # Sprite3D -> {idle,attack,hurt,base}
@@ -32,6 +32,17 @@ func rebuild(monsters: Array) -> void:
 	clear()
 	var n := monsters.size()
 	for i in n:
+		if MonsterModelCatalog.has_model(monsters[i].monster_id):
+			var model := MonsterModelCatalog.instantiate(monsters[i].monster_id)
+			model.phase = i * 1.7
+			_camera.add_child(model)
+			model.position = Vector3((i - (n - 1) / 2.0) * 1.6, _feet_y - DISPLAY_HEIGHT / 2.0, -4.0)
+			# +Z faces the party. Outer models angle inward, showing their volume.
+			model.rotation.y = atan2(-model.position.x, -model.position.z)
+			_sprites[monsters[i]] = model
+			_base_pos[model] = model.position
+			_anim[model] = "idle"
+			continue
 		var s := Sprite3D.new()
 		var t := MonsterSpriteCatalog.textures_for(monsters[i].monster_id)
 		# base = idle 真圖優先，否則純色 placeholder（缺 attack/hurt 時回退到 idle 而非紅塊）
@@ -56,6 +67,10 @@ func refresh() -> void:
 func flash(monster) -> void:
 	if not _sprites.has(monster):
 		return
+	if _sprites[monster] is MonsterModel:
+		_sprites[monster].play_hit()
+		_anim[_sprites[monster]] = "hit"
+		return
 	var s: Sprite3D = _sprites[monster]
 	s.modulate = Color(1.6, 0.6, 0.6)
 	_flash_until[s] = Time.get_ticks_msec() + FLASH_MS
@@ -77,6 +92,10 @@ func flash(monster) -> void:
 
 func play_attack(monster) -> void:
 	if not _sprites.has(monster):
+		return
+	if _sprites[monster] is MonsterModel:
+		_sprites[monster].play_attack()
+		_anim[_sprites[monster]] = _sprites[monster].animation
 		return
 	var s: Sprite3D = _sprites[monster]
 	_kill_tween(s)
@@ -116,6 +135,9 @@ func _process(_delta: float) -> void:
 	var now := Time.get_ticks_msec()
 	var t := now / 1000.0
 	for mon in _sprites:
+		if _sprites[mon] is MonsterModel:
+			_anim[_sprites[mon]] = _sprites[mon].animation
+			continue
 		var s: Sprite3D = _sprites[mon]
 		if not is_instance_valid(s):
 			continue
@@ -133,6 +155,7 @@ func clear() -> void:
 			_tween[s].kill()
 	for mon in _sprites:
 		if is_instance_valid(_sprites[mon]):
+			_sprites[mon].hide()
 			_sprites[mon].queue_free()
 	_sprites.clear()
 	_flash_until.clear()

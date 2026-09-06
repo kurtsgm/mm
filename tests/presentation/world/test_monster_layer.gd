@@ -32,9 +32,8 @@ func test_single_monster_group_centered_full_size():
 func test_cluster_members_scaled_down_when_multiple():
 	var l := _layer()
 	l.rebuild([_live("u1", Vector2i(0, 0), "g")])   # 3 隻
-	var s: Sprite3D = l._sprites["u1"][0]["node"]
-	var full := CombatStage.pixel_size_for(s.texture, CombatStage.DISPLAY_HEIGHT)
-	assert_almost_eq(s.pixel_size, full * MonsterLayer.CLUSTER_SCALE, 0.0001, "n>=2 → 縮小 CLUSTER_SCALE")
+	var model: MonsterModel = l._sprites["u1"][0]["node"]
+	assert_eq(model.scale, Vector3.ONE * MonsterLayer.CLUSTER_SCALE, "叢內 3D 模型按比例縮小")
 
 func test_cluster_centered_on_cell():
 	var l := _layer()
@@ -60,9 +59,8 @@ func test_rebuild_places_feet_on_floor():
 func test_cluster_members_feet_on_floor():
 	var l := _layer()
 	l.rebuild([_live("u1", Vector2i(0, 0), "g")])   # 3 隻（縮放叢）
-	var s: Sprite3D = l._sprites["u1"][1]["node"]
-	var wh := s.texture.get_height() * s.pixel_size   # 實際渲染身高
-	assert_almost_eq(s.position.y - wh / 2.0, 0.0, 0.0001, "縮放後仍腳貼地")
+	var model: MonsterModel = l._sprites["u1"][1]["node"]
+	assert_almost_eq(model.position.y, 0.0, 0.0001, "縮放後模型腳底仍在地板")
 
 func test_rebuild_uses_billboard():
 	var l := _layer()
@@ -84,12 +82,36 @@ func test_apply_moves_no_crash_and_keeps_members():
 	l.apply_moves([_live("u1", Vector2i(1, 0), "g")])   # 觸發補間，不 crash
 	assert_eq(l._sprites["u1"].size(), 3)
 
-func test_goblin_members_use_idle_texture():
+func test_goblin_members_use_3d_models():
 	var l := _layer()
 	l.rebuild([_live("g1", Vector2i(0, 0), "g")])
-	var idle: Texture2D = MonsterSpriteCatalog.textures_for("goblin")["idle"]
 	for member in l._sprites["g1"]:
-		assert_eq(member["node"].texture, idle, "每隻哥布林都用 goblin idle 真圖")
+		assert_true(member["node"] is MonsterModel, "每隻哥布林使用 3D 模型")
+		assert_eq(member["node"].find_children("*", "Sprite3D", true, false).size(), 0)
+
+func test_goblin_walk_turns_and_arrives_at_cell_with_feet_grounded():
+	var l := _layer()
+	l.rebuild([_live("g1", Vector2i(0, 0), "g")])
+	l.apply_moves([_live("g1", Vector2i(1, 0), "g")])
+	var model: MonsterModel = l._sprites["g1"][0]["node"]
+	assert_gt(model._walk_remaining, 0.0)
+	await wait_seconds(MonsterLayer.MOVE_TIME + 0.1)
+	var sum := Vector3.ZERO
+	for member in l._sprites["g1"]:
+		sum += member["node"].position
+		assert_almost_eq(member["node"].position.y, 0.0, 0.0001)
+	assert_almost_eq((sum / 3.0).x, GridGeometry.CELL_SIZE, 0.001)
+	assert_almost_eq(model.rotation.y, PI / 2.0, 0.001, "面向移動方向，非 billboard")
+	l.rebuild([])
+	assert_eq(l.get_child_count(), 0, "移動結束後可乾淨重建")
+
+func test_goblin_rebuild_during_move_cleans_up_tweens():
+	var l := _layer()
+	l.rebuild([_live("g1", Vector2i.ZERO, "g")])
+	l.apply_moves([_live("g1", Vector2i(1, 0), "g")])
+	l.rebuild([])
+	await wait_seconds(MonsterLayer.MOVE_TIME + 0.05)
+	assert_eq(l.get_child_count(), 0)
 
 func test_unknown_group_uses_non_null_placeholder():
 	var l := _layer()

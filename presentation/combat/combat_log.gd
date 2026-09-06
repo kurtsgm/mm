@@ -1,7 +1,7 @@
 class_name CombatLog
 extends Control
 
-# 戰鬥訊息面板：保留最近 MAX_LINES 行。版面比例式（畫面中下、置中橫向），由父層放置。
+# 戰鬥訊息面板：保留最近 MAX_LINES 行。置於上方空間，讓完整怪物與腳底保持可見。
 const MAX_LINES := 8
 
 var _lines: Array[String] = []
@@ -15,8 +15,8 @@ func _ready() -> void:
 	_panel = Panel.new()
 	_panel.anchor_left = 0.20
 	_panel.anchor_right = 0.80
-	_panel.anchor_top = 0.55
-	_panel.anchor_bottom = 0.74
+	_panel.anchor_top = 0.12
+	_panel.anchor_bottom = 0.30
 	_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_panel)
 	_label = Label.new()

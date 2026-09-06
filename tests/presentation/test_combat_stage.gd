@@ -173,14 +173,46 @@ func test_pixel_size_normalizes_by_height():
 func test_pixel_size_null_safe():
 	assert_eq(CombatStage.pixel_size_for(null, 2.0), 2.0, "null → 除以 1，不 crash")
 
-func test_rebuild_goblin_uses_idle_texture_and_normalized_size():
+func test_rebuild_goblin_uses_grounded_3d_model():
 	var g := _goblin_monster()
 	var st := _stage_with([g])
-	var s: Sprite3D = st._sprites[g]
-	var idle: Texture2D = MonsterSpriteCatalog.textures_for("goblin")["idle"]
-	assert_eq(s.texture, idle, "初始顯示 goblin idle 真圖")
-	assert_eq(st._textures[s]["base"], idle, "缺態回退 idle 真圖（非紅塊 placeholder）")
-	assert_almost_eq(s.pixel_size, CombatStage.pixel_size_for(idle, CombatStage.DISPLAY_HEIGHT), 0.0001, "pixel_size 依貼圖高度正規化")
+	var model: MonsterModel = st._sprites[g]
+	assert_true(model is MonsterModel, "哥布林使用完整 3D 模型")
+	assert_false(st._textures.has(model), "3D 模型不載入三態貼圖")
+	assert_almost_eq(model.position.y, -st._camera.position.y, 0.0001, "模型原點在腳底")
+	assert_gt(model.find_children("*", "MeshInstance3D", true, false).size(), 0)
+
+func test_goblin_attack_hit_and_recovery_keep_feet_planted():
+	var g := _goblin_monster()
+	var st := _stage_with([g])
+	var model: MonsterModel = st._sprites[g]
+	var origin := model.position
+	st.play_attack(g)
+	model._process(0.20)
+	assert_eq(model.animation, "attack")
+	assert_ne(model.get_node("Body/RightArm").rotation, Vector3.ZERO, "手臂真的揮動")
+	st.flash(g)
+	assert_eq(model.animation, "hit", "受擊中斷攻擊")
+	st.play_attack(g)
+	assert_eq(model.animation, "hit", "同回合攻擊不可蓋過受擊")
+	model._process(MonsterModel.HIT_DURATION + 0.01)
+	assert_eq(model.animation, "idle")
+	assert_eq(model.position, origin, "動畫不移動脚底原點")
+	for mesh in model._meshes:
+		assert_null(mesh.material_overlay, "受擊後清除紅閃")
+
+func test_goblin_and_sprite_species_can_share_stage():
+	var g := _goblin_monster()
+	var ogre := _monster("Ogre", 20)
+	var st := _stage_with([g, ogre])
+	assert_true(st._sprites[g] is MonsterModel)
+	assert_true(st._sprites[ogre] is Sprite3D)
+	st.play_attack(g)
+	st.flash(ogre)
+	g.hp = 0
+	st.refresh()
+	assert_false(st._sprites[g].visible)
+	assert_true(st._sprites[ogre].visible)
 
 func test_apply_texture_recomputes_pixel_size_on_swap():
 	var a := _monster("A", 10)

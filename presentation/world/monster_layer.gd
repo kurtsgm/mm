@@ -1,8 +1,8 @@
 class_name MonsterLayer
 extends Node3D
 
-# 大地圖會走動的怪 billboard 層。一格的遭遇組「實際的種類與數量」忠實畫出：
-# group 有幾隻、各是什麼怪，就畫幾個對應種類的 Sprite3D 排成一叢（cluster）。
+# 大地圖怪物層：已註冊模型的種類使用完整 3D，其餘使用 billboard。一格的遭遇組「實際的種類與數量」忠實畫出：
+# group 有幾隻、各是什麼怪，就畫幾個對應種類的模型/sprite 排成一叢（cluster）。
 # 跟著切地圖由 main.gd rebuild。腳貼地與尺寸共用 CombatStage 的常數/static。
 # idle 生命感：有第二幀(idle2)的怪走「兩幀輪播」假動畫；沒有的退回「微幅左右晃動」。
 const MOVE_TIME := 0.18      # 移動補間時長（對齊玩家步速 feel）
@@ -13,7 +13,7 @@ const FRAME_PERIOD := 0.4    # idle 兩幀假動畫單幀顯示時長（秒）
 const CLUSTER_SPREAD_RATIO := 0.28   # 叢擺幅半徑 / GridGeometry.CELL_SIZE（格距比例，不寫死世界值/像素）
 const CLUSTER_SCALE := 0.82  # n>=2 時叢內 sprite 縮小倍率（避免擠出格外；n=1 維持原大小）
 
-# uid -> Array[member]；member = {node:Sprite3D, a:Texture2D, b:Texture2D|null, phase:float, cur:int, offset:Vector3, scale:float}
+# uid -> Array[member]；共用 node/phase/offset/scale；只有 sprite 成員有 a/b/cur 貼圖狀態。
 var _sprites: Dictionary = {}
 
 # 純函式：idle 左右晃動的 billboard offset.x（像素，本地平面）。
@@ -68,7 +68,7 @@ func rebuild(monsters: Array) -> void:
 		phase_seed += members.size()
 	set_process(not _sprites.is_empty())   # idle 動畫常駐（有怪才開）
 
-# 依 group 的 defs（種類+數量）建該 uid 的所有 member sprite，加入場景並回傳 member 陣列。
+# 依 group 的 defs（種類+數量）建該 uid 的所有成員，加入場景並回傳 member 陣列。
 func _build_members(group_key: String, cell: Vector2i, phase_seed: int) -> Array:
 	var defs := Bestiary.group_defs_for(group_key)
 	var n: int = defs.size()
@@ -84,6 +84,20 @@ func _build_members(group_key: String, cell: Vector2i, phase_seed: int) -> Array
 	# 中心須下移 (1-scale)*DISPLAY_HEIGHT/2 才能把腳留在地板。n==1（scale=1）→ 0，單隻行為不變。
 	var foot_drop := (CombatStage.DISPLAY_HEIGHT * (1.0 - member_scale)) / 2.0
 	for i in n:
+		if MonsterModelCatalog.has_model(defs[i].id):
+			var model := MonsterModelCatalog.instantiate(defs[i].id)
+			model.phase = (phase_seed + i) * PHASE_SPREAD
+			model.scale = Vector3.ONE * member_scale
+			model.position = GridGeometry.cell_to_world(cell) + offsets[i]
+			add_child(model)
+			var camera := get_viewport().get_camera_3d()
+			if camera != null:
+				var facing := camera.global_position - model.global_position
+				model.rotation.y = atan2(facing.x, facing.z)
+			# _world_pos is centered for sprites; a mesh's origin is at its feet.
+			var model_offset := offsets[i] - Vector3.UP * CombatStage.DISPLAY_HEIGHT / 2.0
+			members.append({"node": model, "phase": model.phase, "offset": model_offset, "scale": member_scale})
+			continue
 		var fr := _frames_for_def(defs[i].id)
 		var offset: Vector3 = offsets[i] - Vector3(0.0, foot_drop, 0.0)
 		members.append(_make_member(fr["a"], fr["b"], cell, offset, member_scale, phase_seed + i))
@@ -105,11 +119,20 @@ func apply_moves(monsters: Array) -> void:
 			continue
 		var base := _world_pos(m["cell"])
 		for member in _sprites[uid]:
-			var s: Sprite3D = member["node"]
+			var s: Node3D = member["node"]
 			var target: Vector3 = base + member["offset"]
 			if s.position.is_equal_approx(target):
 				continue
+			if member.has("move_tween") and member["move_tween"].is_valid():
+				member["move_tween"].kill()
 			var tw := create_tween()
+			member["move_tween"] = tw
+			if s is MonsterModel:
+				var direction := target - s.position
+				var yaw := s.rotation.y + wrapf(atan2(direction.x, direction.z) - s.rotation.y, -PI, PI)
+				s.walk_for(MOVE_TIME)
+				tw.parallel().tween_property(s, "rotation:y", yaw, MOVE_TIME)
+				tw.parallel()
 			tw.tween_property(s, "position", target, MOVE_TIME)
 
 func _process(_delta: float) -> void:
@@ -121,6 +144,8 @@ func _process(_delta: float) -> void:
 
 # 有第二幀（idle2）→ 兩幀輪播；否則 → 微幅左右晃動 fallback。兩者與 position 獨立，不擾移動補間。
 func _update_member(member: Dictionary, t: float) -> void:
+	if member["node"] is MonsterModel:
+		return # Mesh joint animation is owned by MonsterModel; never swap textures or move its foot origin.
 	var s: Sprite3D = member["node"]
 	if member["b"] != null:
 		var idx := frame_index(t, member["phase"] / TAU, FRAME_PERIOD)
@@ -151,6 +176,10 @@ func _placeholder(color: Color) -> Texture2D:
 	return ImageTexture.create_from_image(img)
 
 func _clear() -> void:
+	for members in _sprites.values():
+		for member in members:
+			if member.has("move_tween") and member["move_tween"].is_valid():
+				member["move_tween"].kill()
 	for c in get_children():
 		remove_child(c)
 		c.free()
