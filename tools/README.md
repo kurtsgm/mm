@@ -10,6 +10,9 @@ godot --headless --path . --script res://tools/<name>.gd
 
 | 工具 | 用途 |
 | --- | --- |
+| `compose_oak_wild.py` | 原創奇幻吟遊風野外配樂；需 `requirements-music.txt`。編曲與重建方式見 `content/audio/music/README.md`。 |
+| `build_goblin.gd` / `goblin_rig.gd` | 原創哥布林模型、45 骨架、蒙皮、PBR 貼圖與 GLB 動畫烘焙；製作說明見 `content/monsters/models/README.md`。 |
+| `sculpt_goblin_head.py` | 融合頭部隱式曲面雕塑，需 `requirements-goblin.txt`；輸出供 Godot 建模工具讀取的中間網格。 |
 | `gen_parchment.gd` | **程序化生成羊皮卷 UI 貼圖**（中央乾淨留白 + 四周做舊烤焦破邊 + 透明底）。可參數化尺寸/輸出，看下方。 |
 | `assign_encounter_uuids.gd` | 給 `content/maps/*.json` 缺 id 的 monster entity 補 UUIDv7 並寫回。 |
 | `combat_sim_cli.gd` | 戰鬥模擬器 CLI：跑「遭遇 × 等級」難度表，輸出 markdown + csv 到 `docs/balance/`。 |

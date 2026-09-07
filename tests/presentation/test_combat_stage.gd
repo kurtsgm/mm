@@ -190,7 +190,7 @@ func test_goblin_attack_hit_and_recovery_keep_feet_planted():
 	st.play_attack(g)
 	model._process(0.20)
 	assert_eq(model.animation, "attack")
-	assert_ne(model.get_node("Body/RightArm").rotation, Vector3.ZERO, "手臂真的揮動")
+	assert_ne(model.skeleton.get_bone_pose_rotation(model.skeleton.find_bone("upper_arm_R")), Quaternion.IDENTITY, "手臂骨骼真的揮動")
 	st.flash(g)
 	assert_eq(model.animation, "hit", "受擊中斷攻擊")
 	st.play_attack(g)

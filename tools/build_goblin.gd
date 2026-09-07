@@ -5,23 +5,25 @@ extends SceneTree
 # +Z is forward; the origin is on the soles. No billboard or external assets.
 var _root: Node3D
 var _m: Dictionary = {}
+const RigBuilder = preload("res://tools/goblin_rig.gd")
 
 func _initialize() -> void:
-	_m.skin = _material("Moss skin", Color("677744"), 0.86)
-	_m.skin_dark = _material("Deep olive", Color("424e2e"), 0.9)
+	_m.skin = _material("Moss skin", Color("667254"), 0.86)
+	_m.skin_dark = _material("Deep olive", Color("586449"), 0.9)
 	_m.ear = _material("Ear cartilage", Color("777049"), 0.92)
 	_m.leather = _material("Oxblood leather", Color("493026"), 0.88)
-	_m.edge = _material("Worn leather edge", Color("866248"), 0.93)
+	_m.edge = _material("Worn leather edge", Color("72523b"), 0.93)
 	_m.cloth = _material("Rust red cloth", Color("6e3027"), 1.0)
-	_m.iron = _material("Blackened iron", Color("42494b"), 0.53, 0.72)
-	_m.steel = _material("Honed steel", Color("929c9a"), 0.34, 0.8)
-	_m.brass = _material("Old brass", Color("ae8340"), 0.48, 0.7)
+	_m.iron = _material("Blackened iron", Color("42494b"), 0.68, 0.65)
+	_m.steel = _material("Honed steel", Color("929c9a"), 0.48, 0.8)
+	_m.brass = _material("Old brass", Color("ae8340"), 0.58, 0.7)
 	_m.bone = _material("Old ivory", Color("d5c6a1"), 0.66)
 	_m.mouth = _material("Mouth and sockets", Color("251e16"), 0.85)
 	_m.eye = _material("Amber eyes", Color("deb63c"), 0.3)
 	_m.eye.emission_enabled = true
 	_m.eye.emission = Color("8c510b")
-	_m.eye.emission_energy_multiplier = 0.25
+	_m.eye.emission_energy_multiplier = 0.04
+	RigBuilder.texture_materials(_m)
 	_root = Node3D.new()
 	_root.name = "Goblin"
 	var body := _pivot(_root, "Body", Vector3(0, 0.94, 0))
@@ -31,19 +33,18 @@ func _initialize() -> void:
 	_build_arm(body, 1.0)
 	_build_leg(-1.0)
 	_build_leg(1.0)
-	# Merge rigid pieces by material within each joint. Instances share these baked meshes.
-	_merge_meshes(_root)
-	# Authoring height is 0.94 (body) + 0.59 (neck) + 0.425 (crown).
-	# Normalize at the top-level joints, keeping the sole origin at zero.
-	var height_scale := 2.0 / (0.94 + 0.59 + 0.425)
+	# Bake all geometry in model space, then bind it to a real deformation rig.
+	var height_scale := 2.0 / (0.94 + 0.59 + 0.425 * 0.9)
 	for joint in _root.get_children():
 		joint.position *= height_scale
 		joint.scale *= height_scale
-	_root.set_script(load("res://presentation/monsters/monster_model.gd"))
-	var packed := PackedScene.new()
-	var result := packed.pack(_root)
+	var rig_builder := RigBuilder.new()
+	rig_builder.build(_root, height_scale)
+	var document := GLTFDocument.new()
+	var state := GLTFState.new()
+	var result := document.append_from_scene(_root, state)
 	if result == OK:
-		result = ResourceSaver.save(packed, "res://content/monsters/models/goblin.tscn")
+		result = document.write_to_filesystem(state, "res://content/monsters/models/goblin.glb")
 	_root.free()
 	print("Goblin mesh build: ", error_string(result))
 	quit(0 if result == OK else 1)
@@ -78,13 +79,14 @@ func _ellipsoid(parent: Node3D, pos: Vector3, size: Vector3, mat: Material) -> M
 	var mesh := SphereMesh.new()
 	mesh.radius = 1.0
 	mesh.height = 2.0
-	mesh.radial_segments = 16
-	mesh.rings = 10
+	var detail := maxf(size.x, maxf(size.y, size.z))
+	mesh.radial_segments = 12 if detail < 0.04 else (20 if detail < 0.10 else 32)
+	mesh.rings = 6 if detail < 0.04 else (12 if detail < 0.10 else 20)
 	var n := _mesh(parent, mesh, pos, mat)
 	n.scale = size
 	return n
 
-func _bar(parent: Node3D, a: Vector3, b: Vector3, radius_a: float, radius_b: float, mat: Material, sides: int = 10) -> MeshInstance3D:
+func _bar(parent: Node3D, a: Vector3, b: Vector3, radius_a: float, radius_b: float, mat: Material, sides: int = 20) -> MeshInstance3D:
 	var mesh := CylinderMesh.new()
 	mesh.bottom_radius = radius_a
 	mesh.top_radius = radius_b
@@ -105,31 +107,76 @@ func _box(parent: Node3D, pos: Vector3, size: Vector3, mat: Material) -> MeshIns
 	return _mesh(parent, mesh, pos, mat)
 
 # Cross sections: y, x radius, z radius, forward offset. Sculpted profiles instead of stacked balls.
-func _loft(parent: Node3D, sections: Array, mat: Material, sides: int = 20) -> void:
+func _loft(parent: Node3D, sections: Array, mat: Material, sides: int = 40) -> void:
+	# Catmull-Rom profiles retain anatomical landmarks while removing stepped rings.
+	var rings: Array = []
+	for j in range(sections.size() - 1):
+		for k in 5:
+			var t := float(k) / 5.0
+			var row: Array = []
+			for axis in 4:
+				var a: float = sections[maxi(0, j - 1)][axis]
+				var b: float = sections[j][axis]
+				var c: float = sections[j + 1][axis]
+				var d: float = sections[mini(sections.size() - 1, j + 2)][axis]
+				row.append(0.5 * ((2*b) + (-a+c)*t + (2*a-5*b+4*c-d)*t*t + (-a+3*b-3*c+d)*t*t*t))
+			rings.append(row)
+	rings.append(sections[-1])
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	for j in range(sections.size() - 1):
+	st.set_smooth_group(0)
+	for j in range(rings.size() - 1):
 		for i in sides:
-			var a := _ring(sections[j], i, sides)
-			var b := _ring(sections[j], i + 1, sides)
-			var c := _ring(sections[j + 1], i + 1, sides)
-			var d := _ring(sections[j + 1], i, sides)
-			for v in [a, b, c, a, c, d]:
-				var shade := 0.94 + 0.055 * sin(v.x * 41.0 + v.y * 27.0 + v.z * 33.0)
-				st.set_color(Color(shade, shade, shade))
-				st.add_vertex(v)
+			for ij in [Vector2i(i,j), Vector2i(i+1,j), Vector2i(i+1,j+1), Vector2i(i,j), Vector2i(i+1,j+1), Vector2i(i,j+1)]:
+				st.set_uv(Vector2(float(ij.x)/sides, float(ij.y)/(rings.size()-1)))
+				st.set_color(Color.WHITE)
+				st.add_vertex(_ring(rings[ij.y], ij.x, sides))
 	st.generate_normals()
+	st.generate_tangents()
 	st.index()
 	_mesh(parent, st.commit(), Vector3.ZERO, mat)
 
 func _ring(section: Array, i: int, sides: int) -> Vector3:
 	var angle := float(i % sides) / sides * TAU
-	return Vector3(cos(angle) * section[1], section[0], sin(angle) * section[2] + section[3])
+	return Vector3(cos(angle) * maxf(0.002, section[1]), section[0], sin(angle) * maxf(0.002, section[2]) + section[3])
+
+# One connected tube across shoulder/elbow/wrist or hip/knee/ankle.
+func _limb(parent: Node3D, points: Array, radii: Array, mat: Material) -> void:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_smooth_group(0)
+	var rings: Array = []
+	for j in range(points.size()-1):
+		for k in 5:
+			var t := float(k)/5.0
+			var center: Vector3 = points[j].cubic_interpolate(points[j+1],points[maxi(0,j-1)],points[mini(points.size()-1,j+2)],t)
+			var radius: Vector2 = radii[j].cubic_interpolate(radii[j+1],radii[maxi(0,j-1)],radii[mini(radii.size()-1,j+2)],t)
+			var row: Array = []
+			for i in 33:
+				var angle := float(i)/32.0*TAU
+				row.append(center + Vector3(cos(angle)*radius.x, 0, sin(angle)*radius.y))
+			rings.append(row)
+	var last: Array = []
+	for i in 33:
+		var angle := float(i)/32.0*TAU
+		last.append(points[-1] + Vector3(cos(angle)*radii[-1].x,0,sin(angle)*radii[-1].y))
+	rings.append(last)
+	for j in range(rings.size()-1):
+		for i in 32:
+			for ij in [Vector2i(i,j),Vector2i(i+1,j+1),Vector2i(i+1,j),Vector2i(i,j),Vector2i(i,j+1),Vector2i(i+1,j+1)]:
+				st.set_uv(Vector2(float(ij.x)/32.0,float(ij.y)/(rings.size()-1)))
+				st.set_color(Color.WHITE)
+				st.add_vertex(rings[ij.y][ij.x])
+	st.generate_normals()
+	st.generate_tangents()
+	st.index()
+	_mesh(parent, st.commit(), Vector3.ZERO, mat)
 
 # A closed beveled solid for ears, ragged cloth and weapon silhouettes (XY outline).
 func _solid(parent: Node3D, outline: Array, depth: float, mat: Material, pos: Vector3 = Vector3.ZERO) -> Node3D:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_smooth_group(0)
 	var center := Vector2.ZERO
 	for p in outline:
 		center += p
@@ -182,31 +229,45 @@ func _build_body(body: Node3D) -> void:
 
 func _build_head(body: Node3D) -> void:
 	var head := _pivot(body, "Head", Vector3(0, 0.59, 0.045))
-	_bar(head, Vector3(0, -0.07, 0), Vector3(0, 0.12, 0.01), 0.12, 0.14, _m.skin)
-	_loft(head, [[0.015, 0.025, 0.04, 0.065], [0.05, 0.13, 0.11, 0.065], [0.13, 0.205, 0.15, 0.035], [0.24, 0.215, 0.17, 0], [0.34, 0.18, 0.14, -0.02], [0.40, 0.105, 0.09, -0.02], [0.425, 0.008, 0.008, -0.02]], _m.skin, 24)
-	# Angular ears, recessed inner cartilage and cheek planes.
-	for s in [-1.0, 1.0]:
-		_solid(head, [Vector2(s * 0.16, 0.29), Vector2(s * 0.49, 0.365), Vector2(s * 0.35, 0.16), Vector2(s * 0.21, 0.13)], 0.050, _m.skin, Vector3(0, 0, -0.015))
-		_solid(head, [Vector2(s * 0.215, 0.265), Vector2(s * 0.432, 0.327), Vector2(s * 0.32, 0.19), Vector2(s * 0.235, 0.17)], 0.016, _m.ear, Vector3(0, 0, 0.022))
-		var cheek := _ellipsoid(head, Vector3(s * 0.149, 0.137, 0.124), Vector3(0.080, 0.044, 0.073), _m.skin_dark)
-		cheek.rotation.z = s * 0.4
-		var socket := _ellipsoid(head, Vector3(s * 0.105, 0.231, 0.151), Vector3(0.076, 0.040, 0.028), _m.mouth)
-		socket.rotation.z = s * 0.18
-		var eye := _ellipsoid(head, Vector3(s * 0.105, 0.229, 0.176), Vector3(0.051, 0.024, 0.018), _m.eye)
-		eye.rotation.z = s * 0.18
-		_ellipsoid(head, Vector3(s * 0.098, 0.229, 0.194), Vector3(0.009, 0.021, 0.006), _m.mouth)
-		var brow := _ellipsoid(head, Vector3(s * 0.105, 0.266, 0.168), Vector3(0.099, 0.034, 0.044), _m.skin_dark)
-		brow.rotation.z = s * 0.22
-	# Hooked nose, nostrils, heavy muzzle, mouth slit, asymmetrical tusks.
-	_ellipsoid(head, Vector3(0, 0.207, 0.171), Vector3(0.050, 0.108, 0.065), _m.skin)
-	_ellipsoid(head, Vector3(0, 0.153, 0.23), Vector3(0.071, 0.044, 0.078), _m.skin)
-	for s in [-1.0, 1.0]:
-		_ellipsoid(head, Vector3(s * 0.045, 0.139, 0.274), Vector3(0.018, 0.011, 0.012), _m.mouth)
-	_ellipsoid(head, Vector3(0, 0.089, 0.155), Vector3(0.135, 0.043, 0.065), _m.skin)
-	_ellipsoid(head, Vector3(0, 0.057, 0.169), Vector3(0.127, 0.014, 0.047), _m.mouth)
-	_ellipsoid(head, Vector3(0, 0.029, 0.148), Vector3(0.123, 0.032, 0.061), _m.skin_dark)
-	for s in [-1.0, 1.0]:
-		_bar(head, Vector3(s * 0.09, 0.041, 0.200), Vector3(s * 0.105, 0.114, 0.219), 0.019, 0.002, _m.bone)
+	head.scale = Vector3(0.85, 0.9, 0.88)
+	var file := FileAccess.open("res://content/monsters/models/goblin_head.meshbin", FileAccess.READ)
+	var count := file.get_32()
+	var index_count := file.get_32()
+	var vertices := PackedVector3Array()
+	var normals := PackedVector3Array()
+	var uv := PackedVector2Array()
+	var colors := PackedColorArray()
+	for i in count:
+		var v := Vector3(file.get_float(),file.get_float(),file.get_float())
+		vertices.append(v)
+		var tint := Color.WHITE
+		if absf(v.x)>0.22 and v.z>0.0:
+			tint = Color(0.80,0.75,0.66)
+		if v.y<0.075 and v.z>0.175:
+			tint = Color(0.73,0.73,0.63)
+		colors.append(tint)
+		uv.append(Vector2(atan2(v.z,v.x)/TAU+0.5,(v.y+0.11)/0.56))
+	for i in count:
+		normals.append(Vector3(file.get_float(),file.get_float(),file.get_float()))
+	var indices := PackedInt32Array()
+	for i in index_count:
+		indices.append(file.get_32())
+	var arrays: Array = []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = vertices
+	arrays[Mesh.ARRAY_NORMAL] = normals
+	arrays[Mesh.ARRAY_COLOR] = colors
+	arrays[Mesh.ARRAY_TEX_UV] = uv
+	arrays[Mesh.ARRAY_INDEX] = indices
+	var sculpt := ArrayMesh.new()
+	sculpt.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,arrays)
+	_mesh(head,sculpt,Vector3.ZERO,_m.skin)
+	for side in [-1.0,1.0]:
+		# Small inset eyeballs with amber irises, round pupils, and subtle wet highlights.
+		_ellipsoid(head,Vector3(side*0.091,0.220,0.149),Vector3(0.034,0.013,0.026),_m.bone)
+		_ellipsoid(head,Vector3(side*0.088,0.219,0.172),Vector3(0.017,0.012,0.006),_m.eye)
+		_ellipsoid(head,Vector3(side*0.088,0.219,0.178),Vector3(0.006,0.009,0.003),_m.mouth)
+		_bar(head,Vector3(side*0.084,0.044,0.20),Vector3(side*0.094,0.097,0.220),0.012,0.001,_m.bone)
 	# A healed brow scar and a small brass ear ring.
 	_bar(head, Vector3(-0.14, 0.29, 0.181), Vector3(-0.12, 0.19, 0.187), 0.006, 0.004, _m.ear, 6)
 	var ring := TorusMesh.new()
@@ -214,16 +275,13 @@ func _build_head(body: Node3D) -> void:
 	ring.outer_radius = 0.036
 	ring.rings = 16
 	ring.ring_segments = 8
-	var earring := _mesh(head, ring, Vector3(0.32, 0.16, 0.035), _m.brass)
+	var earring := _mesh(head, ring, Vector3(0.32, 0.24, 0.012), _m.brass)
 	earring.rotation.x = PI / 2.0
 
 func _build_arm(body: Node3D, side: float) -> void:
 	var arm := _pivot(body, "RightArm" if side < 0 else "LeftArm", Vector3(side * 0.32, 0.43, -0.005))
-	_ellipsoid(arm, Vector3(side * 0.045, -0.045, 0), Vector3(0.13, 0.14, 0.13), _m.skin)
-	_bar(arm, Vector3(side * 0.045, -0.04, 0), Vector3(side * 0.15, -0.29, 0.035), 0.105, 0.078, _m.skin)
-	_ellipsoid(arm, Vector3(side * 0.15, -0.29, 0.035), Vector3.ONE * 0.08, _m.skin_dark)
+	_limb(arm, [Vector3(side*0.02,0.065,0), Vector3(side*0.045,-0.04,0), Vector3(side*0.09,-0.15,0.01), Vector3(side*0.15,-0.29,0.035), Vector3(side*0.155,-0.37,0.06), Vector3(side*0.165,-0.54,0.135), Vector3(side*0.165,-0.60,0.155)], [Vector2(0.065,0.060),Vector2(0.12,0.115),Vector2(0.10,0.095),Vector2(0.067,0.071),Vector2(0.089,0.082),Vector2(0.054,0.054),Vector2(0.045,0.045)], _m.skin)
 	var forearm := _pivot(arm, "Forearm", Vector3(side * 0.15, -0.29, 0.035))
-	_bar(forearm, Vector3.ZERO, Vector3(side * 0.015, -0.25, 0.10), 0.087, 0.06, _m.skin)
 	_bar(forearm, Vector3(side * 0.004, -0.08, 0.032), Vector3(side * 0.014, -0.23, 0.09), 0.092, 0.074, _m.leather)
 	for j in 3:
 		var y := -0.10 - j * 0.053
@@ -277,40 +335,12 @@ func _build_shield(hand: Node3D) -> void:
 
 func _build_leg(side: float) -> void:
 	var leg := _pivot(_root, "RightLeg" if side < 0 else "LeftLeg", Vector3(side * 0.15, 0.85, 0))
-	_bar(leg, Vector3.ZERO, Vector3(side * 0.06, -0.32, 0.075), 0.12, 0.09, _m.cloth)
-	_ellipsoid(leg, Vector3(side * 0.06, -0.34, 0.08), Vector3(0.095, 0.10, 0.09), _m.skin)
+	_limb(leg, [Vector3(0,0.04,0),Vector3(side*0.025,-0.10,0.025),Vector3(side*0.06,-0.28,0.07),Vector3(side*0.06,-0.35,0.07),Vector3(side*0.075,-0.47,0.035),Vector3(side*0.105,-0.70,0.01)], [Vector2(0.115,0.125),Vector2(0.122,0.12),Vector2(0.083,0.087),Vector2(0.08,0.082),Vector2(0.087,0.085),Vector2(0.052,0.055)], _m.skin)
+	_bar(leg, Vector3(0,0.06,0), Vector3(side*0.05,-0.24,0.058), 0.145,0.117,_m.cloth)
 	var shin := _pivot(leg, "Shin", Vector3(side * 0.06, -0.35, 0.07))
-	_bar(shin, Vector3.ZERO, Vector3(side * 0.045, -0.35, -0.06), 0.09, 0.058, _m.skin)
-	_bar(shin, Vector3(side * 0.012, -0.10, -0.02), Vector3(side * 0.045, -0.37, -0.06), 0.095, 0.078, _m.leather)
+	_bar(shin, Vector3(side * 0.012, -0.10, -0.02), Vector3(side * 0.045, -0.37, -0.06), 0.113, 0.094, _m.leather)
 	for i in 3:
 		var y := -0.12 - i * 0.08
-		_bar(shin, Vector3(side * 0.025, y, -0.035), Vector3(side * 0.025, y - 0.022, -0.039), 0.099 - i * 0.006, 0.098 - i * 0.006, _m.edge)
+		_bar(shin, Vector3(side * 0.025, y, -0.035), Vector3(side * 0.025, y - 0.022, -0.039), 0.117 - i * 0.007, 0.116 - i * 0.007, _m.edge)
 	_ellipsoid(shin, Vector3(side * 0.045, -0.414, 0.031), Vector3(0.10, 0.086, 0.18), _m.leather)
 	_box(shin, Vector3(side * 0.045, -0.479, 0.031), Vector3(0.19, 0.042, 0.30), _m.mouth)
-
-func _merge_meshes(parent: Node3D) -> void:
-	var groups: Dictionary = {}
-	for child in parent.get_children():
-		if child is MeshInstance3D:
-			var mat: Material = child.material_override
-			if not groups.has(mat):
-				var st := SurfaceTool.new()
-				st.begin(Mesh.PRIMITIVE_TRIANGLES)
-				groups[mat] = st
-			var arrays: Array = child.mesh.surface_get_arrays(0)
-			if arrays[Mesh.ARRAY_COLOR] == null or arrays[Mesh.ARRAY_COLOR].is_empty():
-				var colors := PackedColorArray()
-				colors.resize(arrays[Mesh.ARRAY_VERTEX].size())
-				colors.fill(Color.WHITE)
-				arrays[Mesh.ARRAY_COLOR] = colors
-			var source := ArrayMesh.new()
-			source.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
-			groups[mat].append_from(source, 0, child.transform)
-			child.free()
-		else:
-			_merge_meshes(child)
-	for mat in groups:
-		var st: SurfaceTool = groups[mat]
-		st.index()
-		var node := _mesh(parent, st.commit(), Vector3.ZERO, mat)
-		node.name = mat.resource_name.replace(" ", "")

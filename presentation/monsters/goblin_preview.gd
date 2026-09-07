@@ -9,6 +9,9 @@ var _distance := 4.6
 var _rotate := false
 var _walking := false
 var _status: Label
+var _bones: MeshInstance3D
+var _show_bones := false
+var _rest_pose := false
 
 func _ready() -> void:
 	get_viewport().msaa_3d = Viewport.MSAA_4X
@@ -22,9 +25,9 @@ func _ready() -> void:
 	var world := WorldEnvironment.new()
 	world.environment = environment
 	add_child(world)
-	_light(Vector3(-3, 4, 4), Color("ffdaa1"), 3.2, 8.0)
-	_light(Vector3(3, 2.5, 1), Color("aecddd"), 1.6, 7.0)
-	_light(Vector3(0.5, 3, -3), Color("bcdfc4"), 3.6, 7.0)
+	_light(Vector3(-3, 4, 4), Color("ffdaa1"), 2.0, 8.0)
+	_light(Vector3(3, 2.5, 1), Color("aecddd"), 0.9, 7.0)
+	_light(Vector3(0.5, 3, -3), Color("bcdfc4"), 2.0, 7.0)
 	var floor_mesh := CylinderMesh.new()
 	floor_mesh.top_radius = 1.35
 	floor_mesh.bottom_radius = 1.43
@@ -52,6 +55,14 @@ func _ready() -> void:
 	add_child(ring_node)
 	_model = MonsterModelCatalog.instantiate("goblin")
 	add_child(_model)
+	_bones = MeshInstance3D.new()
+	_bones.mesh = ImmediateMesh.new()
+	var bone_mat := StandardMaterial3D.new()
+	bone_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	bone_mat.no_depth_test = true
+	bone_mat.albedo_color = Color("61efd0")
+	_bones.material_override = bone_mat
+	add_child(_bones)
 	_camera = Camera3D.new()
 	_camera.fov = 37.0
 	add_child(_camera)
@@ -82,7 +93,7 @@ func _build_ui() -> void:
 	title.anchor_right = 0.95
 	canvas.add_child(title)
 	var subtitle := Label.new()
-	subtitle.text = "GOBLIN  /  3D CREATURE STUDY"
+	subtitle.text = "GOBLIN  /  SKINNED CHARACTER · 45 BONES"
 	subtitle.add_theme_color_override("font_color", Color("a8b4b8"))
 	subtitle.anchor_left = 0.05
 	subtitle.anchor_top = 0.13
@@ -93,13 +104,13 @@ func _build_ui() -> void:
 	_status.add_theme_color_override("font_color", Color("aa956d"))
 	canvas.add_child(_status)
 	var controls := HBoxContainer.new()
-	controls.anchor_left = 0.22
-	controls.anchor_right = 0.78
+	controls.anchor_left = 0.05
+	controls.anchor_right = 0.95
 	controls.anchor_top = 0.88
 	controls.anchor_bottom = 0.94
 	controls.add_theme_constant_override("separation", 12)
 	canvas.add_child(controls)
-	for spec in [["揮砍 · Space", _attack], ["受擊 · H", _hit], ["行走 · W", _walk], ["環繞 · R", _orbit]]:
+	for spec in [["揮砍 · Space", _attack], ["受擊 · H", _hit], ["行走 · W", _walk], ["環繞 · R", _orbit], ["骨架 · B", _toggle_bones], ["綁定姿勢 · T", _toggle_rest]]:
 		var button := Button.new()
 		button.text = spec[0]
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -118,9 +129,13 @@ func _process(delta: float) -> void:
 	if _rotate:
 		_yaw += delta * 0.45
 		_update_camera()
-	if _walking:
+	if _show_bones:
+		_draw_bones()
+	if _walking and not _rest_pose:
 		_model.walk_for(0.2)
-	_status.text = {"idle": "待機 / 呼吸", "attack": "攻擊 / 揮砍", "hit": "受擊 / 後仰"}[_model.animation] if not _walking else "行走 / 關節動畫"
+	_status.text = {"idle": "待機 / 呼吸", "attack": "攻擊 / 揮砍", "hit": "受擊 / 後仰"}[_model.animation] if not _walking else "行走 / 骨骼蒙皮"
+	if _rest_pose:
+		_status.text = "綁定姿勢 / 45 bones · 4 weights per vertex"
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
@@ -140,6 +155,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_H: _hit()
 			KEY_W: _walk()
 			KEY_R: _orbit()
+			KEY_B: _toggle_bones()
+			KEY_T: _toggle_rest()
 			KEY_1: _yaw = 0.0
 			KEY_2: _yaw = PI / 2.0
 			KEY_3: _yaw = PI
@@ -151,16 +168,53 @@ func _update_camera() -> void:
 	_camera.look_at(target)
 
 func _attack() -> void:
+	_leave_rest()
 	_model.play_attack()
 
 func _hit() -> void:
+	_leave_rest()
 	_model.play_hit()
 
 func _walk() -> void:
+	_leave_rest()
 	_walking = not _walking
 
 func _orbit() -> void:
 	_rotate = not _rotate
+
+func _leave_rest() -> void:
+	_rest_pose = false
+	_model.set_process(true)
+
+func _toggle_rest() -> void:
+	_rest_pose = not _rest_pose
+	_model.set_process(not _rest_pose)
+	if _rest_pose:
+		_model.animation_player.stop()
+		_model.skeleton.reset_bone_poses()
+		_model._clip = ""
+
+func _toggle_bones() -> void:
+	_show_bones = not _show_bones
+	_bones.visible = _show_bones
+
+func _draw_bones() -> void:
+	var mesh := _bones.mesh as ImmediateMesh
+	mesh.clear_surfaces()
+	mesh.surface_begin(Mesh.PRIMITIVE_LINES)
+	var rig := _model.skeleton
+	for i in rig.get_bone_count():
+		var parent := rig.get_bone_parent(i)
+		if parent < 0:
+			continue
+		var a := rig.get_bone_global_pose(parent).origin
+		var b := rig.get_bone_global_pose(i).origin
+		mesh.surface_add_vertex(a)
+		mesh.surface_add_vertex(b)
+		for axis in [Vector3.RIGHT,Vector3.UP,Vector3.BACK]:
+			mesh.surface_add_vertex(b-axis*0.009)
+			mesh.surface_add_vertex(b+axis*0.009)
+	mesh.surface_end()
 
 # Optional reproducible render for review; only used when explicitly passed on the command line.
 func _capture_if_requested() -> void:
@@ -172,6 +226,16 @@ func _capture_if_requested() -> void:
 	if angle >= 0 and angle + 1 < args.size():
 		_yaw = float(args[angle + 1])
 		_update_camera()
+	var pose := args.find("--pose")
+	if pose >= 0 and pose + 1 < args.size():
+		_model.set_process(false)
+		_model.animation = args[pose+1] if args[pose+1] != "walk" else "idle"
+		_walking = args[pose+1] == "walk"
+		_model.animation_player.play(args[pose+1])
+		_model.animation_player.seek(0.23, true)
+		_model.animation_player.advance(0)
+	if "--bones" in args:
+		_toggle_bones()
 	await get_tree().create_timer(0.6).timeout
 	await RenderingServer.frame_post_draw
 	var result := get_viewport().get_texture().get_image().save_png(args[capture + 1])
