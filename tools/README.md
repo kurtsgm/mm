@@ -10,6 +10,7 @@ godot --headless --path . --script res://tools/<name>.gd
 
 | 工具 | 用途 |
 | --- | --- |
+| `compose_oak_town.py` | 原創溫暖木質民謠城鎮配樂；需 `requirements-music.txt`，與野外編曲工具放在同一目錄。見 `content/audio/music/README.md`。 |
 | `compose_oak_wild.py` | 原創奇幻吟遊風野外配樂；需 `requirements-music.txt`。編曲與重建方式見 `content/audio/music/README.md`。 |
 | `build_goblin.gd` / `goblin_rig.gd` | 原創哥布林模型、45 骨架、蒙皮、PBR 貼圖與 GLB 動畫烘焙；製作說明見 `content/monsters/models/README.md`。 |
 | `sculpt_goblin_head.py` | 融合頭部隱式曲面雕塑，需 `requirements-goblin.txt`；輸出供 Godot 建模工具讀取的中間網格。 |
