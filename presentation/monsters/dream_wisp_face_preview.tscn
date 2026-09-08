@@ -1,0 +1,14 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://presentation/monsters/goblin_preview.gd" id="1"]
+
+[node name="DreamWispFacePreview" type="Node3D"]
+script = ExtResource("1")
+monster_id = "dream_wisp"
+display_name = "夢魘妖 · 臉部細節"
+species_label = "DREAM FAE"
+attack_label = "催眠施法"
+camera_target = Vector3(0, 0.893, 0.052)
+initial_distance = 0.39
+initial_pitch = 0.02
+soft_studio_lighting = true

@@ -1,0 +1,83 @@
+{
+  "blender": "4.5.13 LTS",
+  "stage": "head_gray_study_v1",
+  "meshes": [
+    {
+      "name": "Fae_Head",
+      "cage_vertices": 16278,
+      "cage_faces": 16193,
+      "quad_faces": 16105,
+      "zero_area_faces": 0,
+      "boundary_edges": 168,
+      "nonmanifold_nonboundary_edges": 0,
+      "shape_keys": [
+        "Basis",
+        "01_Face_proportions",
+        "02_Orbits_nose_cheeks",
+        "03_Pointed_ears"
+      ]
+    },
+    {
+      "name": "Eye_L",
+      "cage_vertices": 546,
+      "cage_faces": 544,
+      "quad_faces": 544,
+      "zero_area_faces": 0,
+      "boundary_edges": 0,
+      "nonmanifold_nonboundary_edges": 0,
+      "shape_keys": [
+        "Basis",
+        "01_Face_proportions",
+        "02_Orbits_nose_cheeks",
+        "03_Pointed_ears"
+      ]
+    },
+    {
+      "name": "Eye_R",
+      "cage_vertices": 546,
+      "cage_faces": 544,
+      "quad_faces": 544,
+      "zero_area_faces": 0,
+      "boundary_edges": 0,
+      "nonmanifold_nonboundary_edges": 0,
+      "shape_keys": [
+        "Basis",
+        "01_Face_proportions",
+        "02_Orbits_nose_cheeks",
+        "03_Pointed_ears"
+      ]
+    },
+    {
+      "name": "Eye_L_iris",
+      "cage_vertices": 769,
+      "cage_faces": 768,
+      "quad_faces": 704,
+      "zero_area_faces": 0,
+      "boundary_edges": 64,
+      "nonmanifold_nonboundary_edges": 0,
+      "shape_keys": []
+    },
+    {
+      "name": "Eye_R_iris",
+      "cage_vertices": 769,
+      "cage_faces": 768,
+      "quad_faces": 704,
+      "zero_area_faces": 0,
+      "boundary_edges": 64,
+      "nonmanifold_nonboundary_edges": 0,
+      "shape_keys": []
+    }
+  ],
+  "image_texture_nodes": [],
+  "nominal_head_height_m": 0.222,
+  "neck_boundary": "Open lower bust cut is intentional for later body attachment.",
+  "packed_reference_images": [
+    "face-turnaround.webp"
+  ],
+  "camera_views": [
+    "Camera_Front",
+    "Camera_ThreeQuarter",
+    "Camera_Profile",
+    "Camera_Back"
+  ]
+}

@@ -13,7 +13,11 @@ godot --headless --path . --script res://tools/<name>.gd
 | `compose_oak_town.py` | 原創溫暖木質民謠城鎮配樂；需 `requirements-music.txt`，與野外編曲工具放在同一目錄。見 `content/audio/music/README.md`。 |
 | `compose_oak_wild.py` | 原創奇幻吟遊風野外配樂；需 `requirements-music.txt`。編曲與重建方式見 `content/audio/music/README.md`。 |
 | `build_goblin.gd` / `goblin_rig.gd` | 原創哥布林模型、45 骨架、蒙皮、PBR 貼圖與 GLB 動畫烘焙；製作說明見 `content/monsters/models/README.md`。 |
+| `build_poison_spider.gd` / `import_poison_spider.gd` | 第二隻怪物：小型棘毛毒蛛、41 骨架、八足離線 IK、立體細毛、PBR 與四動作 GLB；匯入鉤子保留彩繪斑紋。見 `content/monsters/models/POISON_SPIDER.md`。 |
+| `build_dream_wisp_art.py` / `export_dream_wisp_geometry.py` / `build_dream_wisp.gd` / `package_dream_wisp_rig.py` | 夢魘妖完整流程：Blender 全身美術、遊戲網格、39 骨骼與四動作、可編輯骨架檔。見 `content/monsters/models/DREAM_WISP.md`。 |
+| `benchmark_dream_wisp.gd` | 2／16 隻同屏的實際渲染基準；輸出幀時間與 draw calls，非完整遊戲 FPS 保證。 |
 | `sculpt_goblin_head.py` | 融合頭部隱式曲面雕塑，需 `requirements-goblin.txt`；輸出供 Godot 建模工具讀取的中間網格。 |
+| `build_dream_wisp_head_study.py` / `export_dream_wisp_head_study.py` | Blender 4.5 LTS 頭部灰模流程：從 Blender Studio CC0 女性基底建立可編輯造型，檢查網格、匯出靜態 GLB 並渲染四個視角。見 `art_source/dream_wisp/head_v1/README.md`。 |
 | `gen_parchment.gd` | **程序化生成羊皮卷 UI 貼圖**（中央乾淨留白 + 四周做舊烤焦破邊 + 透明底）。可參數化尺寸/輸出，看下方。 |
 | `assign_encounter_uuids.gd` | 給 `content/maps/*.json` 缺 id 的 monster entity 補 UUIDv7 並寫回。 |
 | `combat_sim_cli.gd` | 戰鬥模擬器 CLI：跑「遭遇 × 等級」難度表，輸出 markdown + csv 到 `docs/balance/`。 |

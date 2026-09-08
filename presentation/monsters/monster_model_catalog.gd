@@ -2,7 +2,11 @@ class_name MonsterModelCatalog
 extends RefCounted
 
 # Migrate one species at a time; unregistered species still use the sprite catalog.
-const _MODELS := {"goblin": preload("res://content/monsters/models/goblin.tscn")}
+const _MODELS := {
+	"goblin": preload("res://content/monsters/models/goblin.tscn"),
+	"poison_spider": preload("res://content/monsters/models/poison_spider.tscn"),
+	"dream_wisp": preload("res://content/monsters/models/dream_wisp.tscn"),
+}
 
 static func has_model(monster_id: String) -> bool:
 	return _MODELS.has(monster_id)

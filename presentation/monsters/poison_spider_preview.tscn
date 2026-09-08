@@ -1,0 +1,13 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://presentation/monsters/goblin_preview.gd" id="1"]
+
+[node name="PoisonSpiderPreview" type="Node3D"]
+script = ExtResource("1")
+monster_id = "poison_spider"
+display_name = "棘毛毒蛛"
+species_label = "POISON SPIDER"
+attack_label = "撲咬"
+camera_target = Vector3(0, 0.28, 0)
+initial_distance = 3.55
+initial_pitch = 0.38

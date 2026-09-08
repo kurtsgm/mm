@@ -1,6 +1,15 @@
 extends Node3D
 
 # Standalone review scene: ./run.sh res://presentation/monsters/goblin_preview.tscn
+@export var monster_id := "goblin"
+@export var display_name := "獵荒哥布林"
+@export var species_label := "GOBLIN"
+@export var attack_label := "揮砍"
+@export var camera_target := Vector3(0, 1.0, 0)
+@export var initial_distance := 4.6
+@export var initial_pitch := 0.10
+@export var soft_studio_lighting := false
+
 var _model: MonsterModel
 var _camera: Camera3D
 var _yaw := 0.30
@@ -14,6 +23,8 @@ var _show_bones := false
 var _rest_pose := false
 
 func _ready() -> void:
+	_distance = initial_distance
+	_pitch = initial_pitch
 	get_viewport().msaa_3d = Viewport.MSAA_4X
 	var environment := Environment.new()
 	environment.background_mode = Environment.BG_COLOR
@@ -25,9 +36,21 @@ func _ready() -> void:
 	var world := WorldEnvironment.new()
 	world.environment = environment
 	add_child(world)
-	_light(Vector3(-3, 4, 4), Color("ffdaa1"), 2.0, 8.0)
-	_light(Vector3(3, 2.5, 1), Color("aecddd"), 0.9, 7.0)
-	_light(Vector3(0.5, 3, -3), Color("bcdfc4"), 2.0, 7.0)
+	if soft_studio_lighting:
+		for spec in [[Vector3(-30,-25,0),Color("fff0dc"),0.50],[Vector3(-15,135,0),Color("b6c9e5"),0.18],[Vector3(-25,180,0),Color("ddd2ef"),0.25]]:
+			var light:=DirectionalLight3D.new()
+			light.rotation_degrees=spec[0]
+			light.light_color=spec[1]
+			light.light_energy=spec[2]
+			light.shadow_enabled=stage_key_shadow(spec[2])
+			light.shadow_bias=0.08
+			light.shadow_normal_bias=1.0
+			light.directional_shadow_max_distance=8.0
+			add_child(light)
+	else:
+		_light(Vector3(-3, 4, 4), Color("ffdaa1"), 2.0, 8.0)
+		_light(Vector3(3, 2.5, 1), Color("aecddd"), 0.9, 7.0)
+		_light(Vector3(0.5, 3, -3), Color("bcdfc4"), 2.0, 7.0)
 	var floor_mesh := CylinderMesh.new()
 	floor_mesh.top_radius = 1.35
 	floor_mesh.bottom_radius = 1.43
@@ -53,8 +76,19 @@ func _ready() -> void:
 	ring_mat.metallic = 0.7
 	ring_node.material_override = ring_mat
 	add_child(ring_node)
-	_model = MonsterModelCatalog.instantiate("goblin")
+	_model = MonsterModelCatalog.instantiate(monster_id)
 	add_child(_model)
+	# Optional side-by-side asset review at each species' actual game scale.
+	var args := OS.get_cmdline_user_args()
+	var compare := args.find("--compare")
+	if compare >= 0 and compare + 1 < args.size() and MonsterModelCatalog.has_model(args[compare + 1]):
+		var other := MonsterModelCatalog.instantiate(args[compare + 1])
+		add_child(other)
+		other.position.x = -0.70
+		_model.position.x = 0.70
+		camera_target = Vector3(0, 0.9, 0)
+		_distance = 5.6
+		_pitch = 0.16
 	_bones = MeshInstance3D.new()
 	_bones.mesh = ImmediateMesh.new()
 	var bone_mat := StandardMaterial3D.new()
@@ -71,20 +105,23 @@ func _ready() -> void:
 	_build_ui()
 	_capture_if_requested()
 
+func stage_key_shadow(energy: float) -> bool:
+	return energy>0.45 and not "--no-shadows" in OS.get_cmdline_user_args()
+
 func _light(pos: Vector3, color: Color, energy: float, range_value: float) -> void:
 	var light := OmniLight3D.new()
 	light.position = pos
 	light.light_color = color
 	light.light_energy = energy
 	light.omni_range = range_value
-	light.shadow_enabled = true
+	light.shadow_enabled = not "--no-shadows" in OS.get_cmdline_user_args()
 	add_child(light)
 
 func _build_ui() -> void:
 	var canvas := CanvasLayer.new()
 	add_child(canvas)
 	var title := Label.new()
-	title.text = "獵荒哥布林"
+	title.text = display_name
 	title.add_theme_font_size_override("font_size", 32)
 	title.add_theme_color_override("font_color", Color("e1d4b4"))
 	title.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
@@ -93,7 +130,7 @@ func _build_ui() -> void:
 	title.anchor_right = 0.95
 	canvas.add_child(title)
 	var subtitle := Label.new()
-	subtitle.text = "GOBLIN  /  SKINNED CHARACTER · 45 BONES"
+	subtitle.text = "%s  /  SKINNED CHARACTER · %d BONES" % [species_label, _model.skeleton.get_bone_count()]
 	subtitle.add_theme_color_override("font_color", Color("a8b4b8"))
 	subtitle.anchor_left = 0.05
 	subtitle.anchor_top = 0.13
@@ -110,7 +147,7 @@ func _build_ui() -> void:
 	controls.anchor_bottom = 0.94
 	controls.add_theme_constant_override("separation", 12)
 	canvas.add_child(controls)
-	for spec in [["揮砍 · Space", _attack], ["受擊 · H", _hit], ["行走 · W", _walk], ["環繞 · R", _orbit], ["骨架 · B", _toggle_bones], ["綁定姿勢 · T", _toggle_rest]]:
+	for spec in [[attack_label+" · Space", _attack], ["受擊 · H", _hit], ["行走 · W", _walk], ["環繞 · R", _orbit], ["骨架 · B", _toggle_bones], ["綁定姿勢 · T", _toggle_rest]]:
 		var button := Button.new()
 		button.text = spec[0]
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -133,9 +170,9 @@ func _process(delta: float) -> void:
 		_draw_bones()
 	if _walking and not _rest_pose:
 		_model.walk_for(0.2)
-	_status.text = {"idle": "待機 / 呼吸", "attack": "攻擊 / 揮砍", "hit": "受擊 / 後仰"}[_model.animation] if not _walking else "行走 / 骨骼蒙皮"
+	_status.text = {"idle": "待機 / 呼吸", "attack": "攻擊 / "+attack_label, "hit": "受擊 / 後仰"}[_model.animation] if not _walking else "行走 / 骨骼蒙皮"
 	if _rest_pose:
-		_status.text = "綁定姿勢 / 45 bones · 4 weights per vertex"
+		_status.text = "綁定姿勢 / %d bones" % _model.skeleton.get_bone_count()
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
@@ -145,7 +182,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_update_camera()
 	elif event is InputEventMouseButton and event.pressed:
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
-			_distance = maxf(2.8, _distance - 0.25)
+			_distance = maxf(initial_distance*0.4, _distance - 0.25)
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
 			_distance = minf(7.0, _distance + 0.25)
 		_update_camera()
@@ -163,7 +200,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_update_camera()
 
 func _update_camera() -> void:
-	var target := Vector3(0, 1.0, 0)
+	var target := camera_target
 	_camera.position = target + Vector3(sin(_yaw) * cos(_pitch), sin(_pitch), cos(_yaw) * cos(_pitch)) * _distance
 	_camera.look_at(target)
 
@@ -207,8 +244,8 @@ func _draw_bones() -> void:
 		var parent := rig.get_bone_parent(i)
 		if parent < 0:
 			continue
-		var a := rig.get_bone_global_pose(parent).origin
-		var b := rig.get_bone_global_pose(i).origin
+		var a := _model.transform * rig.get_bone_global_pose(parent).origin
+		var b := _model.transform * rig.get_bone_global_pose(i).origin
 		mesh.surface_add_vertex(a)
 		mesh.surface_add_vertex(b)
 		for axis in [Vector3.RIGHT,Vector3.UP,Vector3.BACK]:
@@ -219,13 +256,20 @@ func _draw_bones() -> void:
 # Optional reproducible render for review; only used when explicitly passed on the command line.
 func _capture_if_requested() -> void:
 	var args := OS.get_cmdline_user_args()
+	if "--no-lod" in args: get_viewport().mesh_lod_threshold=0.0
 	var capture := args.find("--capture")
 	if capture < 0 or capture + 1 >= args.size():
 		return
 	var angle := args.find("--yaw")
 	if angle >= 0 and angle + 1 < args.size():
 		_yaw = float(args[angle + 1])
-		_update_camera()
+	var pitch := args.find("--pitch")
+	if pitch >= 0 and pitch + 1 < args.size():
+		_pitch = float(args[pitch + 1])
+	var distance := args.find("--distance")
+	if distance >= 0 and distance + 1 < args.size():
+		_distance = maxf(0.5, float(args[distance + 1]))
+	_update_camera()
 	var pose := args.find("--pose")
 	if pose >= 0 and pose + 1 < args.size():
 		_model.set_process(false)

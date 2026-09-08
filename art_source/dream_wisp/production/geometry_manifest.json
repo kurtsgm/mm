@@ -1,0 +1,1360 @@
+{
+  "triangles": 187726,
+  "parts": {
+    "part_000": {
+      "source": "Eye_L",
+      "attachment": "",
+      "triangles": 1088
+    },
+    "part_001": {
+      "source": "Eye_R",
+      "attachment": "",
+      "triangles": 1088
+    },
+    "part_002": {
+      "source": "Eye_L_iris",
+      "attachment": "",
+      "triangles": 1472
+    },
+    "part_003": {
+      "source": "Eye_R_iris",
+      "attachment": "",
+      "triangles": 1472
+    },
+    "part_004": {
+      "source": "Skin",
+      "attachment": "",
+      "triangles": 59194
+    },
+    "part_005": {
+      "source": "Hair_scalp_cap",
+      "attachment": "",
+      "triangles": 5816
+    },
+    "part_006": {
+      "source": "Hair_lock_-1_00",
+      "attachment": "",
+      "triangles": 2396
+    },
+    "part_007": {
+      "source": "Hair_lock_-1_01",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_008": {
+      "source": "Hair_lock_-1_02",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_009": {
+      "source": "Hair_lock_-1_03",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_010": {
+      "source": "Hair_lock_-1_04",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_011": {
+      "source": "Hair_lock_-1_05",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_012": {
+      "source": "Hair_lock_-1_06",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_013": {
+      "source": "Hair_lock_-1_07",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_014": {
+      "source": "Hair_lock_-1_08",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_015": {
+      "source": "Hair_lock_-1_09",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_016": {
+      "source": "Hair_lock_-1_10",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_017": {
+      "source": "Hair_lock_-1_11",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_018": {
+      "source": "Hair_lock_-1_12",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_019": {
+      "source": "Hair_lock_-1_13",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_020": {
+      "source": "Hair_lock_-1_14",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_021": {
+      "source": "Hair_lock_-1_15",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_022": {
+      "source": "Hair_lock_-1_16",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_023": {
+      "source": "Hair_lock_-1_17",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_024": {
+      "source": "Hair_lock_-1_18",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_025": {
+      "source": "Hair_lock_-1_19",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_026": {
+      "source": "Hair_lock_+1_00",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_027": {
+      "source": "Hair_lock_+1_01",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_028": {
+      "source": "Hair_lock_+1_02",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_029": {
+      "source": "Hair_lock_+1_03",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_030": {
+      "source": "Hair_lock_+1_04",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_031": {
+      "source": "Hair_lock_+1_05",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_032": {
+      "source": "Hair_lock_+1_06",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_033": {
+      "source": "Hair_lock_+1_07",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_034": {
+      "source": "Hair_lock_+1_08",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_035": {
+      "source": "Hair_lock_+1_09",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_036": {
+      "source": "Hair_lock_+1_10",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_037": {
+      "source": "Hair_lock_+1_11",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_038": {
+      "source": "Hair_lock_+1_12",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_039": {
+      "source": "Hair_lock_+1_13",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_040": {
+      "source": "Hair_lock_+1_14",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_041": {
+      "source": "Hair_lock_+1_15",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_042": {
+      "source": "Hair_lock_+1_16",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_043": {
+      "source": "Hair_lock_+1_17",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_044": {
+      "source": "Hair_lock_+1_18",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_045": {
+      "source": "Hair_lock_+1_19",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_046": {
+      "source": "Hair_front_sweep_-1_00",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_047": {
+      "source": "Hair_front_sweep_-1_01",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_048": {
+      "source": "Hair_front_sweep_-1_02",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_049": {
+      "source": "Hair_front_sweep_-1_03",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_050": {
+      "source": "Hair_front_sweep_-1_04",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_051": {
+      "source": "Hair_front_sweep_-1_05",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_052": {
+      "source": "Hair_front_sweep_+1_00",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_053": {
+      "source": "Hair_front_sweep_+1_01",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_054": {
+      "source": "Hair_front_sweep_+1_02",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_055": {
+      "source": "Hair_front_sweep_+1_03",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_056": {
+      "source": "Hair_front_sweep_+1_04",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_057": {
+      "source": "Hair_front_sweep_+1_05",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_058": {
+      "source": "Hair_back_00",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_059": {
+      "source": "Hair_back_01",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_060": {
+      "source": "Hair_back_02",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_061": {
+      "source": "Hair_back_03",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_062": {
+      "source": "Hair_back_04",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_063": {
+      "source": "Hair_back_05",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_064": {
+      "source": "Hair_back_06",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_065": {
+      "source": "Hair_back_07",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_066": {
+      "source": "Hair_back_08",
+      "attachment": "",
+      "triangles": 478
+    },
+    "part_067": {
+      "source": "Brow_-1",
+      "attachment": "",
+      "triangles": 380
+    },
+    "part_068": {
+      "source": "Brow_+1",
+      "attachment": "",
+      "triangles": 380
+    },
+    "part_069": {
+      "source": "Circlet_main",
+      "attachment": "",
+      "triangles": 1440
+    },
+    "part_070": {
+      "source": "Circlet_twig_-1_0",
+      "attachment": "",
+      "triangles": 16
+    },
+    "part_071": {
+      "source": "Circlet_leaf_-1_0",
+      "attachment": "",
+      "triangles": 4
+    },
+    "part_072": {
+      "source": "Circlet_twig_-1_1",
+      "attachment": "",
+      "triangles": 16
+    },
+    "part_073": {
+      "source": "Circlet_leaf_-1_1",
+      "attachment": "",
+      "triangles": 4
+    },
+    "part_074": {
+      "source": "Circlet_twig_-1_2",
+      "attachment": "",
+      "triangles": 16
+    },
+    "part_075": {
+      "source": "Circlet_leaf_-1_2",
+      "attachment": "",
+      "triangles": 4
+    },
+    "part_076": {
+      "source": "Circlet_twig_-1_3",
+      "attachment": "",
+      "triangles": 16
+    },
+    "part_077": {
+      "source": "Circlet_leaf_-1_3",
+      "attachment": "",
+      "triangles": 4
+    },
+    "part_078": {
+      "source": "Circlet_twig_-1_4",
+      "attachment": "",
+      "triangles": 16
+    },
+    "part_079": {
+      "source": "Circlet_leaf_-1_4",
+      "attachment": "",
+      "triangles": 4
+    },
+    "part_080": {
+      "source": "Circlet_twig_-1_5",
+      "attachment": "",
+      "triangles": 16
+    },
+    "part_081": {
+      "source": "Circlet_leaf_-1_5",
+      "attachment": "",
+      "triangles": 4
+    },
+    "part_082": {
+      "source": "Circlet_twig_+1_0",
+      "attachment": "",
+      "triangles": 16
+    },
+    "part_083": {
+      "source": "Circlet_leaf_+1_0",
+      "attachment": "",
+      "triangles": 4
+    },
+    "part_084": {
+      "source": "Circlet_twig_+1_1",
+      "attachment": "",
+      "triangles": 16
+    },
+    "part_085": {
+      "source": "Circlet_leaf_+1_1",
+      "attachment": "",
+      "triangles": 4
+    },
+    "part_086": {
+      "source": "Circlet_twig_+1_2",
+      "attachment": "",
+      "triangles": 16
+    },
+    "part_087": {
+      "source": "Circlet_leaf_+1_2",
+      "attachment": "",
+      "triangles": 4
+    },
+    "part_088": {
+      "source": "Circlet_twig_+1_3",
+      "attachment": "",
+      "triangles": 16
+    },
+    "part_089": {
+      "source": "Circlet_leaf_+1_3",
+      "attachment": "",
+      "triangles": 4
+    },
+    "part_090": {
+      "source": "Circlet_twig_+1_4",
+      "attachment": "",
+      "triangles": 16
+    },
+    "part_091": {
+      "source": "Circlet_leaf_+1_4",
+      "attachment": "",
+      "triangles": 4
+    },
+    "part_092": {
+      "source": "Circlet_twig_+1_5",
+      "attachment": "",
+      "triangles": 16
+    },
+    "part_093": {
+      "source": "Circlet_leaf_+1_5",
+      "attachment": "",
+      "triangles": 4
+    },
+    "part_094": {
+      "source": "Circlet_moonstone",
+      "attachment": "",
+      "triangles": 720
+    },
+    "part_095": {
+      "source": "Boots",
+      "attachment": "",
+      "triangles": 9680
+    },
+    "part_096": {
+      "source": "Bodice",
+      "attachment": "",
+      "triangles": 10472
+    },
+    "part_097": {
+      "source": "Bodice_edge",
+      "attachment": "",
+      "triangles": 768
+    },
+    "part_098": {
+      "source": "Bodice_edge.001",
+      "attachment": "",
+      "triangles": 768
+    },
+    "part_099": {
+      "source": "Boot_toecap_-1",
+      "attachment": "",
+      "triangles": 1196
+    },
+    "part_100": {
+      "source": "Boot_toecap_1",
+      "attachment": "",
+      "triangles": 1196
+    },
+    "part_101": {
+      "source": "Skirt_lining",
+      "attachment": "",
+      "triangles": 1408
+    },
+    "part_102": {
+      "source": "Petal_skirt_0_00",
+      "attachment": "skirt_R",
+      "triangles": 644
+    },
+    "part_103": {
+      "source": "Embroidery_skirt_0_0",
+      "attachment": "skirt_R",
+      "triangles": 136
+    },
+    "part_104": {
+      "source": "Petal_skirt_0_01",
+      "attachment": "skirt_L",
+      "triangles": 644
+    },
+    "part_105": {
+      "source": "Embroidery_skirt_0_1",
+      "attachment": "skirt_L",
+      "triangles": 136
+    },
+    "part_106": {
+      "source": "Petal_skirt_0_02",
+      "attachment": "skirt_L",
+      "triangles": 644
+    },
+    "part_107": {
+      "source": "Embroidery_skirt_0_2",
+      "attachment": "skirt_L",
+      "triangles": 136
+    },
+    "part_108": {
+      "source": "Petal_skirt_0_03",
+      "attachment": "skirt_L",
+      "triangles": 644
+    },
+    "part_109": {
+      "source": "Embroidery_skirt_0_3",
+      "attachment": "skirt_L",
+      "triangles": 136
+    },
+    "part_110": {
+      "source": "Petal_skirt_0_04",
+      "attachment": "skirt_L",
+      "triangles": 644
+    },
+    "part_111": {
+      "source": "Embroidery_skirt_0_4",
+      "attachment": "skirt_L",
+      "triangles": 136
+    },
+    "part_112": {
+      "source": "Petal_skirt_0_05",
+      "attachment": "skirt_L",
+      "triangles": 644
+    },
+    "part_113": {
+      "source": "Embroidery_skirt_0_5",
+      "attachment": "skirt_L",
+      "triangles": 136
+    },
+    "part_114": {
+      "source": "Petal_skirt_0_06",
+      "attachment": "skirt_L",
+      "triangles": 644
+    },
+    "part_115": {
+      "source": "Embroidery_skirt_0_6",
+      "attachment": "skirt_L",
+      "triangles": 136
+    },
+    "part_116": {
+      "source": "Petal_skirt_0_07",
+      "attachment": "skirt_R",
+      "triangles": 644
+    },
+    "part_117": {
+      "source": "Embroidery_skirt_0_7",
+      "attachment": "skirt_R",
+      "triangles": 136
+    },
+    "part_118": {
+      "source": "Petal_skirt_0_08",
+      "attachment": "skirt_R",
+      "triangles": 644
+    },
+    "part_119": {
+      "source": "Embroidery_skirt_0_8",
+      "attachment": "skirt_R",
+      "triangles": 136
+    },
+    "part_120": {
+      "source": "Petal_skirt_0_09",
+      "attachment": "skirt_R",
+      "triangles": 644
+    },
+    "part_121": {
+      "source": "Embroidery_skirt_0_9",
+      "attachment": "skirt_R",
+      "triangles": 136
+    },
+    "part_122": {
+      "source": "Petal_skirt_0_10",
+      "attachment": "skirt_R",
+      "triangles": 644
+    },
+    "part_123": {
+      "source": "Embroidery_skirt_0_10",
+      "attachment": "skirt_R",
+      "triangles": 136
+    },
+    "part_124": {
+      "source": "Petal_skirt_0_11",
+      "attachment": "skirt_R",
+      "triangles": 644
+    },
+    "part_125": {
+      "source": "Embroidery_skirt_0_11",
+      "attachment": "skirt_R",
+      "triangles": 136
+    },
+    "part_126": {
+      "source": "Petal_skirt_1_00",
+      "attachment": "skirt_L",
+      "triangles": 644
+    },
+    "part_127": {
+      "source": "Embroidery_skirt_1_0",
+      "attachment": "skirt_L",
+      "triangles": 136
+    },
+    "part_128": {
+      "source": "Petal_skirt_1_01",
+      "attachment": "skirt_L",
+      "triangles": 644
+    },
+    "part_129": {
+      "source": "Embroidery_skirt_1_1",
+      "attachment": "skirt_L",
+      "triangles": 136
+    },
+    "part_130": {
+      "source": "Petal_skirt_1_02",
+      "attachment": "skirt_L",
+      "triangles": 644
+    },
+    "part_131": {
+      "source": "Embroidery_skirt_1_2",
+      "attachment": "skirt_L",
+      "triangles": 136
+    },
+    "part_132": {
+      "source": "Petal_skirt_1_03",
+      "attachment": "skirt_L",
+      "triangles": 644
+    },
+    "part_133": {
+      "source": "Embroidery_skirt_1_3",
+      "attachment": "skirt_L",
+      "triangles": 136
+    },
+    "part_134": {
+      "source": "Petal_skirt_1_04",
+      "attachment": "skirt_L",
+      "triangles": 644
+    },
+    "part_135": {
+      "source": "Embroidery_skirt_1_4",
+      "attachment": "skirt_L",
+      "triangles": 136
+    },
+    "part_136": {
+      "source": "Petal_skirt_1_05",
+      "attachment": "skirt_L",
+      "triangles": 644
+    },
+    "part_137": {
+      "source": "Embroidery_skirt_1_5",
+      "attachment": "skirt_L",
+      "triangles": 136
+    },
+    "part_138": {
+      "source": "Petal_skirt_1_06",
+      "attachment": "skirt_R",
+      "triangles": 644
+    },
+    "part_139": {
+      "source": "Embroidery_skirt_1_6",
+      "attachment": "skirt_R",
+      "triangles": 136
+    },
+    "part_140": {
+      "source": "Petal_skirt_1_07",
+      "attachment": "skirt_R",
+      "triangles": 644
+    },
+    "part_141": {
+      "source": "Embroidery_skirt_1_7",
+      "attachment": "skirt_R",
+      "triangles": 136
+    },
+    "part_142": {
+      "source": "Petal_skirt_1_08",
+      "attachment": "skirt_R",
+      "triangles": 644
+    },
+    "part_143": {
+      "source": "Embroidery_skirt_1_8",
+      "attachment": "skirt_R",
+      "triangles": 136
+    },
+    "part_144": {
+      "source": "Petal_skirt_1_09",
+      "attachment": "skirt_R",
+      "triangles": 644
+    },
+    "part_145": {
+      "source": "Embroidery_skirt_1_9",
+      "attachment": "skirt_R",
+      "triangles": 136
+    },
+    "part_146": {
+      "source": "Petal_skirt_1_10",
+      "attachment": "skirt_R",
+      "triangles": 644
+    },
+    "part_147": {
+      "source": "Embroidery_skirt_1_10",
+      "attachment": "skirt_R",
+      "triangles": 136
+    },
+    "part_148": {
+      "source": "Petal_skirt_1_11",
+      "attachment": "skirt_R",
+      "triangles": 644
+    },
+    "part_149": {
+      "source": "Embroidery_skirt_1_11",
+      "attachment": "skirt_R",
+      "triangles": 136
+    },
+    "part_150": {
+      "source": "Petal_skirt_2_00",
+      "attachment": "skirt_L",
+      "triangles": 644
+    },
+    "part_151": {
+      "source": "Embroidery_skirt_2_0",
+      "attachment": "skirt_L",
+      "triangles": 136
+    },
+    "part_152": {
+      "source": "Petal_skirt_2_01",
+      "attachment": "skirt_L",
+      "triangles": 644
+    },
+    "part_153": {
+      "source": "Embroidery_skirt_2_1",
+      "attachment": "skirt_L",
+      "triangles": 136
+    },
+    "part_154": {
+      "source": "Petal_skirt_2_02",
+      "attachment": "skirt_L",
+      "triangles": 644
+    },
+    "part_155": {
+      "source": "Embroidery_skirt_2_2",
+      "attachment": "skirt_L",
+      "triangles": 136
+    },
+    "part_156": {
+      "source": "Petal_skirt_2_03",
+      "attachment": "skirt_L",
+      "triangles": 644
+    },
+    "part_157": {
+      "source": "Embroidery_skirt_2_3",
+      "attachment": "skirt_L",
+      "triangles": 136
+    },
+    "part_158": {
+      "source": "Petal_skirt_2_04",
+      "attachment": "skirt_L",
+      "triangles": 644
+    },
+    "part_159": {
+      "source": "Embroidery_skirt_2_4",
+      "attachment": "skirt_L",
+      "triangles": 136
+    },
+    "part_160": {
+      "source": "Petal_skirt_2_05",
+      "attachment": "skirt_L",
+      "triangles": 644
+    },
+    "part_161": {
+      "source": "Embroidery_skirt_2_5",
+      "attachment": "skirt_L",
+      "triangles": 136
+    },
+    "part_162": {
+      "source": "Petal_skirt_2_06",
+      "attachment": "skirt_R",
+      "triangles": 644
+    },
+    "part_163": {
+      "source": "Embroidery_skirt_2_6",
+      "attachment": "skirt_R",
+      "triangles": 136
+    },
+    "part_164": {
+      "source": "Petal_skirt_2_07",
+      "attachment": "skirt_R",
+      "triangles": 644
+    },
+    "part_165": {
+      "source": "Embroidery_skirt_2_7",
+      "attachment": "skirt_R",
+      "triangles": 136
+    },
+    "part_166": {
+      "source": "Petal_skirt_2_08",
+      "attachment": "skirt_R",
+      "triangles": 644
+    },
+    "part_167": {
+      "source": "Embroidery_skirt_2_8",
+      "attachment": "skirt_R",
+      "triangles": 136
+    },
+    "part_168": {
+      "source": "Petal_skirt_2_09",
+      "attachment": "skirt_R",
+      "triangles": 644
+    },
+    "part_169": {
+      "source": "Embroidery_skirt_2_9",
+      "attachment": "skirt_R",
+      "triangles": 136
+    },
+    "part_170": {
+      "source": "Petal_skirt_2_10",
+      "attachment": "skirt_R",
+      "triangles": 644
+    },
+    "part_171": {
+      "source": "Embroidery_skirt_2_10",
+      "attachment": "skirt_R",
+      "triangles": 136
+    },
+    "part_172": {
+      "source": "Petal_skirt_2_11",
+      "attachment": "skirt_R",
+      "triangles": 644
+    },
+    "part_173": {
+      "source": "Embroidery_skirt_2_11",
+      "attachment": "skirt_R",
+      "triangles": 136
+    },
+    "part_174": {
+      "source": "Belt",
+      "attachment": "",
+      "triangles": 768
+    },
+    "part_175": {
+      "source": "Belt.001",
+      "attachment": "",
+      "triangles": 768
+    },
+    "part_176": {
+      "source": "Bodice_seam_-1_0.25",
+      "attachment": "",
+      "triangles": 192
+    },
+    "part_177": {
+      "source": "Bodice_seam_-1_0.63",
+      "attachment": "",
+      "triangles": 192
+    },
+    "part_178": {
+      "source": "Bodice_seam_1_0.25",
+      "attachment": "",
+      "triangles": 192
+    },
+    "part_179": {
+      "source": "Bodice_seam_1_0.63",
+      "attachment": "",
+      "triangles": 192
+    },
+    "part_180": {
+      "source": "Shoulder_-1_0",
+      "attachment": "",
+      "triangles": 388
+    },
+    "part_181": {
+      "source": "Shoulder_-1_1",
+      "attachment": "",
+      "triangles": 388
+    },
+    "part_182": {
+      "source": "Shoulder_-1_2",
+      "attachment": "",
+      "triangles": 388
+    },
+    "part_183": {
+      "source": "Shoulder_-1_3",
+      "attachment": "",
+      "triangles": 388
+    },
+    "part_184": {
+      "source": "Shoulder_-1_4",
+      "attachment": "",
+      "triangles": 388
+    },
+    "part_185": {
+      "source": "Shoulder_1_0",
+      "attachment": "",
+      "triangles": 388
+    },
+    "part_186": {
+      "source": "Shoulder_1_1",
+      "attachment": "",
+      "triangles": 388
+    },
+    "part_187": {
+      "source": "Shoulder_1_2",
+      "attachment": "",
+      "triangles": 388
+    },
+    "part_188": {
+      "source": "Shoulder_1_3",
+      "attachment": "",
+      "triangles": 388
+    },
+    "part_189": {
+      "source": "Shoulder_1_4",
+      "attachment": "",
+      "triangles": 388
+    },
+    "part_190": {
+      "source": "Clasp_bezel",
+      "attachment": "",
+      "triangles": 720
+    },
+    "part_191": {
+      "source": "Clasp_stone",
+      "attachment": "",
+      "triangles": 720
+    },
+    "part_192": {
+      "source": "Wing_upper_R",
+      "attachment": "wing_upper_R",
+      "triangles": 1376
+    },
+    "part_193": {
+      "source": "Vein_main_upper_R",
+      "attachment": "wing_upper_R",
+      "triangles": 480
+    },
+    "part_194": {
+      "source": "Vein_upper_R_1_-1",
+      "attachment": "wing_upper_R",
+      "triangles": 152
+    },
+    "part_195": {
+      "source": "Vein_upper_R_1_1",
+      "attachment": "wing_upper_R",
+      "triangles": 152
+    },
+    "part_196": {
+      "source": "Vein_upper_R_2_-1",
+      "attachment": "wing_upper_R",
+      "triangles": 152
+    },
+    "part_197": {
+      "source": "Vein_upper_R_2_1",
+      "attachment": "wing_upper_R",
+      "triangles": 152
+    },
+    "part_198": {
+      "source": "Vein_upper_R_3_-1",
+      "attachment": "wing_upper_R",
+      "triangles": 152
+    },
+    "part_199": {
+      "source": "Vein_upper_R_3_1",
+      "attachment": "wing_upper_R",
+      "triangles": 152
+    },
+    "part_200": {
+      "source": "Vein_upper_R_4_-1",
+      "attachment": "wing_upper_R",
+      "triangles": 152
+    },
+    "part_201": {
+      "source": "Vein_upper_R_4_1",
+      "attachment": "wing_upper_R",
+      "triangles": 152
+    },
+    "part_202": {
+      "source": "Vein_upper_R_5_-1",
+      "attachment": "wing_upper_R",
+      "triangles": 152
+    },
+    "part_203": {
+      "source": "Vein_upper_R_5_1",
+      "attachment": "wing_upper_R",
+      "triangles": 152
+    },
+    "part_204": {
+      "source": "Vein_upper_R_6_-1",
+      "attachment": "wing_upper_R",
+      "triangles": 152
+    },
+    "part_205": {
+      "source": "Vein_upper_R_6_1",
+      "attachment": "wing_upper_R",
+      "triangles": 152
+    },
+    "part_206": {
+      "source": "Vein_upper_R_7_-1",
+      "attachment": "wing_upper_R",
+      "triangles": 152
+    },
+    "part_207": {
+      "source": "Vein_upper_R_7_1",
+      "attachment": "wing_upper_R",
+      "triangles": 152
+    },
+    "part_208": {
+      "source": "Wing_edge_upper_R_-1",
+      "attachment": "wing_upper_R",
+      "triangles": 632
+    },
+    "part_209": {
+      "source": "Wing_edge_upper_R_1",
+      "attachment": "wing_upper_R",
+      "triangles": 632
+    },
+    "part_210": {
+      "source": "Wing_lower_R",
+      "attachment": "wing_lower_R",
+      "triangles": 1376
+    },
+    "part_211": {
+      "source": "Vein_main_lower_R",
+      "attachment": "wing_lower_R",
+      "triangles": 480
+    },
+    "part_212": {
+      "source": "Vein_lower_R_1_-1",
+      "attachment": "wing_lower_R",
+      "triangles": 152
+    },
+    "part_213": {
+      "source": "Vein_lower_R_1_1",
+      "attachment": "wing_lower_R",
+      "triangles": 152
+    },
+    "part_214": {
+      "source": "Vein_lower_R_2_-1",
+      "attachment": "wing_lower_R",
+      "triangles": 152
+    },
+    "part_215": {
+      "source": "Vein_lower_R_2_1",
+      "attachment": "wing_lower_R",
+      "triangles": 152
+    },
+    "part_216": {
+      "source": "Vein_lower_R_3_-1",
+      "attachment": "wing_lower_R",
+      "triangles": 152
+    },
+    "part_217": {
+      "source": "Vein_lower_R_3_1",
+      "attachment": "wing_lower_R",
+      "triangles": 152
+    },
+    "part_218": {
+      "source": "Vein_lower_R_4_-1",
+      "attachment": "wing_lower_R",
+      "triangles": 152
+    },
+    "part_219": {
+      "source": "Vein_lower_R_4_1",
+      "attachment": "wing_lower_R",
+      "triangles": 152
+    },
+    "part_220": {
+      "source": "Vein_lower_R_5_-1",
+      "attachment": "wing_lower_R",
+      "triangles": 152
+    },
+    "part_221": {
+      "source": "Vein_lower_R_5_1",
+      "attachment": "wing_lower_R",
+      "triangles": 152
+    },
+    "part_222": {
+      "source": "Vein_lower_R_6_-1",
+      "attachment": "wing_lower_R",
+      "triangles": 152
+    },
+    "part_223": {
+      "source": "Vein_lower_R_6_1",
+      "attachment": "wing_lower_R",
+      "triangles": 152
+    },
+    "part_224": {
+      "source": "Vein_lower_R_7_-1",
+      "attachment": "wing_lower_R",
+      "triangles": 152
+    },
+    "part_225": {
+      "source": "Vein_lower_R_7_1",
+      "attachment": "wing_lower_R",
+      "triangles": 152
+    },
+    "part_226": {
+      "source": "Wing_edge_lower_R_-1",
+      "attachment": "wing_lower_R",
+      "triangles": 632
+    },
+    "part_227": {
+      "source": "Wing_edge_lower_R_1",
+      "attachment": "wing_lower_R",
+      "triangles": 632
+    },
+    "part_228": {
+      "source": "Wing_upper_L",
+      "attachment": "wing_upper_L",
+      "triangles": 1376
+    },
+    "part_229": {
+      "source": "Vein_main_upper_L",
+      "attachment": "wing_upper_L",
+      "triangles": 480
+    },
+    "part_230": {
+      "source": "Vein_upper_L_1_-1",
+      "attachment": "wing_upper_L",
+      "triangles": 152
+    },
+    "part_231": {
+      "source": "Vein_upper_L_1_1",
+      "attachment": "wing_upper_L",
+      "triangles": 152
+    },
+    "part_232": {
+      "source": "Vein_upper_L_2_-1",
+      "attachment": "wing_upper_L",
+      "triangles": 152
+    },
+    "part_233": {
+      "source": "Vein_upper_L_2_1",
+      "attachment": "wing_upper_L",
+      "triangles": 152
+    },
+    "part_234": {
+      "source": "Vein_upper_L_3_-1",
+      "attachment": "wing_upper_L",
+      "triangles": 152
+    },
+    "part_235": {
+      "source": "Vein_upper_L_3_1",
+      "attachment": "wing_upper_L",
+      "triangles": 152
+    },
+    "part_236": {
+      "source": "Vein_upper_L_4_-1",
+      "attachment": "wing_upper_L",
+      "triangles": 152
+    },
+    "part_237": {
+      "source": "Vein_upper_L_4_1",
+      "attachment": "wing_upper_L",
+      "triangles": 152
+    },
+    "part_238": {
+      "source": "Vein_upper_L_5_-1",
+      "attachment": "wing_upper_L",
+      "triangles": 152
+    },
+    "part_239": {
+      "source": "Vein_upper_L_5_1",
+      "attachment": "wing_upper_L",
+      "triangles": 152
+    },
+    "part_240": {
+      "source": "Vein_upper_L_6_-1",
+      "attachment": "wing_upper_L",
+      "triangles": 152
+    },
+    "part_241": {
+      "source": "Vein_upper_L_6_1",
+      "attachment": "wing_upper_L",
+      "triangles": 152
+    },
+    "part_242": {
+      "source": "Vein_upper_L_7_-1",
+      "attachment": "wing_upper_L",
+      "triangles": 152
+    },
+    "part_243": {
+      "source": "Vein_upper_L_7_1",
+      "attachment": "wing_upper_L",
+      "triangles": 152
+    },
+    "part_244": {
+      "source": "Wing_edge_upper_L_-1",
+      "attachment": "wing_upper_L",
+      "triangles": 632
+    },
+    "part_245": {
+      "source": "Wing_edge_upper_L_1",
+      "attachment": "wing_upper_L",
+      "triangles": 632
+    },
+    "part_246": {
+      "source": "Wing_lower_L",
+      "attachment": "wing_lower_L",
+      "triangles": 1376
+    },
+    "part_247": {
+      "source": "Vein_main_lower_L",
+      "attachment": "wing_lower_L",
+      "triangles": 480
+    },
+    "part_248": {
+      "source": "Vein_lower_L_1_-1",
+      "attachment": "wing_lower_L",
+      "triangles": 152
+    },
+    "part_249": {
+      "source": "Vein_lower_L_1_1",
+      "attachment": "wing_lower_L",
+      "triangles": 152
+    },
+    "part_250": {
+      "source": "Vein_lower_L_2_-1",
+      "attachment": "wing_lower_L",
+      "triangles": 152
+    },
+    "part_251": {
+      "source": "Vein_lower_L_2_1",
+      "attachment": "wing_lower_L",
+      "triangles": 152
+    },
+    "part_252": {
+      "source": "Vein_lower_L_3_-1",
+      "attachment": "wing_lower_L",
+      "triangles": 152
+    },
+    "part_253": {
+      "source": "Vein_lower_L_3_1",
+      "attachment": "wing_lower_L",
+      "triangles": 152
+    },
+    "part_254": {
+      "source": "Vein_lower_L_4_-1",
+      "attachment": "wing_lower_L",
+      "triangles": 152
+    },
+    "part_255": {
+      "source": "Vein_lower_L_4_1",
+      "attachment": "wing_lower_L",
+      "triangles": 152
+    },
+    "part_256": {
+      "source": "Vein_lower_L_5_-1",
+      "attachment": "wing_lower_L",
+      "triangles": 152
+    },
+    "part_257": {
+      "source": "Vein_lower_L_5_1",
+      "attachment": "wing_lower_L",
+      "triangles": 152
+    },
+    "part_258": {
+      "source": "Vein_lower_L_6_-1",
+      "attachment": "wing_lower_L",
+      "triangles": 152
+    },
+    "part_259": {
+      "source": "Vein_lower_L_6_1",
+      "attachment": "wing_lower_L",
+      "triangles": 152
+    },
+    "part_260": {
+      "source": "Vein_lower_L_7_-1",
+      "attachment": "wing_lower_L",
+      "triangles": 152
+    },
+    "part_261": {
+      "source": "Vein_lower_L_7_1",
+      "attachment": "wing_lower_L",
+      "triangles": 152
+    },
+    "part_262": {
+      "source": "Wing_edge_lower_L_-1",
+      "attachment": "wing_lower_L",
+      "triangles": 632
+    },
+    "part_263": {
+      "source": "Wing_edge_lower_L_1",
+      "attachment": "wing_lower_L",
+      "triangles": 632
+    },
+    "part_264": {
+      "source": "Spell_mote",
+      "attachment": "spell",
+      "triangles": 168
+    },
+    "part_265": {
+      "source": "Spell_mote.001",
+      "attachment": "spell",
+      "triangles": 168
+    },
+    "part_266": {
+      "source": "Spell_mote.002",
+      "attachment": "spell",
+      "triangles": 168
+    },
+    "part_267": {
+      "source": "Spell_mote.003",
+      "attachment": "spell",
+      "triangles": 168
+    },
+    "part_268": {
+      "source": "Spell_mote.004",
+      "attachment": "spell",
+      "triangles": 168
+    },
+    "part_269": {
+      "source": "Spell_mote.005",
+      "attachment": "spell",
+      "triangles": 168
+    },
+    "part_270": {
+      "source": "Spell_mote.006",
+      "attachment": "spell",
+      "triangles": 168
+    }
+  }
+}

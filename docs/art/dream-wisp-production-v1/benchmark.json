@@ -1,0 +1,26 @@
+{
+	"engine": "4.7-stable (official)",
+	"renderer": "Compatibility",
+	"resolution": [
+		1280,
+		720
+	],
+	"samples": [
+		{
+			"draw_calls": 120.0,
+			"instances": 2,
+			"mean_fps": 104.988468766514,
+			"median_frame_ms": 9.152,
+			"p95_frame_ms": 15.563,
+			"primitives": 311680.0
+		},
+		{
+			"draw_calls": 960.0,
+			"instances": 16,
+			"mean_fps": 22.6784482045032,
+			"median_frame_ms": 44.259,
+			"p95_frame_ms": 47.293,
+			"primitives": 3272780.0
+		}
+	]
+}

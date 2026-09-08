@@ -1,0 +1,534 @@
+extends SceneTree
+
+# Original small dream fae; all mesh construction and animation baking is offline.
+const OUT := "res://content/monsters/models/dream_wisp.glb"
+var model := Node3D.new()
+var rig := Skeleton3D.new()
+var bones: Dictionary = {}
+var rests: Dictionary = {}
+var surfaces: Dictionary = {}
+var materials: Dictionary = {}
+var rng := RandomNumberGenerator.new()
+
+func _material(label: String, color: Color, roughness: float) -> void:
+	var mat := StandardMaterial3D.new()
+	mat.resource_name = label
+	mat.albedo_color = color
+	mat.roughness = roughness
+	mat.vertex_color_use_as_albedo = true
+	materials[label] = mat
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	surfaces[label] = st
+
+func _bone(label: String, parent: String, p: Vector3) -> void:
+	var id := rig.get_bone_count()
+	bones[label] = id
+	rests[label] = p
+	rig.add_bone(label)
+	if not parent.is_empty():
+		rig.set_bone_parent(id, bones[parent])
+	var local: Vector3 = p - rests.get(parent, Vector3.ZERO)
+	rig.set_bone_rest(id, Transform3D(Basis.IDENTITY, local))
+	rig.set_bone_pose_position(id, local)
+
+func _vertex(mat: String, bone: String, p: Vector3, normal: Vector3, uv: Vector2, color: Color) -> void:
+	var st: SurfaceTool = surfaces[mat]
+	st.set_normal(normal)
+	st.set_uv(uv)
+	st.set_color(color)
+	st.set_bones(PackedInt32Array([bones[bone], 0, 0, 0]))
+	st.set_weights(PackedFloat32Array([1, 0, 0, 0]))
+	st.add_vertex(p)
+
+# Smooth closed detail surfaces.
+func _ellipsoid(center: Vector3, size: Vector3, mat: String, bone: String, _kind: String = "", segments: int = 40, rings: int = 24) -> void:
+	var verts: Array[Vector3] = []
+	var colors: Array[Color] = []
+	for j in range(rings + 1):
+		for i in range(segments + 1):
+			var v := float(j) / rings
+			var u := float(i) / segments
+			var n := Vector3(sin(v*PI)*cos(u*TAU), cos(v*PI), sin(v*PI)*sin(u*TAU))
+			var p := n * size
+			var color := Color.WHITE
+			verts.append(center + p)
+			colors.append(color)
+	for j in rings:
+		for i in segments:
+			# Godot front faces are clockwise.
+			for index in [j*(segments+1)+i, (j+1)*(segments+1)+i+1, j*(segments+1)+i+1, j*(segments+1)+i, (j+1)*(segments+1)+i, (j+1)*(segments+1)+i+1]:
+				var p := verts[index]
+				var n := ((p-center)/(size*size)).normalized()
+				_vertex(mat,bone,p,n,Vector2(float(index%(segments+1))/segments,float(index/(segments+1) as int)/rings),colors[index])
+
+# Curved tapered strands, veins and filigree.
+func _tube(points: Array[Vector3], radii: Array[float], mat: String, bone: String, sides: int = 16, color: Color = Color.WHITE) -> void:
+	var verts: Array[Vector3] = []
+	var normals: Array[Vector3] = []
+	var initial_tangent := (points[1]-points[0]).normalized()
+	var reference := Vector3.UP if absf(initial_tangent.y)<0.95 else Vector3.RIGHT
+	var frame_x := initial_tangent.cross(reference).normalized()
+	for j in points.size():
+		var tangent := (points[mini(j+1,points.size()-1)]-points[maxi(0,j-1)]).normalized()
+		# Parallel transport avoids sudden frame flips in nearly vertical hairs.
+		var x := (frame_x-tangent*frame_x.dot(tangent)).normalized()
+		var y := tangent.cross(x).normalized()
+		frame_x = x
+		for i in range(sides+1):
+			var a := float(i)/sides*TAU
+			var n := x*cos(a)+y*sin(a)
+			verts.append(points[j]+n*radii[j])
+			normals.append(n)
+	for j in range(points.size()-1):
+		for i in sides:
+			for index in [j*(sides+1)+i,(j+1)*(sides+1)+i,j*(sides+1)+i+1,j*(sides+1)+i+1,(j+1)*(sides+1)+i,(j+1)*(sides+1)+i+1]:
+				_vertex(mat,bone,verts[index],normals[index],Vector2(float(index%(sides+1))/sides,float(index/(sides+1))/(points.size()-1)),color)
+
+func _finish() -> void:
+	var skin := rig.create_skin_from_rest_transforms()
+	var triangles := 0
+	for label in surfaces:
+		var st: SurfaceTool = surfaces[label]
+		st.index()
+		st.generate_tangents()
+		var mesh := MeshInstance3D.new()
+		mesh.name = label
+		mesh.mesh = st.commit()
+		mesh.mesh.surface_set_material(0,materials[label])
+		mesh.skin = skin
+		mesh.skeleton = NodePath("..")
+		mesh.extra_cull_margin = 0.4
+		rig.add_child(mesh)
+		mesh.owner = model
+		triangles += mesh.mesh.surface_get_arrays(0)[Mesh.ARRAY_INDEX].size()/3
+	print("Base mesh triangles: ",triangles)
+
+# Bake hovering, wing beats and casting into standard glTF animation tracks.
+func _animations() -> void:
+	var player := AnimationPlayer.new()
+	player.name = "AnimationPlayer"
+	model.add_child(player)
+	player.owner = model
+	var library := AnimationLibrary.new()
+	for clip in ["RESET","idle","walk","attack","hit"]:
+		var animation := Animation.new()
+		animation.length = {"RESET":0.0,"idle":2.6,"walk":0.72,"attack":0.58,"hit":0.32}[clip]
+		if clip in ["idle","walk"]: animation.loop_mode = Animation.LOOP_LINEAR
+		var frames := maxi(1,ceili(animation.length*60))
+		var tracks: Dictionary = {}
+		for label in bones:
+			var pt := animation.add_track(Animation.TYPE_POSITION_3D)
+			var rt := animation.add_track(Animation.TYPE_ROTATION_3D)
+			animation.track_set_path(pt,NodePath("Skeleton3D:"+label))
+			animation.track_set_path(rt,NodePath("Skeleton3D:"+label))
+			tracks[label] = [pt,rt]
+		for frame in range(frames+1):
+			var t := float(frame)/frames
+			var poses := _poses(clip,t)
+			for label in bones:
+				animation.position_track_insert_key(tracks[label][0],t*animation.length,poses[label][0])
+				animation.rotation_track_insert_key(tracks[label][1],t*animation.length,poses[label][1])
+		library.add_animation(clip,animation)
+	player.add_animation_library("",library)
+
+func _initialize() -> void:
+	rng.seed = 69123
+	model.name = "DreamWisp"
+	rig.name = "Skeleton3D"
+	model.add_child(rig)
+	rig.owner = model
+	for spec in [["Skin","c99d86",0.80],["Face","ffffff",0.85],["Silk","2f595b",0.73],["Petals","526870",0.80],["Hair","716574",0.72],["Gold","b7a370",0.37],["Wings","ffffff",0.77],["Veins","978f76",0.64],["EyeWhite","c9c3b5",0.40],["Glow","aabbdc",0.30]]:
+		_material(spec[0],Color(spec[1]),spec[2])
+	materials.Gold.metallic = 0.62
+	materials.Glow.emission_enabled = true
+	materials.Glow.emission = Color("8d9eca")
+	materials.Glow.emission_energy_multiplier = 0.25
+	_textures()
+	var face_image:=Image.load_from_file(ProjectSettings.globalize_path("res://content/monsters/models/textures/fairy_face_albedo.png"))
+	face_image.generate_mipmaps()
+	materials.Face.albedo_texture=ImageTexture.create_from_image(face_image)
+	_rig()
+	_body()
+	_head()
+	for side in [-1.0,1.0]:
+		_limbs(side)
+		_wings(side)
+		_ornaments(side)
+	_finish()
+	_animations()
+	var doc := GLTFDocument.new()
+	var state := GLTFState.new()
+	var result := doc.append_from_scene(model,state)
+	if result==OK: result = doc.write_to_filesystem(state,OUT)
+	print("Dream fae: %d bones, %d material surfaces. %s" % [rig.get_bone_count(),surfaces.size(),error_string(result)])
+	model.free()
+	quit(0 if result==OK else 1)
+
+func _rig() -> void:
+	_bone("root","",Vector3.ZERO)
+	_bone("pelvis","root",Vector3(0,0.43,0))
+	_bone("spine","pelvis",Vector3(0,0.51,0))
+	_bone("chest","spine",Vector3(0,0.59,0))
+	_bone("neck","chest",Vector3(0,0.65,0))
+	_bone("head","neck",Vector3(0,0.71,0))
+	for side in [-1.0,1.0]:
+		var s := "L" if side>0 else "R"
+		_bone("ear_"+s,"head",Vector3(side*0.033,0.737,-0.003))
+		_bone("upper_arm_"+s,"chest",Vector3(side*0.074,0.612,0))
+		_bone("forearm_"+s,"upper_arm_"+s,Vector3(side*0.124,0.529,0.012))
+		_bone("hand_"+s,"forearm_"+s,Vector3(side*0.147,0.459,0.035))
+		for finger in 5:
+			var p := Vector3(side*(0.137+finger*0.006),0.437,0.040)
+			if finger==4: p=Vector3(side*0.132,0.447,0.044)
+			_bone("finger_%d_"%finger+s,"hand_"+s,p)
+		_bone("thigh_"+s,"pelvis",Vector3(side*0.035,0.418,0))
+		_bone("shin_"+s,"thigh_"+s,Vector3(side*0.041,0.235,0.018))
+		_bone("foot_"+s,"shin_"+s,Vector3(side*0.047,0.060,0.005))
+		_bone("wing_upper_"+s,"chest",Vector3(side*0.026,0.605,-0.031))
+		_bone("wing_lower_"+s,"chest",Vector3(side*0.028,0.564,-0.038))
+		_bone("skirt_"+s,"pelvis",Vector3(side*0.045,0.433,0))
+		_bone("hair_"+s,"head",Vector3(side*0.023,0.745,-0.015))
+	_bone("spell","hand_L",Vector3(0.147,0.49,0.082))
+
+# Continuous torso skin blends between its named joint endpoints.
+func _loft(rows: Array, mat: String, chain: Array[String], sides: int=48) -> void:
+	var rings: Array = []
+	for j in range(rows.size()-1):
+		for k in 5:
+			var t := float(k)/5.0
+			var row: Array = []
+			for axis in 4:
+				var a: float=rows[maxi(j-1,0)][axis]
+				var b: float=rows[j][axis]
+				var c: float=rows[j+1][axis]
+				var d: float=rows[mini(j+2,rows.size()-1)][axis]
+				row.append(0.5*((2*b)+(-a+c)*t+(2*a-5*b+4*c-d)*t*t+(-a+3*b-3*c+d)*t*t*t))
+			rings.append(row)
+	rings.append(rows[-1])
+	for j in range(rings.size()-1):
+		for i in sides:
+			for ij in [Vector2i(i,j),Vector2i(i+1,j),Vector2i(i+1,j+1),Vector2i(i,j),Vector2i(i+1,j+1),Vector2i(i,j+1)]:
+				var row: Array = rings[ij.y]
+				var angle := float(ij.x)/sides*TAU
+				var p := Vector3(cos(angle)*maxf(0.0002,row[1]),row[0],sin(angle)*maxf(0.0002,row[2])+row[3])
+				var before: Array = rings[maxi(0,ij.y-1)]
+				var after: Array = rings[mini(rings.size()-1,ij.y+1)]
+				var tangent := Vector3(cos(angle)*(after[1]-before[1]),after[0]-before[0],sin(angle)*(after[2]-before[2])+after[3]-before[3])
+				var around := Vector3(-sin(angle)*row[1],0,cos(angle)*row[2])
+				var n := tangent.cross(around).normalized()
+				var b0: String=chain[0]
+				var b1: String=chain[-1]
+				var w := 0.0
+				if chain.size()>1:
+					var lo: float=rests[b0].y
+					var hi: float=rests[b1].y
+					w=smoothstep(lo,hi,p.y)
+				var st: SurfaceTool=surfaces[mat]
+				st.set_bones(PackedInt32Array([bones[b0],bones[b1],0,0]))
+				st.set_weights(PackedFloat32Array([1-w,w,0,0]))
+				st.set_normal(n)
+				st.set_uv(Vector2(float(ij.x)/sides,float(ij.y)/(rings.size()-1)))
+				st.set_color(Color.WHITE)
+				st.add_vertex(p)
+
+func _body() -> void:
+	_loft([[0.424,0.048,0.030,0],[0.454,0.046,0.028,0],[0.49,0.033,0.026,0],[0.53,0.040,0.027,0],[0.571,0.058,0.036,0],[0.604,0.073,0.027,0],[0.624,0.044,0.026,0],[0.633,0.016,0.016,0]],"Silk",["pelvis","chest"])
+	_loft([[0.625,0.020,0.016,0],[0.645,0.014,0.014,0],[0.695,0.017,0.016,0]],"Skin",["neck","head"])
+	# Layered petal skirt, each panel with a raised midrib and a solid reverse.
+	for layer in 2:
+		for i in 10:
+			var a := i*TAU/10.0+layer*0.31
+			var base := Vector3(sin(a)*0.038,0.455-layer*0.026,cos(a)*0.029)
+			var tip := Vector3(sin(a)*(0.093-layer*0.012),0.275+layer*0.056+0.012*sin(i*3.0),cos(a)*(0.065-layer*0.007))
+			_leaf(base,tip,0.034-layer*0.005,"Petals","skirt_L" if sin(a)>0 else "skirt_R",Color("748b96") if i%2==0 else Color("b0b8b0"),false)
+	# Gold thread corset seams, clasp and small sewn moon motifs.
+	for side in [-1.0,1.0]:
+		var pts: Array[Vector3]=[]
+		var radii: Array[float]=[]
+		for i in 16:
+			var t:=float(i)/15
+			pts.append(Vector3(side*(0.022+sin(t*PI)*0.016),0.452+t*0.16,0.030+sin(t*PI)*0.008))
+			radii.append(0.0015)
+		_tube(pts,radii,"Gold","chest",8)
+	for i in 5:
+		_ellipsoid(Vector3(0,0.488+i*0.020,0.039),Vector3(0.003,0.003,0.002),"Gold","chest","",16,10)
+	_ellipsoid(Vector3(0,0.614,0.027),Vector3(0.009,0.012,0.004),"Gold","chest")
+	_ellipsoid(Vector3(0,0.614,0.031),Vector3(0.005,0.007,0.003),"Glow","chest")
+
+func _limb(a: Vector3,b: Vector3,c: Vector3,radii: Array[float],chain: Array[String],mat: String) -> void:
+	var points: Array[Vector3]=[]
+	var widths: Array[float]=[]
+	for j in 2:
+		for i in 13:
+			var t:=float(i)/12.0
+			points.append(a.lerp(b,t) if j==0 else b.lerp(c,t))
+			widths.append(lerpf(radii[j],radii[j+1],t)*(1.0+sin(t*PI)*0.15))
+	var st: SurfaceTool=surfaces[mat]
+	var verts: Array[Vector3]=[]
+	var norms: Array[Vector3]=[]
+	for j in points.size():
+		var axis:=(c-a).normalized()
+		var x:=axis.cross(Vector3.BACK).normalized()
+		var y:=axis.cross(x)
+		for i in 33:
+			var angle:=float(i)/32*TAU
+			var n:=x*cos(angle)+y*sin(angle)
+			verts.append(points[j]+n*widths[j])
+			norms.append(n)
+	for j in range(points.size()-1):
+		for i in 32:
+			for index in [j*33+i,(j+1)*33+i,j*33+i+1,j*33+i+1,(j+1)*33+i,(j+1)*33+i+1]:
+				var ring:=int(index/33)
+				var along:=float(ring)/(points.size()-1)
+				var w:=smoothstep(0.36,0.65,along)
+				st.set_bones(PackedInt32Array([bones[chain[0]],bones[chain[1]],0,0]))
+				st.set_weights(PackedFloat32Array([1-w,w,0,0]))
+				st.set_normal(norms[index])
+				st.set_uv(Vector2(float(index%33)/32,along))
+				st.set_color(Color.WHITE)
+				st.add_vertex(verts[index])
+
+func _limbs(side: float) -> void:
+	var s:="L" if side>0 else "R"
+	_limb(rests["upper_arm_"+s],rests["forearm_"+s],rests["hand_"+s],[0.018,0.012,0.009],["upper_arm_"+s,"forearm_"+s],"Skin")
+	_limb(rests["thigh_"+s],rests["shin_"+s],rests["foot_"+s],[0.029,0.018,0.011],["thigh_"+s,"shin_"+s],"Skin")
+	_ellipsoid(Vector3(side*0.148,0.448,0.039),Vector3(0.013,0.019,0.007),"Skin","hand_"+s)
+	for f in 5:
+		var label:="finger_%d_"%f+s
+		var a: Vector3=rests[label]
+		var len_value:=0.015+(0.003 if f==1 else 0.0)
+		var b:=a+Vector3(side*0.001,-len_value*0.65,0.003)
+		var c:=a+Vector3(side*0.001,-len_value,0.006)
+		if f==4: b=a+Vector3(-side*0.007,-0.005,0.005); c=b+Vector3(-side*0.002,-0.005,0.003)
+		_tube([a,b,c],[0.0028,0.0022,0.0013],"Skin",label,10)
+		_ellipsoid(c+Vector3(0,0,0.001),Vector3(0.0016,0.0024,0.0008),"EyeWhite",label,"",12,8)
+	# Petal shoulder caps and layered knee-high slippers.
+	_leaf(Vector3(side*0.038,0.63,-0.010),Vector3(side*0.108,0.579,0.01),0.028,"Petals","upper_arm_"+s,Color("b6b8ac"),false)
+	_ellipsoid(Vector3(side*0.047,0.043,0.023),Vector3(0.016,0.043,0.036),"Silk","foot_"+s)
+	_tube([Vector3(side*0.047,0.024,0.043),Vector3(side*0.047,0.031,0.071),Vector3(side*0.047,0.042,0.081)],[0.014,0.009,0.0008],"Silk","foot_"+s,20)
+	for i in 5:
+		var y:=0.075+i*0.019
+		_tube([Vector3(side*0.036,y,0.010),Vector3(side*0.047,y+0.008,0.029),Vector3(side*0.058,y+0.014,0.010)],[0.0018,0.0018,0.0018],"Gold","shin_"+s,8)
+
+func _head() -> void:
+	var file:=FileAccess.open("res://content/monsters/models/fairy_head.meshbin",FileAccess.READ)
+	if file==null:
+		push_error("Run tools/sculpt_fairy_head.py before building the fae")
+		quit(1)
+		return
+	var count:=file.get_32()
+	var index_count:=file.get_32()
+	var vertices: Array[Vector3]=[]
+	var normals: Array[Vector3]=[]
+	for i in count: vertices.append(Vector3(file.get_float(),file.get_float(),file.get_float()))
+	for i in count: normals.append(Vector3(file.get_float(),file.get_float(),file.get_float()))
+	for i in index_count:
+		var index:=file.get_32()
+		var v:=vertices[index]
+		var bone:="head"
+		if absf(v.x)>0.30: bone="ear_L" if v.x>0 else "ear_R"
+		var u:=clampf(0.5+v.x*1.46,0.015,0.985)
+		u=lerpf(0.985 if v.x>0 else 0.015,u,smoothstep(-0.03,0.05,v.z))
+		_vertex("Face",bone,Vector3(0,0.68,0.003)+v*0.115,normals[index],Vector2(u,_face_v(v.y)),Color.WHITE)
+	_hair_cap()
+
+# Front projection matched to the generated albedo's eye, nose and lip landmarks.
+func _face_v(y: float) -> float:
+	var landmarks: Array[Vector2]=[Vector2(0,0.99),Vector2(0.08,0.93),Vector2(0.16,0.78),Vector2(0.30,0.63),Vector2(0.44,0.385),Vector2(0.51,0.27),Vector2(0.65,0.14),Vector2(1,0.005)]
+	for i in range(landmarks.size()-1):
+		if y<=landmarks[i+1].x:
+			return lerpf(landmarks[i].y,landmarks[i+1].y,clampf(inverse_lerp(landmarks[i].x,landmarks[i+1].x,y),0,1))
+	return 0.005
+
+func _hair_cap() -> void:
+	var center:=Vector3(0,0.744,-0.002)
+	var size:=Vector3(0.0367,0.051,0.0340)
+	var vertices: Array[Vector3]=[]
+	var normals: Array[Vector3]=[]
+	var colors: Array[Color]=[]
+	var cols:=128
+	var rows:=48
+	for j in range(rows+1):
+		for i in range(cols+1):
+			var phi:=float(i)/cols*TAU
+			var front:=(sin(phi)+1.0)*0.5
+			var edge:=1.24+1.04*(1.0-front)
+			var theta:=float(j)/rows*edge
+			var n:=Vector3(sin(theta)*cos(phi),cos(theta),sin(theta)*sin(phi))
+			var ridge:=pow(maxf(0,sin(phi*84+theta*6)),8)*0.00035*pow(sin(theta),2)
+			vertices.append(center+n*(size+Vector3.ONE*ridge))
+			normals.append((n/size).normalized())
+			colors.append(Color.WHITE.lerp(Color("918593"),pow(maxf(0,sin(phi*101+theta*4)),8)*0.25))
+	for j in rows:
+		for i in cols:
+			for index in [j*(cols+1)+i,(j+1)*(cols+1)+i+1,j*(cols+1)+i+1,j*(cols+1)+i,(j+1)*(cols+1)+i,(j+1)*(cols+1)+i+1]:
+				_vertex("Hair","head",vertices[index],normals[index],Vector2(float(index%(cols+1))/cols,float(int(index/(cols+1)))/rows),colors[index])
+	# Full locks flow off the temple and back scalp, leaving the face unobstructed.
+	for i in 150:
+		var phi:=lerpf(PI*0.88,PI*2.12,float(i)/149)
+		var side:=1.0 if cos(phi)>0 else -1.0
+		var front:=(sin(phi)+1)*0.5
+		var edge:=1.24+1.04*(1-front)
+		var pts: Array[Vector3]=[]
+		var widths: Array[float]=[]
+		for j in 25:
+			var t:=float(j)/24
+			var theta:=0.30+(edge-0.30)*minf(t/0.62,1.0)
+			var n:=Vector3(sin(theta)*cos(phi),cos(theta),sin(theta)*sin(phi))
+			var p:=center+n*(size+Vector3.ONE*0.0015)
+			if t>0.62:
+				var drop:=(t-0.62)/0.38
+				p+=Vector3(side*(0.006*sin(drop*PI)+0.004*sin(phi*9)*drop),-drop*(0.112+0.018*sin(phi*7)),-0.011*drop)
+			pts.append(p)
+			widths.append(0.0017*(0.55+0.45*sin(t*PI))*(1-t*0.65))
+		_tube(pts,widths,"Hair","hair_L" if side>0 else "hair_R",8,Color("d3c4c7") if i%9==0 else Color.WHITE)
+
+# A curved, double-sided membrane with scalloped edges and a narrow raised rim.
+func _leaf(a: Vector3,b: Vector3,width: float,mat: String,bone: String,tint: Color,wing: bool) -> void:
+	var axis:=(b-a).normalized()
+	var across:=Vector3(-axis.y,axis.x,0).normalized()
+	if not wing: across=axis.cross(Vector3.BACK).normalized()
+	var normal:=across.cross(axis).normalized()
+	var rows:=64 if wing else 24
+	var cols:=32 if wing else 12
+	var points: Array[Vector3]=[]
+	var colors: Array[Color]=[]
+	for j in range(rows+1):
+		var t:=float(j)/rows
+		var envelope:=pow(maxf(0.0001,sin(t*PI)),0.78)*(1.0+0.025*cos(t*TAU*9))*width
+		for i in range(cols+1):
+			var s:=float(i)/cols*2-1
+			var p:=a.lerp(b,t)+across*s*envelope+normal*sin(t*PI)*(1-s*s)*0.014
+			var color:=tint
+			if wing:
+				var edge:=smoothstep(0.70,0.97,absf(s))
+				color=Color("7c828d").lerp(Color("d5bd8d"),edge)
+				color=color.lerp(Color("363349"),pow(maxf(0.0,sin(t*38+absf(s)*5)),10)*0.35)
+				var eye:=sqrt(pow((t-0.64)/0.12,2)+pow((s-0.02)/0.42,2))
+				if eye<1.3: color=color.lerp(Color("bd9b66"),1-smoothstep(1.05,1.3,eye))
+				if eye<0.95: color=color.lerp(Color("35313f"),1-smoothstep(0.75,0.95,eye))
+				if eye<0.50: color=color.lerp(Color("92aaa5"),1-smoothstep(0.35,0.50,eye))
+				if eye<0.20: color=Color("ded7b9")
+			points.append(p)
+			colors.append(color)
+	for face in [-1.0,1.0]:
+		for j in rows:
+			for i in cols:
+				var indices: Array[int]=[j*(cols+1)+i,j*(cols+1)+i+1,(j+1)*(cols+1)+i+1,j*(cols+1)+i,(j+1)*(cols+1)+i+1,(j+1)*(cols+1)+i]
+				if face>0: indices.reverse()
+				for idx in indices:
+					_vertex(mat,bone,points[idx]+normal*face*0.0004,normal*face,Vector2(float(idx%(cols+1))/cols,float(int(idx/(cols+1)))/rows),colors[idx])
+	if wing:
+		for edge in [0,cols]:
+			var rim: Array[Vector3]=[]
+			var radii: Array[float]=[]
+			for j in range(rows+1):
+				rim.append(points[j*(cols+1)+edge])
+				radii.append(0.0011)
+			_tube(rim,radii,"Veins",bone,6)
+		# Branching radial veins and tiny peripheral scale flecks are geometry.
+		for branch in range(1,10):
+			var t:=0.18+branch*0.076
+			for side in [-1.0,1.0]:
+				var end:=points[int(t*rows)*(cols+1)+(cols if side>0 else 0)]
+				var origin:=a.lerp(b,t*0.56)+normal*0.001
+				_tube([origin,origin.lerp(end,0.55)+axis*0.014,end],[0.0017,0.0010,0.0004],"Veins",bone,6)
+		for j in range(8,rows-3):
+			for edge in [0,cols]:
+				var p:=points[j*(cols+1)+edge]
+				_tube([p,p+across*(0.006 if edge==cols else -0.006)],[0.0008,0.0001],"Gold",bone,4)
+	else:
+		_tube([a,a.lerp(b,0.5)+normal*0.015,b],[0.0010,0.0013,0.0002],"Gold",bone,6)
+
+func _wings(side: float) -> void:
+	var s:="L" if side>0 else "R"
+	_leaf(rests["wing_upper_"+s],Vector3(side*0.535,0.929,-0.09),0.148,"Wings","wing_upper_"+s,Color.WHITE,true)
+	_leaf(rests["wing_lower_"+s],Vector3(side*0.386,0.303,-0.085),0.130,"Wings","wing_lower_"+s,Color.WHITE,true)
+	_ellipsoid(Vector3(side*0.026,0.591,-0.034),Vector3(0.012,0.030,0.013),"Gold","chest")
+
+func _ornaments(side: float) -> void:
+	# Twig diadem, seed pearls and a small ear pendant.
+	_tube([Vector3(side*0.008,0.788,0.016),Vector3(side*0.028,0.780,0.020),Vector3(side*0.041,0.760,0.005)],[0.0017,0.0015,0.0009],"Gold","head",8)
+	for i in 4:
+		var p:=Vector3(side*(0.009+i*0.006),0.789-i*0.003,0.017)
+		_tube([p,p+Vector3(side*0.003,0.012,0),p+Vector3(side*0.008,0.017,-0.002)],[0.0012,0.0008,0.0001],"Gold","head",6)
+		_ellipsoid(p+Vector3(side*0.003,0.012,0),Vector3.ONE*0.0025,"Glow","head","",16,10)
+	var s:="L" if side>0 else "R"
+	_tube([Vector3(side*0.043,0.743,-0.003),Vector3(side*0.045,0.724,0.001)],[0.0008,0.0008],"Gold","ear_"+s,6)
+	_ellipsoid(Vector3(side*0.045,0.722,0.001),Vector3(0.0027,0.0047,0.002),"Glow","ear_"+s,"",20,12)
+	if side>0:
+		# A small orbit of dream motes follows the left casting hand.
+		for i in 9:
+			var angle:=float(i)/9*TAU
+			_ellipsoid(Vector3(0.147+cos(angle)*0.019,0.493+sin(angle)*0.019,0.082),Vector3.ONE*(0.0016 if i%3 else 0.0025),"Glow","spell","",16,10)
+
+func _textures() -> void:
+	var size:=512
+	var noise:=FastNoiseLite.new()
+	noise.seed=803
+	noise.frequency=0.34
+	var albedo:=Image.create(size,size,false,Image.FORMAT_RGB8)
+	var normal:=Image.create(size,size,false,Image.FORMAT_RGB8)
+	var rough:=Image.create(size,size,false,Image.FORMAT_RGB8)
+	for y in size:
+		for x in size:
+			var n:=noise.get_noise_2d(x,y)
+			var weave:=sin(x*PI*0.5)*sin(y*PI*0.5)
+			var value:=0.93+n*0.10+weave*0.015
+			albedo.set_pixel(x,y,Color(value,value,value))
+			var dx:=noise.get_noise_2d(x+1,y)-noise.get_noise_2d(x-1,y)
+			var dy:=noise.get_noise_2d(x,y+1)-noise.get_noise_2d(x,y-1)
+			var v:=Vector3(-dx*0.3,-dy*0.3,1).normalized()
+			normal.set_pixel(x,y,Color(v.x*0.5+0.5,v.y*0.5+0.5,v.z*0.5+0.5))
+			var r:=0.86+n*0.12
+			rough.set_pixel(x,y,Color(r,r,r))
+	for img in [albedo,normal,rough]: img.generate_mipmaps()
+	var atex:=ImageTexture.create_from_image(albedo)
+	var ntex:=ImageTexture.create_from_image(normal)
+	var rtex:=ImageTexture.create_from_image(rough)
+	for label in ["Skin","Silk","Petals","Hair","Wings"]:
+		materials[label].albedo_texture=atex
+		materials[label].normal_enabled=true
+		materials[label].normal_texture=ntex
+		materials[label].normal_scale=0.08 if label=="Skin" else 0.45
+		materials[label].roughness_texture=rtex
+
+func _poses(clip: String,t: float) -> Dictionary:
+	var poses: Dictionary={}
+	for label in bones: poses[label]=[rig.get_bone_rest(bones[label]).origin,Quaternion.IDENTITY]
+	if clip=="RESET": return poses
+	var breath:=sin(t*TAU)
+	var pulse:=sin(t*PI)
+	poses.pelvis[0]+=Vector3(0,0.13+breath*0.014,0)
+	if clip=="attack": poses.pelvis[0]+=Vector3(0,pulse*0.03,pulse*0.07)
+	poses.chest[1]=Quaternion(Vector3.RIGHT,-0.035+breath*0.015)
+	poses.head[1]=Quaternion(Vector3.UP,breath*0.045)
+	for side in [-1.0,1.0]:
+		var s:="L" if side>0 else "R"
+		var flap:=sin(t*TAU*(4 if clip=="idle" else 2))
+		poses["wing_upper_"+s][1]=Quaternion.from_euler(Vector3(0,side*(0.10+flap*0.24),side*0.035*breath))
+		poses["wing_lower_"+s][1]=Quaternion.from_euler(Vector3(0,side*(0.06+sin(t*TAU*(4 if clip=="idle" else 2)+0.45)*0.19),0))
+		poses["upper_arm_"+s][1]=Quaternion.from_euler(Vector3(-0.08,0,side*(-0.10+breath*0.035)))
+		poses["forearm_"+s][1]=Quaternion(Vector3.RIGHT,-0.18)
+		poses["thigh_"+s][1]=Quaternion(Vector3.RIGHT,0.06+side*0.035)
+		poses["shin_"+s][1]=Quaternion(Vector3.RIGHT,0.18+side*0.05)
+		poses["foot_"+s][1]=Quaternion(Vector3.RIGHT,0.14)
+		poses["skirt_"+s][1]=Quaternion.from_euler(Vector3(breath*0.055,0,side*0.025))
+		poses["hair_"+s][1]=Quaternion(Vector3.RIGHT,breath*0.055)
+		if clip=="walk":
+			poses.chest[1]=Quaternion(Vector3.RIGHT,0.14)
+			poses["thigh_"+s][1]=Quaternion(Vector3.RIGHT,-0.12+side*breath*0.07)
+			poses["shin_"+s][1]=Quaternion(Vector3.RIGHT,0.40)
+			poses["hair_"+s][1]=Quaternion(Vector3.RIGHT,0.20+breath*0.04)
+		if clip=="attack":
+			poses["upper_arm_"+s][1]=Quaternion.from_euler(Vector3(-pulse*1.00,side*pulse*0.25,side*pulse*0.12))
+			poses["forearm_"+s][1]=Quaternion(Vector3.RIGHT,-0.15-pulse*0.35)
+			poses["hand_"+s][1]=Quaternion(Vector3.RIGHT,pulse*0.40)
+			poses.head[1]=Quaternion(Vector3.RIGHT,pulse*0.10)
+		if clip=="hit":
+			poses.chest[1]=Quaternion(Vector3.RIGHT,-pulse*0.32)
+			poses["wing_upper_"+s][1]=Quaternion(Vector3.UP,side*pulse*0.60)
+			poses.pelvis[0].z=-pulse*0.055
+	poses.spell[1]=Quaternion(Vector3.BACK,breath*0.8)
+	return poses

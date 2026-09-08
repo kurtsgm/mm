@@ -1,0 +1,7 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://content/monsters/models/poison_spider.glb" id="1_model"]
+[ext_resource type="Script" path="res://presentation/monsters/monster_model.gd" id="2_driver"]
+
+[node name="PoisonSpider" instance=ExtResource("1_model")]
+script = ExtResource("2_driver")
