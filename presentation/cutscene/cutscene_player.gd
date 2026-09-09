@@ -43,7 +43,7 @@ func _ready() -> void:
 	add_child(_title_card)
 
 	# 自擁 DialogueOverlay（layer 95 > 本 player 的 90 → 對話框顯示在黑幕之上）。
-	# 刻意不接 main 的 _on_dialogue_finished：其會 set_enabled(true)/標 once，會在過場中途誤觸。
+	# 刻意不接 main 的 _on_dialogue_finished：其負責獨立對話的收尾與 once 標記。
 	# 只把 overlay 的 advanced 以本 player 的 dialogue_advanced 轉出（main 再路由到訊息列）。
 	_dialogue_overlay = DialogueOverlay.new()
 	add_child(_dialogue_overlay)
@@ -59,23 +59,36 @@ func setup(camera: Camera3D, ctx) -> void:
 func is_playing() -> bool:
 	return _playing
 
-func play(data: CutsceneData) -> void:
-	if data == null:
-		return
-	_playing = true
+func play(data: CutsceneData) -> ActionResult:
+	if data == null or _playing:
+		return ActionResult.failure(&"invalid_cutscene")
+	# Validate required dialogue dependencies before starting visuals or committing effects.
 	for step in data.steps:
-		await _play_step(step)
+		if step["type"] == "dialogue" and DialogueCatalog.load_dialogue(String(step["dialogue"])) == null:
+			return ActionResult.failure(&"missing_dialogue", ["過場對話資料遺失。"])
+	_playing = true
+	var result := ActionResult.success()
+	for step in data.steps:
+		result = await _play_step(step)
+		if not result.ok:
+			break
 	_playing = false
+	if not result.ok:
+		_fade_rect.color.a = 0.0
+		_cg_rect.visible = false
+		_title_card.visible = false
 	finished.emit()
+	return ActionResult.success() if result.ok else result
 
-func _play_step(step: Dictionary) -> void:
+func _play_step(step: Dictionary) -> ActionResult:
 	match String(step.get("type", "")):
 		"wait":
 			await get_tree().create_timer(float(step["duration"])).timeout
 		"effects":
-			var descs := DialogueEffects.apply(step["effects"], _ctx)
-			if descs.size() > 0:
-				dialogue_advanced.emit(descs)
+			var result := StoryEffects.apply(step["effects"], _ctx)
+			if result.ok and not result.events.is_empty():
+				dialogue_advanced.emit(result.events)
+			return result
 		"audio":
 			_play_audio(step)
 		"fade":
@@ -98,11 +111,12 @@ func _play_step(step: Dictionary) -> void:
 		"dialogue":
 			var data := DialogueCatalog.load_dialogue(String(step["dialogue"]))
 			if data == null:
-				return
+				return ActionResult.failure(&"missing_dialogue")
 			_dialogue_overlay.open(DialogueRunner.new(data, _ctx))
 			await _dialogue_overlay.finished
 		_:
-			pass  # 未知型別略過
+			return ActionResult.failure(&"unsupported_step")
+	return ActionResult.success()
 
 func _play_audio(step: Dictionary) -> void:
 	match String(step["op"]):
@@ -128,6 +142,7 @@ func _dwell(hold: float) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
+		get_viewport().set_input_as_handled()
 		_skip_dwell = true
 
 # 鏡頭震動：在 duration 內以衰減隨機 offset 擾動相機，結束復位。

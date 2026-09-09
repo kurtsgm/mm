@@ -35,7 +35,7 @@ func test_capture_from_reads_game_state():
 	assert_eq(data.party, gs.party)
 	assert_true(data.cleared_encounters["wild_ne"].has(Vector2i(1, 1)))
 
-func test_apply_to_restores_state_and_clears_encounters():
+func test_apply_to_restores_progress_without_mutating_definition():
 	var ss = _sys()
 	var gs = _gs()
 	var mm = _mm()
@@ -55,7 +55,8 @@ func test_apply_to_restores_state_and_clears_encounters():
 	assert_eq(gs.player_pos, Vector2i(1, 1))
 	assert_eq(gs.player_facing, GridDirection.Dir.WEST)
 	assert_eq(mm.current_map.map_id, "wild_ne")
-	assert_false(mm.current_map.has_encounter(enc), "已清遭遇應被抹除")
+	assert_true(mm.current_map.has_encounter(enc), "定義仍保留遭遇")
+	assert_true(gs.world_snapshot().encounter_defeated("wild_ne", enc, mm.current_map.get_encounter_uid(enc)), "執行狀態記錄已清遭遇")
 
 func test_capture_from_reads_explored():
 	var ss = _sys()
@@ -87,3 +88,19 @@ func test_capture_apply_carries_opened_objects():
 	add_child_autofree(gs2)
 	SaveSystem.apply_to(data, gs2, MapManager)
 	assert_eq(gs2.opened_objects, {"town_oak": [Vector2i(1, 1)]})
+
+func test_world_progress_is_detached_on_capture_and_apply():
+	var gs = _gs()
+	gs.current_map_id = "wild_ne"
+	gs.opened_objects = {"wild_ne": [Vector2i(1, 1)]}
+	gs.monster_state = {"wild_ne": {"u": {"cell": Vector2i(3, 4), "state": 1}}}
+	var data = _sys().capture_from(gs)
+	gs.opened_objects["wild_ne"].append(Vector2i(2, 2))
+	gs.monster_state["wild_ne"]["u"]["cell"] = Vector2i(9, 9)
+	assert_eq(data.opened_objects["wild_ne"], [Vector2i(1, 1)])
+	assert_eq(data.monster_state["wild_ne"]["u"]["cell"], Vector2i(3, 4))
+	_sys().apply_to(data, gs, _mm())
+	gs.opened_objects["wild_ne"].clear()
+	gs.monster_state["wild_ne"]["u"]["cell"] = Vector2i.ZERO
+	assert_eq(data.opened_objects["wild_ne"], [Vector2i(1, 1)])
+	assert_eq(data.monster_state["wild_ne"]["u"]["cell"], Vector2i(3, 4))

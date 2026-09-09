@@ -39,21 +39,35 @@ func test_use_heal_item_restores_target_and_advances():
 	var hurt := _char("Hurt", 10, 30, 5)
 	var cs := CombatSystem.new(_party([fast, hurt]), _monsters([_monster("M", 100, 1)]), _rng(3))
 	assert_true(cs.is_party_turn())
-	var ev := cs.party_use_item(_potion(), 1)   # 對隊伍 index 1 = Hurt
+	var ev := cs.party_use_item(_potion(), 1, _inventory())   # 對隊伍 index 1 = Hurt
 	assert_eq(hurt.hp, 30, "10 + 20 夾在上限")
-	assert_gt(ev.size(), 0)
+	assert_gt(ev.events.size(), 0)
 	assert_false(cs.current_combatant() == fast, "已前進，不再是 Fast 的回合")
 
 func test_use_item_no_effect_does_not_advance():
 	var full := _char("Full", 30, 30, 50)
 	var cs := CombatSystem.new(_party([full]), _monsters([_monster("M", 100, 1)]), _rng(3))
-	var ev := cs.party_use_item(_potion(), 0)   # 滿血 → can_use=false
-	assert_eq(ev.size(), 0, "無效：回空")
+	var ev := cs.party_use_item(_potion(), 0, _inventory())   # 滿血 → can_use=false
+	assert_eq(ev.events.size(), 0, "無效：回空")
 	assert_true(cs.is_party_turn(), "未消耗回合")
 
-func test_use_item_does_not_touch_inventory():
-	# CombatSystem 不該引用 GameState/Inventory；此測試僅確認方法簽章與回傳，背包由 layer 處理。
+func test_use_item_consumes_injected_inventory_once():
 	var hurt := _char("Hurt", 5, 30, 50)
 	var cs := CombatSystem.new(_party([hurt]), _monsters([_monster("M", 100, 1)]), _rng(3))
-	var ev := cs.party_use_item(_potion(), 0)
-	assert_gt(ev.size(), 0)
+	var inventory := _inventory()
+	var ev := cs.party_use_item(_potion(), 0, inventory)
+	assert_true(ev.ok)
+	assert_eq(inventory.count_of("potion"), 0)
+
+func _inventory() -> Inventory:
+	var inventory := Inventory.new()
+	inventory.add(_potion().id, 1)
+	return inventory
+
+func test_stale_inventory_cannot_heal_or_advance():
+	var hurt := _char("Hurt", 5, 30, 50)
+	var cs := CombatSystem.new(_party([hurt]), _monsters([_monster("M", 100, 1)]), _rng(3))
+	var result := cs.party_use_item(_potion(), 0, Inventory.new())
+	assert_false(result.ok)
+	assert_eq(hurt.hp, 5)
+	assert_eq(cs.current_combatant(), hurt)

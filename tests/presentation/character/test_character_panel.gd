@@ -311,14 +311,20 @@ func test_combat_only_spell_does_nothing():
 	panel._unhandled_input(_key(KEY_ENTER))   # spark 戰鬥限定 → 無效
 	assert_eq(st.party.members[0].sp, 10, "SP 不變")
 
-func test_recall_emits_world_spell_cast_and_closes():
+func test_recall_without_world_handler_does_not_charge_or_close():
 	var st := _caster_state(["town_portal"], 10)
 	var panel := _spells_panel(st)
-	watch_signals(panel)
-	panel._unhandled_input(_key(KEY_ENTER))   # town_portal(RECALL) → emit + 關閉
-	assert_signal_emitted(panel, "world_spell_cast")
-	assert_false(panel.is_open(), "施放後關閉")
-	assert_eq(st.party.members[0].sp, 4, "扣 SP 6")
+	panel._unhandled_input(_key(KEY_ENTER))
+	assert_true(panel.is_open())
+	assert_eq(st.party.members[0].sp, 10)
+
+func test_rejected_world_spell_does_not_charge_or_close():
+	var st := _caster_state(["town_portal"], 10)
+	var panel := _spells_panel(st)
+	panel.world_spell_action = func(_caster, _spell): return ActionResult.failure(&"wrong_mode")
+	panel._unhandled_input(_key(KEY_ENTER))
+	assert_true(panel.is_open())
+	assert_eq(st.party.members[0].sp, 10)
 
 func test_builds_party_rail_and_status_view():
 	var panel := _panel(3)

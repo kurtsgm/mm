@@ -59,6 +59,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if not (event is InputEventKey and event.pressed and not event.echo):
 		return
+	if event.keycode != KEY_J:
+		get_viewport().set_input_as_handled()
 	# 只自處理 Esc/↑↓/T；J 的開/關交給 main._toggle_menu（沿用 Save/Inventory/Spell 選單慣例）。
 	# 若這裡也吃 J：child 先收事件→close()，事件未被消費→main 再收 J→看到已關→又重開（無法用 J 關閉）。
 	if event.keycode == KEY_ESCAPE:

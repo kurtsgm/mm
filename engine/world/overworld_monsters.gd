@@ -2,11 +2,12 @@ class_name OverworldMonsters
 extends RefCounted
 
 # 大地圖會走動的怪（MM3 風步進制）。純邏輯狀態機：玩家走一步 → step() 驅動範圍內的怪走一步。
-# 不依賴 autoload：is_passable / is_defeated 皆由呼叫端注入；位置回寫存檔由 main.gd 負責。
+# 不依賴 autoload：WorldSnapshot / is_passable 由呼叫端注入；位置回寫由 main.gd 負責。
 const AGGRO_RANGE := 4   # Chebyshev：玩家進此範圍 → IDLE→CHASING
 const LEASH_RANGE := 8   # Chebyshev：CHASING 離 home 超過此距離 → RETURNING（放棄）
 enum State { IDLE, CHASING, RETURNING }
 
+var _flee_grace: Dictionary = {} # uid -> remaining world steps, transient
 var _list: Array = []   # 每隻 { uid:String, group:String, origin_map:String, origin_off:Vector2i, home:Vector2i, cell:Vector2i, state:int }（home/cell 為全域格）
 
 # Chebyshev 距離（八方等距）：max(|dx|, |dy|)。
@@ -14,7 +15,7 @@ static func cheb(a: Vector2i, b: Vector2i) -> int:
 	return max(abs(a.x - b.x), abs(a.y - b.y))
 
 # 4 向 BFS 求 from→goal 最短路的「第一步」。occupied（Dictionary 或 Array of Vector2i）視為不可踏，
-# 但 goal 一律可當終點（怪能踏上玩家格＝接觸）。無路或被堵 → 回 from（不動）。
+# 但 goal 一律可當尋路終點（step 另確保不占用玩家格）。無路或被堵 → 回 from（不動）。
 static func next_step(from: Vector2i, goal: Vector2i, is_passable: Callable, occupied) -> Vector2i:
 	if from == goal:
 		return from
@@ -51,16 +52,16 @@ static func _as_set(occupied) -> Dictionary:
 	return out
 
 # 從地圖 encounter 建怪清單（單圖特例：放在全域原點）。
-func init_from_map(map: MapData, is_defeated: Callable) -> void:
-	_list.clear()
-	_add_map(map, Vector2i.ZERO, is_defeated, {})
+func init_from_map(map: MapData, state: WorldSnapshot) -> void:
+	init_from_regions([{ "map": map, "ox": 0, "oy": 0 }], state)
 
 # 把一張圖的 encounters 投影成全域 entry 加入 _list。
 # offset=該圖在當前框架的全域偏移；saved（該圖 { uid:{cell:原生相對 local, state} }）相符 uid 覆寫 cell(+offset)/state。
-func _add_map(map: MapData, offset: Vector2i, is_defeated: Callable, saved: Dictionary) -> void:
+func _add_map(map: MapData, offset: Vector2i, state: WorldSnapshot) -> void:
+	var saved := state.monsters_for(map.map_id)
 	for cell in map.encounters:
 		var uid := map.get_encounter_uid(cell)
-		if is_defeated.is_valid() and is_defeated.call(uid):
+		if state.encounter_defeated(map.map_id, cell, uid):
 			continue
 		var home_global: Vector2i = cell + offset
 		var cur := home_global
@@ -80,18 +81,16 @@ func _add_map(map: MapData, offset: Vector2i, is_defeated: Callable, saved: Dict
 		})
 
 # 從 WorldGrid.regions()（[{map, ox, oy}]）建統一全域怪集（含當前圖 + 鄰圖）。
-# is_defeated 注入；saved_provider(map_id) 回該圖 { uid:{cell:原生相對 local, state} }（非 Dictionary 當空）。
-func init_from_regions(regions: Array, is_defeated: Callable, saved_provider: Callable) -> void:
+# 當前圖與鄰圖套用同一份 runtime 快照，無需先刪改 map.encounters。
+func init_from_regions(regions: Array, state: WorldSnapshot) -> void:
 	_list.clear()
+	_flee_grace.clear()
 	for region in regions:
 		var map: MapData = region["map"]
 		if map == null:
 			continue
 		var offset := Vector2i(int(region["ox"]), int(region["oy"]))
-		var saved = saved_provider.call(map.map_id)
-		if typeof(saved) != TYPE_DICTIONARY:
-			saved = {}
-		_add_map(map, offset, is_defeated, saved)
+		_add_map(map, offset, state)
 
 # 給呈現層用的快照（不含 home/內部欄位）。
 func live() -> Array:
@@ -107,6 +106,7 @@ func home_of(uid: String) -> Vector2i:
 	return Vector2i(-1, -1)
 
 func remove(uid: String) -> void:
+	_flee_grace.erase(uid)
 	for i in range(_list.size() - 1, -1, -1):
 		if _list[i]["uid"] == uid:
 			_list.remove_at(i)
@@ -121,18 +121,29 @@ func step(player_cell: Vector2i, is_passable: Callable) -> Dictionary:
 	# 2. 逐隻跑狀態機並移動一步（依 _list 順序，確定性）。
 	var occupied := _occupied_set()
 	var moved: Array = []
+	var resting := _flee_grace.duplicate()
+	for uid in resting:
+		_flee_grace[uid] -= 1
+		if _flee_grace[uid] <= 0:
+			_flee_grace.erase(uid)
 	for m in _list:
+		if resting.has(m["uid"]):
+			continue
 		var before: Vector2i = m["cell"]
 		_step_one(m, player_cell, is_passable, occupied)
+		# Player and monster never share a cell, including returning monsters.
+		if m["cell"] == player_cell:
+			m["cell"] = before
 		var after: Vector2i = m["cell"]
 		if after != before:
 			occupied.erase(before)   # 移走舊格、加入新格，避免後續怪疊上來
 			occupied[after] = true
 			moved.append(m["uid"])
-	# 3. 移動後再判接觸：怪走進玩家。
+	# 3. 正交相鄰即接戰，怪停在玩家格外；返家/逃跑寬限中的怪不主動接戰。
 	var contact := ""
 	for m in _list:
-		if m["cell"] == player_cell:
+		var delta: Vector2i = m["cell"] - player_cell
+		if not resting.has(m["uid"]) and m["state"] == State.CHASING and abs(delta.x) + abs(delta.y) == 1:
 			contact = m["uid"]
 			break
 	return {"contact": contact, "moved": moved}
@@ -180,5 +191,23 @@ func to_save() -> Dictionary:
 func combat_info(uid: String) -> Dictionary:
 	for m in _list:
 		if m["uid"] == uid:
-			return {"group": m["group"], "origin_map": m["origin_map"], "home_local": m["home"] - m["origin_off"]}
+			return {"cell": m["cell"], "group": m["group"], "origin_map": m["origin_map"], "home_local": m["home"] - m["origin_off"]}
 	return {}
+
+func uid_at(cell: Vector2i) -> String:
+	for m in _list:
+		if m["cell"] == cell:
+			return m["uid"]
+	return ""
+
+func pause_after_flee(uid: String) -> void:
+	if not combat_info(uid).is_empty():
+		_flee_grace[uid] = 2
+
+# A seamless map reframe retains the short escape window; loading a world does not.
+func reframe(regions: Array, state: WorldSnapshot) -> void:
+	var grace := _flee_grace.duplicate()
+	init_from_regions(regions, state)
+	for uid in grace:
+		if not combat_info(uid).is_empty():
+			_flee_grace[uid] = grace[uid]

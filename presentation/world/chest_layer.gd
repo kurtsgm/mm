@@ -2,7 +2,7 @@ class_name ChestLayer
 extends Node3D
 
 # 狀態感知寶箱渲染層：依 opened 集合（{Vector2i->true}）選 closed/open 場景。
-# 切地圖時 build() 重建；開箱當下由 WorldStitchRenderer.refresh_objects 單區重建。
+# 由 WorldStitchRenderer 比對快照後呼叫 build；不自行讀取 GameState。
 func build(map: MapData, opened: Dictionary, catalog = null) -> void:
 	_clear()
 	for obj in map.objects:

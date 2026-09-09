@@ -1,0 +1,63 @@
+Engine assessment validation — 2026-09-09
+Project commit: 6174161642660a88bfdd9bb9c32a86886c3211f1
+ScummVM source commit: 37ad7bf53df401f31de501b663c9c0982733beac
+Godot: 4.7.stable.official.5b4e0cb0f
+
+Command: godot --headless --path . --script addons/gut/gut_cmdln.gd
+Exit: 0
+Scripts: 182
+Tests: 1178
+Passing: 1178
+Assertions: 5020
+Elapsed reported by GUT: 9.647 seconds
+Deprecated: 3
+Intentional corrupt-save test emitted JSON parse error and passed.
+Exit reported 4 ObjectDB instances leaked and 2 resources still in use.
+
+Command: godot --headless --path . --script res://tools/quest_lint_cli.gd
+Exit: 0
+Godot Engine v4.7.stable.official.5b4e0cb0f - https://godotengine.org
+
+=== /check-quest 任務內容驗證 ===
+✓ 無問題
+--- 合計：0 error, 0 warning ---
+--- 任務 flow 自動跑通 ---
+✓ flow goblin_menace
+✓ flow oak_antidote
+✓ flow oak_levy
+✓ flow wild_message
+
+Command: godot --headless --path . --script res://tools/loot_lint_cli.gd
+Exit: 0
+Godot Engine v4.7.stable.official.5b4e0cb0f - https://godotengine.org
+
+=== loot_lint 掉落內容一致性檢查 ===
+[loot_lint] OK：掉落內容一致
+
+Command: godot --headless --path . --quit-after 180
+Exit: 0
+Godot Engine v4.7.stable.official.5b4e0cb0f - https://godotengine.org
+
+WARNING: 4 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2535)
+ERROR: 2 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:822)
+
+Rendered input smoke check:
+Command: godot --path . --script /tmp/mm-assessment-capture.gd
+Temporary SceneTree harness instantiated the actual main.tscn.
+It used Input.parse_input_event for backward x2, strafe-right x2,
+then strafe-left to the guard, then key 1 to accept goblin_menace.
+No direct quest-state mutation; no combat or end-to-end quest completion.
+Viewport captures: 1280x800, saved directly as lossy WebP quality 0.82.
+Exit: 0
+Godot Engine v4.7.stable.official.5b4e0cb0f - https://godotengine.org
+OpenGL API 4.1 Metal - 90.5 - Compatibility - Using Device: Apple - Apple M2
+
+ASSESSMENT_CAPTURE=0
+ASSESSMENT_TOWN_CAPTURE=0
+ASSESSMENT_LOCATION=town_oak
+ASSESSMENT_QUEST_ACCEPTED=true
+
+Xeen: source review only; no build, original-game data run, or custom campaign validation.
+Screenshots: start.webp, town.webp, dialogue.webp.

@@ -23,6 +23,9 @@ var _is_busy := false
 var _is_moving := false       # 純供 head bob 判斷「是否正在走路」（轉向不算）
 var _enabled := true
 var _move_tween: Tween
+var _turn_tween: Tween
+# Return false to consume a step before entering an occupied encounter cell.
+var can_enter_cell: Callable
 
 # head bob 狀態
 var _bob_phase := 0.0
@@ -50,6 +53,9 @@ func setup(world_grid: WorldGrid, start_pos: Vector2i, start_facing: int) -> voi
 	if _move_tween != null and _move_tween.is_valid():
 		_move_tween.kill()
 	_move_tween = null
+	if _turn_tween != null and _turn_tween.is_valid():
+		_turn_tween.kill()
+	_turn_tween = null
 	_is_busy = false
 	_is_moving = false
 	_world_grid = world_grid
@@ -80,7 +86,7 @@ func rebase(delta: Vector2i, new_grid: WorldGrid) -> void:
 		_is_busy = true
 		_move_tween = create_tween()
 		_move_tween.tween_property(self, "position", GridGeometry.cell_to_world(_pos), MOVE_TIME)
-		_move_tween.finished.connect(func(): _is_busy = false)
+		_move_tween.finished.connect(_on_move_finished)
 
 func _apply_transform_immediate() -> void:
 	position = GridGeometry.cell_to_world(_pos)
@@ -108,10 +114,12 @@ func _attempt_move(move: int) -> bool:
 	if not _world_grid.is_walkable(target):
 		bumped.emit(target)
 		return false   # 牆/實心 NPC（含外緣無鄰）→ 不動；main 端決定 bump 是否觸發互動
+	if can_enter_cell.is_valid() and not can_enter_cell.call(target):
+		return false
 	_pos = target
-	entered_cell.emit(_pos)
 	_is_busy = true
 	_is_moving = true
+	entered_cell.emit(_pos)
 	_move_tween = create_tween()
 	_move_tween.tween_property(self, "position", GridGeometry.cell_to_world(_pos), MOVE_TIME)
 	_move_tween.finished.connect(_on_move_finished)
@@ -141,12 +149,31 @@ func _attempt_turn(new_facing: int) -> void:
 	_facing = new_facing
 	facing_changed.emit(_facing)
 	_is_busy = true
-	var tween := create_tween()
+	_turn_tween = create_tween()
 	var target_yaw := GridGeometry.facing_to_yaw(_facing)
 	target_yaw = _nearest_equivalent_angle(rotation.y, target_yaw)
-	tween.tween_property(self, "rotation:y", target_yaw, TURN_TIME)
-	tween.finished.connect(func(): _is_busy = false)
+	_turn_tween.tween_property(self, "rotation:y", target_yaw, TURN_TIME)
+	_turn_tween.finished.connect(func(): _is_busy = false)
 
 func _nearest_equivalent_angle(current: float, target: float) -> float:
 	var diff := fposmod(target - current + PI, TAU) - PI
 	return current + diff
+
+# The caller owns the input lock. Poll state so a move created after entered_cell
+# and a rebase replacing its tween are both included; no fixed encounter delay.
+func settle() -> void:
+	while _is_busy or _bob_weight > 0.0:
+		await get_tree().process_frame
+
+func face_cell(cell: Vector2i) -> void:
+	var delta := cell - _pos
+	if delta == Vector2i.ZERO:
+		return
+	var facing: int
+	if abs(delta.x) > abs(delta.y):
+		facing = GridDirection.Dir.EAST if delta.x > 0 else GridDirection.Dir.WEST
+	else:
+		facing = GridDirection.Dir.SOUTH if delta.y > 0 else GridDirection.Dir.NORTH
+	if facing != _facing:
+		_attempt_turn(facing)
+	await settle()

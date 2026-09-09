@@ -221,3 +221,14 @@ func test_sell_equipment_not_owned():
 	assert_eq(res["reason"], "not_owned")
 	assert_eq(ctx.gold, 0)
 	ItemInstance.base_resolver = Callable()
+
+func test_invalid_equipment_and_negative_service_cost_leave_state_unchanged():
+	ItemCatalog.install_resolver()
+	var ctx := Ctx.new()
+	ctx.gold = 50
+	assert_false(VendorTransaction.buy_equipment(ctx, "missing").ok)
+	assert_eq(ctx.inventory.instances().size(), 0)
+	var character := _char("Cleric")
+	assert_false(VendorTransaction.buy_service(ctx, {"cost": -5, "effect": "revive"}, [character]).ok)
+	assert_eq(character.condition, Character.Condition.UNCONSCIOUS)
+	assert_eq(ctx.gold, 50)

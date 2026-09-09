@@ -39,7 +39,7 @@ func test_single_map_one_container_at_origin():
 	var a := _map("a", 5, 5)
 	_world = { "a": a }
 	var r := _renderer()
-	r.rebuild(_regions_for(a))
+	r.rebuild(_regions_for(a), WorldSnapshot.new())
 	assert_eq(r.get_child_count(), 1)
 	assert_eq((r.get_child(0) as Node3D).position, Vector3.ZERO)
 
@@ -48,7 +48,7 @@ func test_east_neighbor_container_offset():
 	var e := _map("e", 5, 5, { GridDirection.Dir.WEST: "a" })
 	_world = { "a": a, "e": e }
 	var r := _renderer()
-	r.rebuild(_regions_for(a))
+	r.rebuild(_regions_for(a), WorldSnapshot.new())
 	var e_container := _container_with_marker(r, "marker_e")
 	assert_not_null(e_container)
 	assert_eq(e_container.position, Vector3(5 * GridGeometry.CELL_SIZE, 0, 0))
@@ -58,9 +58,9 @@ func test_pooling_reuses_region_node_across_rebuild():
 	var e := _map("e", 5, 5, { GridDirection.Dir.WEST: "a" })
 	_world = { "a": a, "e": e }
 	var r := _renderer()
-	r.rebuild(_regions_for(a))
+	r.rebuild(_regions_for(a), WorldSnapshot.new())
 	var a1 := _container_with_marker(r, "marker_a")
-	r.rebuild(_regions_for(a))   # 同一 current 再 rebuild
+	r.rebuild(_regions_for(a), WorldSnapshot.new())   # 同一 current 再 rebuild
 	var a2 := _container_with_marker(r, "marker_a")
 	assert_eq(a1, a2, "沿用同一節點實例，未重建")
 
@@ -70,11 +70,11 @@ func test_reused_container_repositioned_when_current_region_changes():
 	var e := _map("e", 5, 5, { GridDirection.Dir.WEST: "a" })
 	_world = { "a": a, "e": e }
 	var r := _renderer()
-	r.rebuild(_regions_for(a))   # a 為 current，在原點
+	r.rebuild(_regions_for(a), WorldSnapshot.new())   # a 為 current，在原點
 	var a1 := _container_with_marker(r, "marker_a")
 	assert_not_null(a1)
 	assert_eq(a1.position, Vector3.ZERO, "a 為 current 時在原點")
-	r.rebuild(_regions_for(e))   # e 為 current → a 變成西鄰，容器沿用但須重定位
+	r.rebuild(_regions_for(e), WorldSnapshot.new())   # e 為 current → a 變成西鄰，容器沿用但須重定位
 	var a2 := _container_with_marker(r, "marker_a")
 	assert_eq(a1, a2, "沿用同一容器實例（pooled，未重建）")
 	assert_eq(a2.position, Vector3(-a.width * GridGeometry.CELL_SIZE, 0, 0),
@@ -86,9 +86,9 @@ func test_pooling_frees_departed_region():
 	var far := _map("far", 5, 5)
 	_world = { "a": a, "e": e, "far": far }
 	var r := _renderer()
-	r.rebuild(_regions_for(a))
+	r.rebuild(_regions_for(a), WorldSnapshot.new())
 	assert_gt(r.get_child_count(), 1)
-	r.rebuild(_regions_for(far))   # far 無鄰 → a/e 應被 free
+	r.rebuild(_regions_for(far), WorldSnapshot.new())   # far 無鄰 → a/e 應被 free
 	assert_eq(r.get_child_count(), 1, "離開的區域被清掉")
 	assert_not_null(_container_with_marker(r, "marker_far"))
 
@@ -102,15 +102,12 @@ func test_default_path_builds_real_worldbuilder_and_objectlayer():
 	_world = { "a": a }
 	var r := WorldStitchRenderer.new()
 	add_child_autofree(r)
-	r.rebuild(_regions_for(a))
+	r.rebuild(_regions_for(a), WorldSnapshot.new())
 	assert_eq(r.get_child_count(), 1)
 	var container: Node3D = r.get_child(0)
 	assert_eq(container.position, Vector3.ZERO)
 	assert_true(container.get_child(0) is WorldBuilder, "容器含 WorldBuilder")
 	assert_true(container.get_child(1) is ObjectLayer, "容器含 ObjectLayer")
-
-func _no_opened(_map_id: String) -> Array:
-	return []
 
 func _chest_layer_of(container: Node3D) -> ChestLayer:
 	for c in container.get_children():
@@ -126,31 +123,64 @@ func test_default_path_builds_chest_layer():
 	a.tiles = t
 	_world = { "a": a }
 	var r := WorldStitchRenderer.new()
-	r.opened_provider = Callable(self, "_no_opened")
 	add_child_autofree(r)
-	r.rebuild(_regions_for(a))
+	r.rebuild(_regions_for(a), WorldSnapshot.new())
 	var container: Node3D = r.get_child(0)
 	assert_true(container.get_child(2) is ChestLayer, "容器含 ChestLayer（第三層）")
 
-func test_refresh_objects_rebuilds_chest_layer():
-	var a := _map("a", 3, 3)
-	a.theme_id = "default"
-	var t := PackedInt32Array()
-	t.resize(9)
-	a.tiles = t
-	a.objects = [{"pos": Vector2i(1, 1), "items": [], "gold": 0, "model": "chest"}]
-	_world = { "a": a }
-	var r := WorldStitchRenderer.new()
-	r.opened_provider = Callable(self, "_no_opened")
-	add_child_autofree(r)
-	r.rebuild(_regions_for(a))
-	var cl := _chest_layer_of(r.get_child(0))
-	assert_not_null(cl)
-	assert_eq(cl.get_child_count(), 1, "一個寶箱物件 → 一個節點")
-	# 模擬 stale：清空後 refresh 應重建
-	for c in cl.get_children():
-		cl.remove_child(c)
-		c.free()
-	assert_eq(cl.get_child_count(), 0)
-	r.refresh_objects(a)
-	assert_eq(cl.get_child_count(), 1, "refresh_objects 重建目標區 ChestLayer")
+func _chest_map(id: String, neighbors := {}) -> MapData:
+	var map := _map(id, 3, 3, neighbors)
+	map.tiles.resize(9)
+	map.objects = [{"pos": Vector2i(1, 1), "items": [], "gold": 0, "model": "chest"}]
+	return map
+
+func _chest_scene(r: WorldStitchRenderer, id: String) -> String:
+	return r._chests[id].get_child(0).scene_file_path
+
+func test_rebuild_restores_closed_chests_in_current_and_pooled_neighbor():
+	var a := _chest_map("a", {GridDirection.Dir.EAST: "e"})
+	var e := _chest_map("e", {GridDirection.Dir.WEST: "a"})
+	_world = {"a": a, "e": e}
+	var r := _renderer()
+	r.rebuild(_regions_for(a), WorldSnapshot.new())
+	var closed_scene := _chest_scene(r, "e")
+	var terrain_a = r._regions["a"].get_child(0)
+	var terrain_e = r._regions["e"].get_child(0)
+	r.sync_state(WorldSnapshot.new({"a": [Vector2i(1, 1)], "e": [Vector2i(1, 1)]}))
+	assert_ne(_chest_scene(r, "a"), closed_scene)
+	assert_ne(_chest_scene(r, "e"), closed_scene)
+	# Same containers and same map IDs after loading an earlier save.
+	r.rebuild(_regions_for(a), WorldSnapshot.new())
+	assert_eq(_chest_scene(r, "a"), closed_scene)
+	assert_eq(_chest_scene(r, "e"), closed_scene)
+	assert_eq(r._regions["a"].get_child(0), terrain_a)
+	assert_eq(r._regions["e"].get_child(0), terrain_e)
+
+func test_sync_preserves_unchanged_chests_and_recenter_applies_same_state():
+	var a := _chest_map("a", {GridDirection.Dir.EAST: "e"})
+	var e := _chest_map("e", {GridDirection.Dir.WEST: "a"})
+	_world = {"a": a, "e": e}
+	var r := _renderer()
+	var state := WorldSnapshot.new({"e": [Vector2i(1, 1)]})
+	r.rebuild(_regions_for(a), state)
+	var chest_a = r._chests["a"].get_child(0)
+	var chest_e = r._chests["e"].get_child(0)
+	r.rebuild(_regions_for(e), state)
+	assert_eq(r._chests["a"].get_child(0), chest_a)
+	assert_eq(r._chests["e"].get_child(0), chest_e)
+	assert_eq(r._regions["a"].position.x, -3 * GridGeometry.CELL_SIZE)
+	r.sync_state(WorldSnapshot.new({"a": [Vector2i(1, 1)], "e": [Vector2i(1, 1)]}))
+	assert_eq(r._chests["e"].get_child(0), chest_e, "其他區開箱不重建未變寶箱")
+
+func test_eviction_and_reentry_rebuild_dynamic_state_from_snapshot():
+	var a := _chest_map("a")
+	var far := _chest_map("far")
+	_world = {"a": a, "far": far}
+	var r := _renderer()
+	r.rebuild(_regions_for(a), WorldSnapshot.new({"a": [Vector2i(1, 1)]}))
+	var open_scene := _chest_scene(r, "a")
+	r.rebuild(_regions_for(far), WorldSnapshot.new())
+	assert_false(r._maps.has("a"))
+	assert_false(r._opened.has("a"))
+	r.rebuild(_regions_for(a), WorldSnapshot.new())
+	assert_ne(_chest_scene(r, "a"), open_scene)

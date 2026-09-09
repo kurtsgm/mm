@@ -44,7 +44,7 @@ func test_damage_spell_reduces_hp_and_sp():
 	var ev := cs.party_cast(_damage("bolt", SpellDef.Target.SINGLE_ENEMY, 10, 3), 0)
 	assert_lt(mon.hp, 100, "敵人受傷")
 	assert_eq(mage.sp, 7, "扣 3 SP")
-	assert_gt(ev.size(), 0)
+	assert_gt(ev.events.size(), 0)
 
 func test_aoe_damages_all_enemies():
 	var mage := _char("Mage", 50, 10, 50, 50)
@@ -87,7 +87,7 @@ func test_unknown_spell_rejected_no_cost_no_advance():
 	var ev := cs.party_cast(_damage("bolt", SpellDef.Target.SINGLE_ENEMY, 10, 3), 0)
 	assert_eq(mage.sp, 10, "未扣 SP")
 	assert_true(cs.is_party_turn(), "未消耗回合")
-	assert_gt(ev.size(), 0, "有提示訊息")
+	assert_gt(ev.events.size(), 0, "有提示訊息")
 
 func test_insufficient_sp_rejected():
 	var mage := _char("Mage", 50, 1, 50, 50)
@@ -110,3 +110,12 @@ func test_resistance_modifies_spell_damage():
 	cs2.party_cast(_damage("fb", SpellDef.Target.SINGLE_ENEMY, 20, 2, SpellDef.Element.FIRE), 0)
 	var dmg_weak := 300 - weak.hp
 	assert_gt(dmg_weak, dmg_neutral, "負抗性（被克制）吃更多傷")
+
+func test_invalid_spell_target_preserves_sp_and_turn():
+	var mage := _char("Mage", 50, 10, 50, 50)
+	mage.known_spells = ["bolt"]
+	var cs := CombatSystem.new(_party([mage]), _monsters([_monster("M", 100, 1)]), _rng(1))
+	var result := cs.party_cast(_damage("bolt", SpellDef.Target.SINGLE_ENEMY, 10, 3), 99)
+	assert_false(result.ok)
+	assert_eq(mage.sp, 10)
+	assert_eq(cs.current_combatant(), mage)

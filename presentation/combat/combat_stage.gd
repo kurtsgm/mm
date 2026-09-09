@@ -1,7 +1,7 @@
 class_name CombatStage
 extends Node3D
 
-# 戰鬥怪物：優先使用完整 3D 模型，尚未製作模型的種類保留 billboard。掛在相機前方一排。
+# 戰鬥接管世界中原有的怪物；獨立戰鬥預覽才建立相機前方的怪物。
 # 名牌/血條/狀態/編號由 2D EnemyPanel 呈現。
 const FLASH_MS := 250
 const IDLE_PERIOD := 2.0
@@ -15,6 +15,9 @@ const HIT_AMP := 0.06
 const DISPLAY_HEIGHT := 2.0   # billboard 目標世界高度（unit）；pixel_size 依貼圖實際高度正規化到此
 const _STATE_TEXTURE_KEY := {"idle": "idle", "attack": "attack", "hit": "hurt"}
 
+var _borrowed: Dictionary = {} # node -> member; world layer keeps lifetime ownership
+var _idle_update: Callable
+var _display_height: Dictionary = {}
 var _camera: Camera3D
 var _sprites: Dictionary = {}     # Monster -> Node3D (MonsterModel or Sprite3D)
 var _flash_until: Dictionary = {} # Sprite3D -> msec
@@ -60,6 +63,50 @@ func rebuild(monsters: Array) -> void:
 	refresh()
 	set_process(true)   # idle 呼吸常駐（有 sprite 即開）
 
+# Members match EncounterSystem.build_group's definition order. No node creation,
+# reparenting, scale reset or pose restart at the exploration/combat boundary.
+func bind_existing(monsters: Array, members: Array, idle_update: Callable) -> void:
+	clear()
+	assert(monsters.size() == members.size())
+	_idle_update = idle_update
+	for i in monsters.size():
+		var member: Dictionary = members[i]
+		var node: Node3D = member["node"]
+		_borrowed[node] = member
+		_sprites[monsters[i]] = node
+		_base_pos[node] = node.position
+		_anim[node] = "idle"
+		if node is Sprite3D:
+			_display_height[node] = node.pixel_size * node.texture.get_height()
+			var textures := MonsterSpriteCatalog.textures_for(monsters[i].monster_id)
+			textures["base"] = node.texture
+			_textures[node] = textures
+	refresh()
+	set_process(true)
+
+func _camera_axis(node: Node3D, axis: Vector3) -> Vector3:
+	if not _borrowed.has(node):
+		return axis
+	return (node.get_parent_node_3d().global_basis.inverse() * (_camera.global_basis * axis)).normalized()
+
+# Keep input locked through the last visible attack/hit; return the same nodes
+# only after they have recovered, so fleeing cannot interrupt a lunge with a snap.
+func settle() -> void:
+	while _has_animation():
+		await get_tree().process_frame
+
+func has_borrowed_visuals() -> bool:
+	return not _borrowed.is_empty()
+
+func _has_animation() -> bool:
+	for node in _sprites.values():
+		if node is MonsterModel and node.is_visible_in_tree() and node.animation != "idle":
+			return true
+	for tw in _tween.values():
+		if tw != null and tw.is_valid() and tw.is_running():
+			return true
+	return false
+
 func refresh() -> void:
 	for mon in _sprites:
 		_sprites[mon].visible = mon.is_alive()
@@ -83,9 +130,9 @@ func flash(monster) -> void:
 	var base: Vector3 = _base_pos[s]
 	var step := (HIT_MS / 1000.0) / 4.0
 	var tw := create_tween()
-	tw.tween_property(s, "position", base + Vector3(HIT_AMP, 0.0, 0.0), step)
-	tw.tween_property(s, "position", base - Vector3(HIT_AMP, 0.0, 0.0), step)
-	tw.tween_property(s, "position", base + Vector3(HIT_AMP * 0.5, 0.0, 0.0), step)
+	tw.tween_property(s, "position", base + _camera_axis(s, Vector3.RIGHT) * HIT_AMP, step)
+	tw.tween_property(s, "position", base - _camera_axis(s, Vector3.RIGHT) * HIT_AMP, step)
+	tw.tween_property(s, "position", base + _camera_axis(s, Vector3.RIGHT) * HIT_AMP * 0.5, step)
 	tw.tween_property(s, "position", base, step)
 	tw.tween_callback(Callable(self, "_end_anim").bind(s))
 	_tween[s] = tw
@@ -102,7 +149,7 @@ func play_attack(monster) -> void:
 	_anim[s] = "attack"
 	_apply_texture(s, texture_for_state("attack", _textures[s]))
 	var base: Vector3 = _base_pos[s]
-	var lunged := base + Vector3(0.0, 0.0, LUNGE_DIST)   # local +Z 朝隊伍前撲
+	var lunged := base + _camera_axis(s, Vector3.BACK) * LUNGE_DIST   # local +Z 朝隊伍前撲
 	var tw := create_tween()
 	tw.tween_property(s, "position", lunged, LUNGE_OUT).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tw.parallel().tween_property(s, "scale", Vector3.ONE * ATTACK_SCALE, LUNGE_OUT)
@@ -117,7 +164,11 @@ func _end_anim(s) -> void:
 	_anim[s] = "idle"
 	s.position = _base_pos[s]
 	s.scale = Vector3.ONE
-	_apply_texture(s, texture_for_state("idle", _textures[s]))
+	if _borrowed.has(s):
+		var member: Dictionary = _borrowed[s]
+		_apply_texture(s, member["b"] if member["cur"] == 1 else member["a"])
+	else:
+		_apply_texture(s, texture_for_state("idle", _textures[s]))
 	_tween.erase(s)
 
 func _kill_tween(s) -> void:
@@ -129,7 +180,7 @@ func _kill_tween(s) -> void:
 # 萬一某怪三態尺寸不一也不會在切換時「大小跳一下」。
 func _apply_texture(s: Sprite3D, tex: Texture2D) -> void:
 	s.texture = tex
-	s.pixel_size = pixel_size_for(tex, DISPLAY_HEIGHT)
+	s.pixel_size = pixel_size_for(tex, _display_height.get(s, DISPLAY_HEIGHT))
 
 func _process(_delta: float) -> void:
 	var now := Time.get_ticks_msec()
@@ -147,7 +198,10 @@ func _process(_delta: float) -> void:
 			_flash_until.erase(s)
 		# idle 呼吸：僅存活且 idle 態
 		if mon.is_alive() and _anim.get(s, "idle") == "idle":
-			s.position.y = _base_pos[s].y + sin(t * TAU / IDLE_PERIOD) * IDLE_AMP
+			if _borrowed.has(s):
+				_idle_update.call(_borrowed[s], t)
+			else:
+				s.position.y = _base_pos[s].y + sin(t * TAU / IDLE_PERIOD) * IDLE_AMP
 
 func clear() -> void:
 	for s in _tween:
@@ -155,8 +209,21 @@ func clear() -> void:
 			_tween[s].kill()
 	for mon in _sprites:
 		if is_instance_valid(_sprites[mon]):
-			_sprites[mon].hide()
-			_sprites[mon].queue_free()
+			var node: Node3D = _sprites[mon]
+			if _borrowed.has(node):
+				node.position = _base_pos[node]
+				node.show()
+				if node is Sprite3D:
+					node.scale = Vector3.ONE
+					node.modulate = Color.WHITE
+					var member: Dictionary = _borrowed[node]
+					_apply_texture(node, member["b"] if member["cur"] == 1 else member["a"])
+			else:
+				node.hide()
+				node.queue_free()
+	_borrowed.clear()
+	_display_height.clear()
+	_idle_update = Callable()
 	_sprites.clear()
 	_flash_until.clear()
 	_base_pos.clear()

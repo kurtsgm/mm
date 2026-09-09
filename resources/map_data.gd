@@ -1,6 +1,8 @@
 class_name MapData
 extends Resource
 
+# Authored definition only: gameplay progress belongs to GameState, never erase entities here.
+
 enum TileType { FLOOR = 0, WALL = 1, DOOR = 2, STAIRS_UP = 3, STAIRS_DOWN = 4 }
 
 const LOCAL_SIZE := 16   # 每張 local map 一律 LOCAL_SIZE × LOCAL_SIZE（無縫拼接需等邊長）
@@ -38,9 +40,6 @@ func has_encounter(pos: Vector2i) -> bool:
 
 func get_encounter(pos: Vector2i) -> String:
 	return encounters.get(pos, "")
-
-func clear_encounter(pos: Vector2i) -> void:
-	encounters.erase(pos)
 
 func get_encounter_uid(pos: Vector2i) -> String:
 	return encounter_uids.get(pos, "")

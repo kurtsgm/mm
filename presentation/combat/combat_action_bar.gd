@@ -53,3 +53,11 @@ func show_actions(actions: Array) -> void:
 
 func set_prompt(text: String) -> void:
 	_prompt.text = text
+
+# The party strip grows upward with portrait width/status rows. Keep actions above
+# its actual top edge across viewport sizes instead of assuming a fixed card height.
+func place_above(party_top_ratio: float) -> void:
+	_row.anchor_top = maxf(0.0, party_top_ratio - 0.08)
+	_row.anchor_bottom = maxf(0.0, party_top_ratio - 0.02)
+	_prompt.anchor_top = maxf(0.0, party_top_ratio - 0.10)
+	_prompt.anchor_bottom = _prompt.anchor_top

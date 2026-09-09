@@ -25,11 +25,15 @@ func available_choices() -> Array:
 			out.append(c)
 	return out
 
-func choose(choice: Dictionary) -> Array:
-	var descs := DialogueEffects.apply(choice.get("effects", []), _ctx)
+func choose(choice: Dictionary) -> ActionResult:
+	if _finished or not available_choices().has(choice):
+		return ActionResult.failure(&"stale_choice", ["這個選項目前已無法選擇。"])
+	var result := StoryEffects.apply(choice.get("effects", []), _ctx)
+	if not result.ok:
+		return result
 	var goto = choice.get("goto", null)
 	if goto == null:
 		_finished = true
 	else:
 		_current = String(goto)
-	return descs
+	return result

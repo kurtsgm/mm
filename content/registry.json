@@ -1,0 +1,240 @@
+{
+  "items": {
+    "short_sword": {
+      "path": "res://content/items/short_sword.tres"
+    },
+    "iron_sword": {
+      "path": "res://content/items/iron_sword.tres"
+    },
+    "leather": {
+      "path": "res://content/items/leather_armor.tres"
+    },
+    "chain_mail": {
+      "path": "res://content/items/chain_mail.tres"
+    },
+    "buckler": {
+      "path": "res://content/items/buckler.tres"
+    },
+    "lucky_charm": {
+      "path": "res://content/items/lucky_charm.tres"
+    },
+    "wood_club": {
+      "path": "res://content/items/wood_club.tres"
+    },
+    "hand_axe": {
+      "path": "res://content/items/hand_axe.tres"
+    },
+    "steel_blade": {
+      "path": "res://content/items/steel_blade.tres"
+    },
+    "war_hammer": {
+      "path": "res://content/items/war_hammer.tres"
+    },
+    "mithril_edge": {
+      "path": "res://content/items/mithril_edge.tres"
+    },
+    "dragonbone_sword": {
+      "path": "res://content/items/dragonbone_sword.tres"
+    },
+    "cloth_robe": {
+      "path": "res://content/items/cloth_robe.tres"
+    },
+    "plate_armor": {
+      "path": "res://content/items/plate_armor.tres"
+    },
+    "mithril_mail": {
+      "path": "res://content/items/mithril_mail.tres"
+    },
+    "dragon_scale": {
+      "path": "res://content/items/dragon_scale.tres"
+    },
+    "iron_ring": {
+      "path": "res://content/items/iron_ring.tres"
+    },
+    "amulet_of_power": {
+      "path": "res://content/items/amulet_of_power.tres"
+    },
+    "ring_of_kings": {
+      "path": "res://content/items/ring_of_kings.tres"
+    },
+    "potion": {
+      "path": "res://content/items/potion.tres"
+    },
+    "ether": {
+      "path": "res://content/items/ether.tres"
+    },
+    "revive": {
+      "path": "res://content/items/revive_herb.tres"
+    },
+    "antidote": {
+      "path": "res://content/items/antidote.tres"
+    },
+    "swamp_herb": {
+      "path": "res://content/items/swamp_herb.tres"
+    }
+  },
+  "spells": {
+    "spark": {
+      "path": "res://content/spells/spark.tres"
+    },
+    "flame_wave": {
+      "path": "res://content/spells/flame_wave.tres"
+    },
+    "weaken": {
+      "path": "res://content/spells/weaken.tres"
+    },
+    "sleep": {
+      "path": "res://content/spells/sleep.tres"
+    },
+    "poison": {
+      "path": "res://content/spells/poison.tres"
+    },
+    "heal": {
+      "path": "res://content/spells/heal.tres"
+    },
+    "revive": {
+      "path": "res://content/spells/revive.tres"
+    },
+    "bless": {
+      "path": "res://content/spells/bless.tres"
+    },
+    "teleport": {
+      "path": "res://content/spells/teleport.tres"
+    },
+    "town_portal": {
+      "path": "res://content/spells/town_portal.tres"
+    }
+  },
+  "encounters": {
+    "g": {
+      "path": "res://content/monsters/goblin.tres",
+      "count": 3
+    },
+    "o": {
+      "path": "res://content/monsters/ogre.tres",
+      "count": 1
+    },
+    "ps": {
+      "path": "res://content/monsters/poison_spider.tres",
+      "count": 2
+    },
+    "dw": {
+      "path": "res://content/monsters/dream_wisp.tres",
+      "count": 2
+    }
+  },
+  "maps": {
+    "int_oak_general": {
+      "path": "res://content/maps/int_oak_general.json"
+    },
+    "int_oak_inn": {
+      "path": "res://content/maps/int_oak_inn.json"
+    },
+    "int_oak_mage": {
+      "path": "res://content/maps/int_oak_mage.json"
+    },
+    "int_oak_smithy": {
+      "path": "res://content/maps/int_oak_smithy.json"
+    },
+    "int_oak_temple": {
+      "path": "res://content/maps/int_oak_temple.json"
+    },
+    "town_oak": {
+      "path": "res://content/maps/town_oak.json"
+    },
+    "wild_ne": {
+      "path": "res://content/maps/wild_ne.json"
+    },
+    "wild_nw": {
+      "path": "res://content/maps/wild_nw.json"
+    },
+    "wild_se": {
+      "path": "res://content/maps/wild_se.json"
+    },
+    "wild_sw": {
+      "path": "res://content/maps/wild_sw.json"
+    }
+  },
+  "quests": {
+    "goblin_menace": {
+      "path": "res://content/quests/goblin_menace.json"
+    },
+    "oak_antidote": {
+      "path": "res://content/quests/oak_antidote.json"
+    },
+    "oak_levy": {
+      "path": "res://content/quests/oak_levy.json"
+    },
+    "wild_message": {
+      "path": "res://content/quests/wild_message.json"
+    }
+  },
+  "dialogues": {
+    "demo_event": {
+      "path": "res://content/dialogues/demo_event.json"
+    },
+    "nav_echo_nest": {
+      "path": "res://content/dialogues/nav_echo_nest.json"
+    },
+    "oak_caravan_master": {
+      "path": "res://content/dialogues/oak_caravan_master.json"
+    },
+    "oak_inquisitor_omen": {
+      "path": "res://content/dialogues/oak_inquisitor_omen.json"
+    },
+    "qg_dorn": {
+      "path": "res://content/dialogues/qg_dorn.json"
+    },
+    "qg_margo": {
+      "path": "res://content/dialogues/qg_margo.json"
+    },
+    "qg_ne_scout": {
+      "path": "res://content/dialogues/qg_ne_scout.json"
+    },
+    "qg_nw_messenger": {
+      "path": "res://content/dialogues/qg_nw_messenger.json"
+    },
+    "qg_oak_guard": {
+      "path": "res://content/dialogues/qg_oak_guard.json"
+    },
+    "qg_oak_lord": {
+      "path": "res://content/dialogues/qg_oak_lord.json"
+    },
+    "qg_oak_taxman": {
+      "path": "res://content/dialogues/qg_oak_taxman.json"
+    }
+  },
+  "vendors": {
+    "oak_general_store": {
+      "path": "res://content/vendors/oak_general_store.json"
+    },
+    "oak_inn": {
+      "path": "res://content/vendors/oak_inn.json"
+    },
+    "oak_mage": {
+      "path": "res://content/vendors/oak_mage.json"
+    },
+    "oak_smithy": {
+      "path": "res://content/vendors/oak_smithy.json"
+    },
+    "oak_temple": {
+      "path": "res://content/vendors/oak_temple.json"
+    },
+    "wandering_merchant": {
+      "path": "res://content/vendors/wandering_merchant.json"
+    }
+  },
+  "cutscenes": {
+    "nav_echo_nest": {
+      "path": "res://content/cutscenes/nav_echo_nest.json"
+    }
+  },
+  "world": {
+    "continents": {
+      "path": "res://content/world/continents.json"
+    },
+    "travel_network": {
+      "path": "res://content/world/travel_network.json"
+    }
+  }
+}

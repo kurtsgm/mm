@@ -5,7 +5,7 @@ extends Node3D
 # group 有幾隻、各是什麼怪，就畫幾個對應種類的模型/sprite 排成一叢（cluster）。
 # 跟著切地圖由 main.gd rebuild。腳貼地與尺寸共用 CombatStage 的常數/static。
 # idle 生命感：有第二幀(idle2)的怪走「兩幀輪播」假動畫；沒有的退回「微幅左右晃動」。
-const MOVE_TIME := 0.18      # 移動補間時長（對齊玩家步速 feel）
+const MOVE_TIME := PlayerController.MOVE_TIME
 const SWAY_WORLD := 0.04     # idle 左右晃動世界振幅
 const SWAY_PERIOD := 1.8     # idle 晃動週期（秒）
 const PHASE_SPREAD := 1.7    # 每隻相位間隔（弧度）→ 一群怪不同手同腳
@@ -15,6 +15,8 @@ const CLUSTER_SCALE := 0.82  # n>=2 時叢內 sprite 縮小倍率（避免擠出
 
 # uid -> Array[member]；共用 node/phase/offset/scale；只有 sprite 成員有 a/b/cur 貼圖狀態。
 var _sprites: Dictionary = {}
+var _engaged_uid := ""
+var _facing_tween: Tween
 
 # 純函式：idle 左右晃動的 billboard offset.x（像素，本地平面）。
 # 以 SWAY_WORLD 世界振幅 / pixel_size 換算成像素 → 任何貼圖尺寸都呈現相同世界振幅；
@@ -59,14 +61,31 @@ static func cluster_offsets(n: int, spread: float) -> Array[Vector3]:
 		out[i] -= centroid
 	return out
 
-func rebuild(monsters: Array) -> void:
-	_clear()
+func rebuild(monsters: Array, rebase_delta: Vector2i = Vector2i.ZERO) -> void:
+	if rebase_delta == Vector2i.ZERO:
+		_clear()
+	else:
+		# A map seam changes coordinates, not the visible monsters or their poses.
+		var retained := {}
+		for m in monsters:
+			retained[m["uid"]] = true
+		for uid in _sprites.keys():
+			if not retained.has(uid):
+				remove_group(uid)
+				continue
+			for member in _sprites[uid]:
+				var tw: Tween = member.get("move_tween")
+				if tw != null and tw.is_valid():
+					tw.kill()
+				member["node"].position += GridGeometry.cell_to_world(rebase_delta)
 	var phase_seed := 0
 	for m in monsters:
-		var members := _build_members(m["group"], m["cell"], phase_seed)
-		_sprites[m["uid"]] = members
-		phase_seed += members.size()
-	set_process(not _sprites.is_empty())   # idle 動畫常駐（有怪才開）
+		if not _sprites.has(m["uid"]):
+			_sprites[m["uid"]] = _build_members(m["group"], m["cell"], phase_seed)
+		phase_seed += _sprites[m["uid"]].size()
+	if rebase_delta != Vector2i.ZERO:
+		apply_moves(monsters)
+	set_process(not _sprites.is_empty())
 
 # 依 group 的 defs（種類+數量）建該 uid 的所有成員，加入場景並回傳 member 陣列。
 func _build_members(group_key: String, cell: Vector2i, phase_seed: int) -> Array:
@@ -138,6 +157,8 @@ func apply_moves(monsters: Array) -> void:
 func _process(_delta: float) -> void:
 	var t := Time.get_ticks_msec() / 1000.0
 	for uid in _sprites:
+		if uid == _engaged_uid:
+			continue
 		for member in _sprites[uid]:
 			if is_instance_valid(member["node"]):
 				_update_member(member, t)
@@ -176,6 +197,9 @@ func _placeholder(color: Color) -> Texture2D:
 	return ImageTexture.create_from_image(img)
 
 func _clear() -> void:
+	_engaged_uid = ""
+	if _facing_tween != null and _facing_tween.is_valid():
+		_facing_tween.kill()
 	for members in _sprites.values():
 		for member in members:
 			if member.has("move_tween") and member["move_tween"].is_valid():
@@ -185,3 +209,47 @@ func _clear() -> void:
 		c.free()
 	_sprites.clear()
 	set_process(false)
+
+func settle() -> void:
+	while _has_motion():
+		await get_tree().process_frame
+
+func _has_motion() -> bool:
+	for members in _sprites.values():
+		for member in members:
+			var tw: Tween = member.get("move_tween")
+			if tw != null and tw.is_valid() and tw.is_running():
+				return true
+	return false
+
+func face_party(uid: String, party_position: Vector3) -> void:
+	var tw: Tween
+	for member in _sprites.get(uid, []):
+		var node: Node3D = member["node"]
+		if node is MonsterModel:
+			if tw == null:
+				tw = create_tween().set_parallel(true)
+			var direction := to_local(party_position) - node.position
+			var yaw := node.rotation.y + wrapf(atan2(direction.x, direction.z) - node.rotation.y, -PI, PI)
+			tw.tween_property(node, "rotation:y", yaw, PlayerController.TURN_TIME)
+	_facing_tween = tw
+
+func finish_facing() -> void:
+	if _facing_tween != null and _facing_tween.is_valid() and _facing_tween.is_running():
+		await _facing_tween.finished
+
+# Borrow visual ownership, keeping the scene nodes, world transforms and idle phases.
+func engage(uid: String) -> Array:
+	_engaged_uid = uid
+	return _sprites.get(uid, [])
+
+func release_encounter() -> void:
+	_engaged_uid = ""
+
+func remove_group(uid: String) -> void:
+	for member in _sprites.get(uid, []):
+		var tw: Tween = member.get("move_tween")
+		if tw != null and tw.is_valid():
+			tw.kill()
+		member["node"].queue_free()
+	_sprites.erase(uid)

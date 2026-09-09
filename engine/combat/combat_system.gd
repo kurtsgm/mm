@@ -144,19 +144,24 @@ func try_skip_turn() -> Array:
 	return events
 
 # 隊員施放已解析的 SpellDef。target_index：單體時為敵/友索引；AoE 時忽略。
-func party_cast(spell: SpellDef, target_index: int) -> Array:
+func party_cast(spell: SpellDef, target_index: int) -> ActionResult:
 	var events: Array = []
 	var actor = current_combatant()
 	if not (actor is Character):
-		return events
+		return ActionResult.failure(&"invalid_action", events)
 	if spell == null or not spell.is_combat_usable():
-		return events
+		return ActionResult.failure(&"invalid_action", events)
 	if not actor.known_spells.has(spell.id):
 		events.append("%s 還不會 %s。" % [actor.name, spell.display_name])
-		return events
+		return ActionResult.failure(&"invalid_action", events)
 	if actor.sp < spell.sp_cost:
 		events.append("%s 的 SP 不足。" % actor.name)
-		return events
+		return ActionResult.failure(&"invalid_action", events)
+	var targets: Array = _ally_targets(spell, target_index) if spell.target in [SpellDef.Target.SINGLE_ALLY, SpellDef.Target.ALL_ALLIES] else _enemy_targets(spell, target_index)
+	if spell.effect in [SpellDef.Effect.HEAL, SpellDef.Effect.REVIVE]:
+		targets = targets.filter(func(target): return SpellEffects.can_cast(spell, actor, target))
+	if targets.is_empty():
+		return ActionResult.failure(&"invalid_target", ["沒有可生效的施法對象。"])
 	actor.sp -= spell.sp_cost
 	match spell.effect:
 		SpellDef.Effect.DAMAGE:
@@ -166,23 +171,18 @@ func party_cast(spell: SpellDef, target_index: int) -> Array:
 		SpellDef.Effect.STATUS:
 			events.append_array(_cast_status(spell, target_index))
 	_advance()
-	return events
+	return ActionResult.success(events)
 
-# 隊員對 target_index 隊友使用消耗品。效果套用成功（events 非空）才前進回合。
-# 不碰背包：扣除由呼叫端（CombatLayer）依「events 非空」決定，維持本類對 GameState 解耦。
-func party_use_item(item: ItemDef, target_index: int) -> Array:
-	var events: Array = []
-	var actor = current_combatant()
-	if not (actor is Character):
-		return events
+# 資源命令：背包、目標與效果同一處驗證；成功才扣道具並推進回合。
+func party_use_item(item: ItemDef, target_index: int, inventory: Inventory) -> ActionResult:
+	if not current_combatant() is Character:
+		return ActionResult.failure(&"wrong_turn")
 	if target_index < 0 or target_index >= party.members.size():
-		return events
-	var target: Character = party.members[target_index]
-	events = ItemEffects.apply(item, target)
-	if events.is_empty():
-		return events
-	_advance()
-	return events
+		return ActionResult.failure(&"invalid_target")
+	var result := ItemUseAction.use(item, party.members[target_index], inventory)
+	if result.ok:
+		_advance()
+	return result
 
 func _cast_damage(spell: SpellDef, caster: Character, target_index: int) -> Array:
 	var events: Array = []

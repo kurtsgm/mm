@@ -213,3 +213,15 @@ func test_successful_move_does_not_emit_bumped():
 	watch_signals(pc)
 	pc._attempt_move(GridMovement.Move.FORWARD)   # (1,0) 可走
 	assert_signal_not_emitted(pc, "bumped")
+
+func test_rebase_during_move_finishes_motion_for_engagement():
+	var grid := _wg(_floor_map("a", 6, 6))
+	var pc := _make_pc(grid, Vector2i(2, 3), GridDirection.Dir.NORTH)
+	pc._attempt_move(GridMovement.Move.FORWARD)
+	pc.set_enabled(false)
+	await wait_seconds(0.05)
+	pc.rebase(Vector2i(-1, 0), grid)
+	await wait_seconds(PlayerController.MOVE_TIME + 0.1)
+	assert_false(pc._is_busy)
+	assert_false(pc._is_moving, "重建補間完成後也須停止走路，接戰才能等到 head bob 回正")
+	assert_eq(pc.position, GridGeometry.cell_to_world(Vector2i(1, 2)))

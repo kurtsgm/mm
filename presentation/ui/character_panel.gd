@@ -7,7 +7,7 @@ extends CanvasLayer
 # 道具分頁：分頁與左右欄排成同一水平軸，←→ 連續貫穿、邊界外溢切分頁；Tab 則直接循環分頁。
 
 signal closed
-signal world_spell_cast(spell: SpellDef)
+var world_spell_action: Callable = Callable()
 
 enum Tab { STATUS = 0, ITEMS = 1, SPELLS = 2 }
 
@@ -185,6 +185,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if not (event is InputEventKey and event.pressed and not event.echo):
 		return
+	if event.keycode not in [KEY_C, KEY_I, KEY_B]:
+		get_viewport().set_input_as_handled()
 	if _tab == Tab.SPELLS and _mode == Mode.PICK_TARGET:
 		_input_pick_target(event.keycode)
 		return
@@ -415,17 +417,15 @@ func _activate_spell() -> void:
 	var caster := _selected_member()
 	match spell.effect:
 		SpellDef.Effect.TELEPORT, SpellDef.Effect.RECALL:
-			if not _pay(caster, spell):
-				return
-			world_spell_cast.emit(spell)
-			close()
+			var result := ActionResult.failure(&"unavailable", ["目前無法使用這個法術。"])
+			if world_spell_action.is_valid():
+				result = world_spell_action.call(caster, spell)
+			_report_action(result)
+			if result.ok:
+				close()
 		_:
 			if spell.target == SpellDef.Target.ALL_ALLIES:
-				if not _pay(caster, spell):
-					return
-				for m in _members():
-					for e in SpellEffects.apply(spell, caster, m):
-						_push(String(e))
+				_report_action(FieldSpellAction.cast(caster, spell, _members()))
 				_refresh()
 			else:
 				_pending_spell = spell
@@ -456,26 +456,13 @@ func _confirm_pick_target() -> void:
 		return
 	var target: Character = ms[_target_cursor]
 	var caster := _selected_member()
-	if not SpellEffects.can_cast(_pending_spell, caster, target):
-		_push("無法對 %s 施放 %s。" % [target.name, _pending_spell.display_name])
-		_mode = Mode.LIST
-		_refresh()
-		return
-	if not _pay(caster, _pending_spell):
-		_mode = Mode.LIST
-		_refresh()
-		return
-	for e in SpellEffects.apply(_pending_spell, caster, target):
-		_push(String(e))
+	_report_action(FieldSpellAction.cast(caster, _pending_spell, [target]))
 	_mode = Mode.LIST
 	_refresh()
 
-func _pay(caster: Character, spell: SpellDef) -> bool:
-	if caster.sp < spell.sp_cost:
-		_push("%s 的 SP 不足。" % caster.name)
-		return false
-	caster.sp -= spell.sp_cost
-	return true
+func _report_action(result: ActionResult) -> void:
+	for event in result.events:
+		_push(String(event))
 
 func _refresh() -> void:
 	_clamp_cursors()

@@ -24,7 +24,7 @@ var _item_list: Array = []          # Array[ItemDef]
 var _pending_spell: SpellDef = null
 var _pending_item: ItemDef = null
 
-func begin(cs: CombatSystem, camera: Camera3D) -> void:
+func begin(cs: CombatSystem, camera: Camera3D, members: Array = [], idle_update: Callable = Callable()) -> void:
 	combat = cs
 	_camera = camera
 	_mode = "action"
@@ -32,7 +32,10 @@ func begin(cs: CombatSystem, camera: Camera3D) -> void:
 	_build_party_strip()
 	visible = true
 	_stage.setup(_camera)
-	_stage.rebuild(combat.monsters)
+	if members.is_empty():
+		_stage.rebuild(combat.monsters)
+	else:
+		_stage.bind_existing(combat.monsters, members, idle_update)
 	_log.clear()
 	_log.push("戰鬥開始！")
 	set_process_unhandled_input(true)
@@ -60,13 +63,19 @@ func _build() -> void:
 func _build_party_strip() -> void:
 	for c in _party_cards:
 		if is_instance_valid(c):
+			_party_box.remove_child(c)
 			c.queue_free()
 	_party_cards.clear()
 	if _party_box == null:
 		_party_box = HBoxContainer.new()
-		_party_box.anchor_left = 0.15; _party_box.anchor_right = 0.85
-		_party_box.anchor_top = 0.90; _party_box.anchor_bottom = 1.0
-		_party_box.offset_bottom = -8
+		# Match the exploration party strip: switching modes keeps portraits in place.
+		_party_box.anchor_left = 0.0; _party_box.anchor_right = 0.70
+		_party_box.anchor_top = 1.0; _party_box.anchor_bottom = 1.0
+		_party_box.offset_left = 16
+		_party_box.offset_bottom = -16
+		_party_box.grow_vertical = Control.GROW_DIRECTION_BEGIN
+		_party_box.resized.connect(_sync_action_layout)
+		get_viewport().size_changed.connect(_sync_action_layout)
 		_party_box.add_theme_constant_override("separation", 8)
 		add_child(_party_box)
 	for m in combat.party.members:
@@ -75,6 +84,11 @@ func _build_party_strip() -> void:
 		card.setup(m)
 		m.damaged.connect(card._on_self_damaged)
 		_party_cards.append(card)
+
+func _sync_action_layout() -> void:
+	if _party_box != null and _action_bar != null:
+		var height := get_viewport().get_visible_rect().size.y
+		_action_bar.place_above(_party_box.position.y / maxf(height, 1.0))
 
 func _refresh_party() -> void:
 	var actor = combat.current_combatant() if combat != null else null
@@ -162,7 +176,7 @@ func _item_target_input(key: int) -> void:
 # ---- 滑鼠（行動列/子選單）----
 
 func _on_action_selected(id: String) -> void:
-	if _mode != "action":
+	if combat == null or _mode != "action":
 		return
 	match id:
 		"attack":
@@ -176,6 +190,8 @@ func _on_action_selected(id: String) -> void:
 			if _has_usable_item(): _open_item_menu()
 
 func _on_choice_chosen(index: int) -> void:
+	if combat == null:
+		return
 	if _mode == "spell":
 		_pending_spell = _spell_list[index]
 		_choices.close()
@@ -237,7 +253,7 @@ func _run() -> void:
 func _cast_pending(target_index: int) -> void:
 	var spell := _pending_spell
 	_pending_spell = null
-	_apply(func(): return combat.party_cast(spell, target_index))
+	_apply(func(): return combat.party_cast(spell, target_index).events)
 
 func _use_pending_item(target_index: int) -> void:
 	# 若 _pending_spell 仍存在表示這是「單體治癒法術」的隊友選取；否則是道具。
@@ -247,11 +263,12 @@ func _use_pending_item(target_index: int) -> void:
 	var item := _pending_item
 	_pending_item = null
 	var before := _snapshot_monster_hp()
-	var events := combat.party_use_item(item, target_index)
+	var result := combat.party_use_item(item, target_index, GameState.inventory)
+	var events := result.events
 	events.append_array(combat.drain_events())
 	for e in events:
 		_log.push(e)
-	if not events.is_empty():
+	if result.ok:
 		item_consumed.emit(item.id)
 	_animate_from(before)
 	_after_action()
@@ -309,8 +326,11 @@ func _animate_from(before: Dictionary) -> void:
 
 func _finish() -> void:
 	var result := combat.result()
-	_stage.clear()
 	set_process_unhandled_input(false)
-	visible = false
 	combat = null
+	_mode = "ending"
+	if _stage.has_borrowed_visuals():
+		await _stage.settle()
+	_stage.clear()
+	visible = false
 	combat_finished.emit(result)

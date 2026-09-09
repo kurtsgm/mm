@@ -23,6 +23,7 @@ var _overworld_monsters: OverworldMonsters
 var _monster_layer: MonsterLayer
 var _npc_layer: NpcLayer
 var _combat_uid: String = ""
+var _rebase_delta := Vector2i.ZERO
 
 var _hud: Hud
 var _combat_layer: CombatLayer
@@ -42,13 +43,15 @@ var _quest_log: QuestLog
 var _world_map: WorldMapScreen
 var _quest_toast: QuestToast
 var _quest_tracker: QuestTracker
-var _scene_pos: Vector2i
-var _scene_once: bool = false
-var _menus: Array = []
-var _transitioning := false
+var _active_scene: NarrativeScene
+var _menu_ids: Dictionary = {}
+var _flow := GameFlow.new()
+var _game_over_layer: CanvasLayer
 
 func _ready() -> void:
-	var map := MapManager.enter_map(START_MAP_ID, GameState.cleared_for(START_MAP_ID))
+	_flow.changed.connect(_sync_input_control)
+	_sync_input_control()
+	var map := MapManager.enter_map(START_MAP_ID)
 	_world_renderer = WorldStitchRenderer.new()
 	add_child(_world_renderer)
 	_monster_layer = MonsterLayer.new()
@@ -65,6 +68,7 @@ func _ready() -> void:
 	_player.entered_cell.connect(_on_entered_cell)
 	_player.facing_changed.connect(_on_facing_changed)
 	_player.bumped.connect(_on_player_bumped)
+	_player.can_enter_cell = _can_enter_cell
 
 	_mini_map = MiniMap.new()
 	add_child(_mini_map)
@@ -78,13 +82,13 @@ func _ready() -> void:
 
 	_save_menu = SaveMenu.new()
 	add_child(_save_menu)
-	_save_menu.closed.connect(_on_menu_closed)
+	_save_menu.closed.connect(_on_menu_closed.bind(&"save"))
 	SaveSystem.loaded.connect(_on_loaded)
 
 	_character_panel = CharacterPanel.new()
 	add_child(_character_panel)
-	_character_panel.closed.connect(_on_menu_closed)
-	_character_panel.world_spell_cast.connect(_on_world_spell_cast)
+	_character_panel.closed.connect(_on_menu_closed.bind(&"character"))
+	_character_panel.world_spell_action = _cast_world_spell
 	SaveSystem.item_resolver = Callable(ItemCatalog, "get_item")
 
 	_chest_prompt = ChestPrompt.new()
@@ -111,12 +115,10 @@ func _ready() -> void:
 	add_child(_cutscene_player)
 	_cutscene_player.setup(_camera, GameState)
 	_cutscene_player.dialogue_advanced.connect(_on_dialogue_advanced)
-	_cutscene_player.finished.connect(_on_cutscene_finished)
 
 	_quest_log = QuestLog.new()
 	add_child(_quest_log)
-	_quest_log.closed.connect(_on_menu_closed)
-	GameState.quest_resolver = Callable(QuestCatalog, "load_quest")
+	_quest_log.closed.connect(_on_menu_closed.bind(&"quest"))
 	GameState.quests_changed.connect(_on_quests_changed)
 	_quest_toast = QuestToast.new()
 	add_child(_quest_toast)
@@ -127,9 +129,9 @@ func _ready() -> void:
 
 	_world_map = WorldMapScreen.new()
 	add_child(_world_map)
-	_world_map.closed.connect(_on_menu_closed)
+	_world_map.closed.connect(_on_menu_closed.bind(&"world_map"))
 
-	_menus = [_save_menu, _character_panel, _quest_log, _world_map]
+	_menu_ids = {_save_menu: &"save", _character_panel: &"character", _quest_log: &"quest", _world_map: &"world_map"}
 
 	_player.setup(_world_grid, map.start_pos, map.start_facing)
 
@@ -158,7 +160,12 @@ func _setup_environment() -> void:
 	we.environment = env
 	add_child(we)
 
+func _sync_input_control() -> void:
+	_player.set_enabled(_flow.can_explore())
+
 func _on_entered_cell(global: Vector2i) -> void:
+	if not _flow.can_explore():
+		return
 	var r := _world_grid.resolve(global)
 	if r.is_empty():
 		return   # 理論上 walkable 格必可反查；防呆
@@ -202,8 +209,10 @@ func _on_entered_cell(global: Vector2i) -> void:
 # 跨圖 recenter：重建焦點圖/grid/renderer/怪物，玩家以 rebase 平移到新框架（保留滑動 → 零跳動）。
 func _recenter_to(map_id: String, local: Vector2i, global: Vector2i) -> void:
 	var delta := local - global   # = -新焦點圖在舊框架的偏移
-	MapManager.enter_map(map_id, GameState.cleared_for(map_id))
+	MapManager.enter_map(map_id)
+	_rebase_delta = delta
 	_rebuild_world()
+	_rebase_delta = Vector2i.ZERO
 	_player.rebase(delta, _world_grid)
 	GameState.current_map_id = map_id
 	AudioManager.play_map_bgm(MapManager.current_map.bgm)   # 同曲時內部 no-op，無縫跨圖不重啟
@@ -229,11 +238,21 @@ func _fade(target_alpha: float) -> void:
 	await tween.finished
 
 # 入口連結切換：淡出 → 載入目的地 + 命名入口 → 重建定位 → 訊息 → 淡入。
-func _enter_via_link(map_id: String, entry_name: String) -> void:
-	_transitioning = true
-	_player.set_enabled(false)
+func _enter_via_link(map_id: String, entry_name: String, from_owner: StringName = &"") -> ActionResult:
+	var dest := MapManager.peek_map(map_id)
+	if dest == null or not dest.has_entry(entry_name):
+		GameState.message_log.push("找不到目的地入口。")
+		return ActionResult.failure(&"missing_destination")
+	var entered := _flow.enter(GameFlow.Mode.TRANSITION, &"transition") if from_owner == &"" else _flow.handoff(from_owner, GameFlow.Mode.TRANSITION, &"transition")
+	if not entered:
+		return ActionResult.failure(&"wrong_mode")
+	await _complete_transition(dest, entry_name)
+	return ActionResult.success()
+
+func _complete_transition(dest: MapData, entry_name: String) -> void:
 	await _fade(1.0)
-	var dest := MapManager.enter_map(map_id, GameState.cleared_for(map_id))
+	var map_id := dest.map_id
+	MapManager.current_map = dest
 	var e := dest.get_entry(entry_name)
 	var pos: Vector2i = e.get("pos", dest.start_pos)
 	var facing: int = e.get("facing", GridDirection.Dir.NORTH)
@@ -250,28 +269,26 @@ func _enter_via_link(map_id: String, entry_name: String) -> void:
 	GameState.message_log.push("你來到%s。" % nm)
 	_hud.refresh()
 	await _fade(0.0)
-	_transitioning = false
-	_player.set_enabled(true)
+	_flow.finish(&"transition")
 
-func _start_combat_with_group(group: String) -> void:
+func _start_combat_with_group(group: String, members: Array) -> void:
 	var defs := Bestiary.group_defs_for(group)
 	if defs.is_empty():
+		return
+	if not _flow.handoff(&"engagement", GameFlow.Mode.COMBAT, &"combat"):
 		return
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
 	var grp := EncounterSystem.build_group(defs)
 	_combat = CombatSystem.new(GameState.party, grp, rng)
-	_player.set_enabled(false)
 	GameState.message_log.push("遭遇怪物！")
 	_set_overworld_visible(false)
 	AudioManager.push_combat_bgm()
-	_combat_layer.begin(_combat, _camera)
+	_combat_layer.begin(_combat, _camera, members, _monster_layer._update_member)
 
-# 大地圖呈現（HUD/小地圖/任務追蹤 + 會走動的怪 billboard）整批切換；戰鬥進出時呼叫。
-# 開戰即隱藏大地圖怪叢，避免與戰鬥顯示重複；FLED 結束恢復顯示，VICTORY 由 rebuild 移除被打的那叢。
+# 切換探索 HUD；世界怪物持續留在原地，由戰鬥借用同一批節點。
 func _set_overworld_visible(on: bool) -> void:
 	_hud.visible = on
-	_monster_layer.visible = on
 	if _mini_map != null:
 		_mini_map.visible = on
 	if _quest_tracker != null:
@@ -281,24 +298,25 @@ func _build_world_grid() -> void:
 	_world_grid = WorldGrid.new(MapManager.current_map, Callable(MapManager, "peek_map"))
 
 # 單一世界載入編排：一次 stitch（_build_world_grid）→ regions → 所有層共用。
-# 未來新世界內容：在此加一行 _x.build(regions) 即可，不必再碰各重建點。
+# 動態層共用同一份 runtime 快照；定義與靜態 pooling 不承載遊戲進度。
 func _rebuild_world() -> void:
 	_build_world_grid()
 	var regions := _world_grid.regions()
-	_world_renderer.rebuild(regions)
-	_rebuild_monsters(regions)
+	var state := GameState.world_snapshot()
+	_world_renderer.rebuild(regions, state)
+	_rebuild_monsters(regions, state)
 	_rebuild_npcs(regions)
 
-func _rebuild_monsters(regions: Array) -> void:
-	_overworld_monsters = OverworldMonsters.new()
-	_overworld_monsters.init_from_regions(regions, Callable(GameState, "is_defeated"), Callable(self, "_saved_monster_state"))
-	_monster_layer.rebuild(_overworld_monsters.live())
+func _rebuild_monsters(regions: Array, state: WorldSnapshot) -> void:
+	if _rebase_delta == Vector2i.ZERO:
+		_overworld_monsters = OverworldMonsters.new()
+		_overworld_monsters.init_from_regions(regions, state)
+	else:
+		_overworld_monsters.reframe(regions, state)
+	_monster_layer.rebuild(_overworld_monsters.live(), _rebase_delta)
 
 func _rebuild_npcs(regions: Array) -> void:
 	_npc_layer.build(NpcLayer.collect(regions))
-
-func _saved_monster_state(map_id) -> Dictionary:
-	return GameState.monster_state.get(map_id, {})
 
 # to_save 現為 { origin_map: {uid:{cell,state}} }；逐 origin_map 寫回（怪可被引離原生圖，故非只當前圖）。
 func _write_monster_state(saved: Dictionary) -> void:
@@ -309,22 +327,46 @@ func _is_passable(cell: Vector2i) -> bool:
 	return _world_grid.is_walkable(cell)   # Phase 2：怪可跨界走（統一 grid；外緣無鄰 = 牆）
 
 func _start_combat_for_uid(uid: String) -> void:
+	if not _flow.can_explore():
+		return
 	var info := _overworld_monsters.combat_info(uid)
-	if info.is_empty():
+	if info.is_empty() or Bestiary.group_defs_for(info["group"]).is_empty():
+		return
+	if not _flow.enter(GameFlow.Mode.ENGAGING, &"engagement"):
 		return
 	_combat_uid = uid
 	_combat_origin_map = info["origin_map"]      # 戰鬥身分錨在原生 (map, home_local)，可跨界
 	_combat_home_local = info["home_local"]
-	_start_combat_with_group(info["group"])
+	await _player.settle()
+	await _monster_layer.settle()
+	# Both turns run together after movement and head bob have settled.
+	_monster_layer.face_party(uid, _player.global_position)
+	await _player.face_cell(info["cell"])
+	# face_party may still be rotating when the player was already facing the group.
+	await _monster_layer.finish_facing()
+	if not _flow.owns(&"engagement"):
+		return
+	var members := _monster_layer.engage(uid)
+	_start_combat_with_group(info["group"], members)
 
-func _on_combat_item_consumed(item_id: String) -> void:
-	GameState.inventory.remove(item_id, 1)
+func _can_enter_cell(cell: Vector2i) -> bool:
+	var uid := _overworld_monsters.uid_at(cell)
+	if uid.is_empty():
+		return true
+	_start_combat_for_uid(uid)
+	return false
+
+func _on_combat_item_consumed(_item_id: String) -> void:
+	GameState.refresh_collect()
 
 func _on_combat_finished(result: int) -> void:
+	if not _flow.owns(&"combat"):
+		return
 	if result == CombatSystem.Result.DEFEAT:
 		AudioManager.stop_music()
 	else:
 		AudioManager.pop_combat_bgm()
+	_monster_layer.release_encounter()
 	_set_overworld_visible(true)
 	if result == CombatSystem.Result.VICTORY:
 		_grant_rewards()
@@ -333,22 +375,24 @@ func _on_combat_finished(result: int) -> void:
 		GameState.refresh_collect()
 		GameState.mark_encounter_cleared(_combat_origin_map, _combat_home_local)   # 持久層；origin_map 可非 current_map
 		_overworld_monsters.remove(_combat_uid)
-		_monster_layer.rebuild(_overworld_monsters.live())
+		_monster_layer.remove_group(_combat_uid)
 		_write_monster_state(_overworld_monsters.to_save())
 		AudioManager.play_sfx("victory")
 		GameState.message_log.push("戰鬥勝利！")
 		# 戰鬥身分錨在原生 (origin_map, home_local)；怪可能從鄰圖被引來、或在別圖被打死。
 		# 只有「原生圖＝玩家所在圖 且 home_local＝玩家格」才在當下提示開箱（引離/跨界擊殺不遠端開箱）。
 		if _combat_origin_map == GameState.current_map_id and _combat_home_local == GameState.player_pos and _has_unopened_chest(_combat_home_local):
-			_prompt_chest(_combat_home_local)
+			_prompt_chest(_combat_home_local, &"combat")
 		else:
-			_player.set_enabled(true)
+			_flow.finish(&"combat")
 	elif result == CombatSystem.Result.FLED:
+		_overworld_monsters.pause_after_flee(_combat_uid)
 		GameState.message_log.push("你們逃離了戰鬥。")
-		_player.set_enabled(true)
+		_flow.finish(&"combat")
 	else:  # DEFEAT
 		AudioManager.play_sfx("defeat")
 		GameState.message_log.push("全隊覆滅……")
+		_flow.handoff(&"combat", GameFlow.Mode.GAME_OVER, &"game_over")
 		_show_game_over()
 	_hud.refresh()
 	_combat = null
@@ -360,12 +404,16 @@ func _has_unopened_chest(pos: Vector2i) -> bool:
 	var map := MapManager.current_map
 	return map.has_object(pos) and not GameState.is_object_opened(map.map_id, pos)
 
-func _prompt_chest(pos: Vector2i) -> void:
+func _prompt_chest(pos: Vector2i, from_owner: StringName = &"") -> void:
+	var entered := _flow.enter(GameFlow.Mode.CHEST, &"chest") if from_owner == &"" else _flow.handoff(from_owner, GameFlow.Mode.CHEST, &"chest")
+	if not entered:
+		return
 	_chest_pos = pos
-	_player.set_enabled(false)
 	_chest_prompt.open()
 
 func _on_chest_confirmed() -> void:
+	if not _flow.owns(&"chest"):
+		return
 	var map := MapManager.current_map
 	var chest := map.get_object(_chest_pos)
 	var res := ChestLoot.grant(chest, GameState.inventory)
@@ -373,7 +421,8 @@ func _on_chest_confirmed() -> void:
 	var gold := int(res["gold"])
 	GameState.gold += gold
 	GameState.mark_object_opened(map.map_id, _chest_pos)
-	_world_renderer.refresh_objects(map)
+	_world_renderer.sync_state(GameState.world_snapshot())
+	_mini_map.refresh()
 	if gold > 0:
 		GameState.message_log.push("獲得 %d 金幣。" % gold)
 	for id in res["items"]:
@@ -381,53 +430,46 @@ func _on_chest_confirmed() -> void:
 		var label: String = item.display_name if item != null else String(id)
 		GameState.message_log.push("獲得道具：%s" % label)
 	GameState.refresh_collect()
-	_player.set_enabled(true)
+	_flow.finish(&"chest")
 	_hud.refresh()
 
 func _on_chest_declined() -> void:
-	_player.set_enabled(true)
+	_flow.finish(&"chest")
 
 func _try_scene(pos: Vector2i) -> bool:
 	var map := MapManager.current_map
-	if not map.has_scene(pos):
+	if not _flow.can_explore() or not map.has_scene(pos):
 		return false
-	var scene := map.get_scene(pos)
-	var triggered := GameState.is_scene_triggered(map.map_id, pos)
-	if not SceneTrigger.should_trigger(scene, GameState, triggered):
+	var run := GameState.narrative().begin_scene(map.map_id, pos, map.get_scene(pos))
+	if run == null:
 		return false
-	if scene.has("cutscene"):
-		_play_scene_cutscene(pos, scene)
-		return true
-	var data := DialogueCatalog.load_dialogue(String(scene["dialogue"]))
-	if data == null:
-		GameState.message_log.push("（對話 %s 遺失）" % scene["dialogue"])
-		return false
-	_scene_pos = pos
-	_scene_once = bool(scene.get("once", false))
-	_player.set_enabled(false)
-	_dialogue_overlay.open(DialogueRunner.new(data, GameState))
+	if run.cutscene != null:
+		_play_narrative_cutscene(run)
+	else:
+		if not _flow.enter(GameFlow.Mode.DIALOGUE, &"dialogue"):
+			return false
+		_active_scene = run
+		_dialogue_overlay.open(DialogueRunner.new(run.dialogue, GameState))
 	return true
 
-# 過場分支：閘玩家 → await 播放 → 依 once 標記 → 復原玩家。
 func _play_scene_cutscene(pos: Vector2i, scene: Dictionary) -> void:
-	var data := CutsceneCatalog.load(String(scene["cutscene"]))
-	if data == null:
-		GameState.message_log.push("（過場 %s 遺失）" % scene["cutscene"])
+	var run := GameState.narrative().begin_scene(MapManager.current_map.map_id, pos, scene)
+	if run != null and run.cutscene != null:
+		await _play_narrative_cutscene(run)
+
+func _play_narrative_cutscene(run: NarrativeScene) -> void:
+	if not _flow.enter(GameFlow.Mode.CUTSCENE, &"cutscene"):
 		return
-	var map_id := MapManager.current_map.map_id   # await 前捕捉：若未來過場改地圖，once 仍標在原圖
-	_player.set_enabled(false)
-	await _cutscene_player.play(data)
-	if bool(scene.get("once", false)):
-		GameState.mark_scene_triggered(map_id, pos)
-	GameState.refresh_collect()
-	_player.set_enabled(true)
+	var result := await _cutscene_player.play(run.cutscene)
+	run.complete(result.ok)
+	for event in result.events:
+		GameState.message_log.push(String(event))
+	_mini_map.refresh()
+	_flow.finish(&"cutscene")
 	_hud.refresh()
 
-func _on_cutscene_finished() -> void:
-	pass  # 收尾由 _play_scene_cutscene 的 await 之後處理；此處預留給未來非格子觸發
-
 func _on_player_bumped(cell: Vector2i) -> void:
-	if _dialogue_overlay.is_open() or _vendor_overlay.is_open():
+	if not _flow.can_explore():
 		return
 	var occ := _world_grid.occupant_at(cell)
 	if String(occ.get("kind", "")) != "questgiver":
@@ -436,8 +478,9 @@ func _on_player_bumped(cell: Vector2i) -> void:
 	if data == null:
 		GameState.message_log.push("（對話 %s 遺失）" % occ["dialogue"])
 		return
-	_scene_once = false
-	_player.set_enabled(false)
+	if not _flow.enter(GameFlow.Mode.DIALOGUE, &"dialogue"):
+		return
+	_active_scene = null
 	_dialogue_overlay.open(DialogueRunner.new(data, GameState))
 
 # 踩進可穿越 NPC 格 → 開對話（擋路 NPC 走 _on_player_bumped 的 bump 分支）。
@@ -449,8 +492,9 @@ func _try_questgiver(global: Vector2i) -> bool:
 	if data == null:
 		GameState.message_log.push("（對話 %s 遺失）" % occ["dialogue"])
 		return false
-	_scene_once = false
-	_player.set_enabled(false)
+	if not _flow.enter(GameFlow.Mode.DIALOGUE, &"dialogue"):
+		return false
+	_active_scene = null
 	_dialogue_overlay.open(DialogueRunner.new(data, GameState))
 	return true
 
@@ -463,7 +507,8 @@ func _try_vendor(pos: Vector2i) -> bool:
 	if vendor.is_empty():
 		GameState.message_log.push("（商店 %s 遺失）" % entry["id"])
 		return false
-	_player.set_enabled(false)
+	if not _flow.enter(GameFlow.Mode.VENDOR, &"vendor"):
+		return false
 	_vendor_overlay.open(vendor, GameState)
 	return true
 
@@ -474,10 +519,14 @@ func _on_dialogue_advanced(descriptions: Array) -> void:
 	_hud.refresh()
 
 func _on_dialogue_finished() -> void:
-	if _scene_once:
-		GameState.mark_scene_triggered(MapManager.current_map.map_id, _scene_pos)
+	if not _flow.owns(&"dialogue"):
+		return
+	if _active_scene != null:
+		_active_scene.complete(true)
+		_active_scene = null
+		_mini_map.refresh()
 	GameState.refresh_collect()
-	_player.set_enabled(true)
+	_flow.finish(&"dialogue")
 	_hud.refresh()
 
 func _on_vendor_transacted(events: Array) -> void:
@@ -486,7 +535,7 @@ func _on_vendor_transacted(events: Array) -> void:
 	_hud.refresh()
 
 func _on_vendor_finished() -> void:
-	_player.set_enabled(true)
+	_flow.finish(&"vendor")
 	_hud.refresh()
 
 # 踩到 travel 格 → 開旅行選單（比照 _try_vendor：停玩家、開 overlay、短路後續觸發）。
@@ -495,15 +544,18 @@ func _try_travel(pos: Vector2i) -> bool:
 	if not map.has_travel(pos):
 		return false
 	var node_id := String(map.get_travel(pos)["node"])
-	_player.set_enabled(false)
+	if not _flow.enter(GameFlow.Mode.TRAVEL, &"travel"):
+		return false
 	_travel_overlay.open(TravelCatalog.unlocked_destinations(GameState, node_id))
 	return true
 
 func _on_travel_finished() -> void:
-	_player.set_enabled(true)
+	_flow.finish(&"travel")
 
 func _on_travel_chosen(node: Dictionary) -> void:
-	await _enter_via_link(String(node["map"]), String(node["entry"]))
+	var result := await _enter_via_link(String(node.get("map", "")), String(node.get("entry", "")), &"travel")
+	if not result.ok:
+		_flow.finish(&"travel")
 	# _enter_via_link 已推「你來到…」訊息並重新啟用玩家
 
 func _grant_rewards() -> void:
@@ -546,23 +598,17 @@ func _grant_drops() -> void:
 		GameState.message_log.push("獲得裝備：[%s] %s (ilvl%d)" % [Quality.display_name(inst.quality), inst.display_name(), inst.ilvl])
 
 func _show_game_over() -> void:
-	var layer := CanvasLayer.new()
+	_game_over_layer = CanvasLayer.new()
 	var label := Label.new()
-	label.text = "GAME OVER"
+	label.text = "GAME OVER\n[Tab] 讀檔"
 	label.set_anchors_preset(Control.PRESET_CENTER)
 	label.add_theme_font_size_override("font_size", 64)
-	layer.add_child(label)
-	add_child(layer)
+	_game_over_layer.add_child(label)
+	add_child(_game_over_layer)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not (event is InputEventKey and event.pressed and not event.echo):
 		return
-	if _combat != null:
-		return  # 戰鬥中禁用選單
-	if _chest_prompt.is_open():
-		return  # 開箱確認中，不開其他選單
-	if _dialogue_overlay.is_open() or _vendor_overlay.is_open() or _travel_overlay.is_open() or _cutscene_player.is_playing():
-		return  # 對話/商店/旅行/過場中，不開其他選單
 	if event.keycode == KEY_TAB:
 		_toggle_menu(_save_menu)
 	elif event.keycode == KEY_C:
@@ -575,37 +621,37 @@ func _unhandled_input(event: InputEvent) -> void:
 		_toggle_menu(_quest_log)
 	elif event.keycode == KEY_M:
 		_toggle_menu(_world_map)
+	else:
+		return
+	get_viewport().set_input_as_handled()
 
 func _toggle_menu(menu) -> void:
-	if menu.is_open():
+	var owner: StringName = _menu_ids[menu]
+	if _flow.owns(owner) and _flow.mode == GameFlow.Mode.MENU:
 		AudioManager.play_sfx("menu_close")
 		menu.close()
 		return
-	for other in _menus:
-		if other != menu and other.is_open():
-			return  # 另一選單開著時不切換
-	_player.set_enabled(false)
+	if not _flow.open_menu(owner):
+		return
 	AudioManager.play_sfx("menu_open")
-	menu.open()
+	if menu == _save_menu:
+		_save_menu.open(_flow.can_save())
+	else:
+		menu.open()
 
 # C/I/B：未開→開到該分頁；已開→切到該分頁；已開且已在該分頁→關閉。
-# 面板不自行攔 C/I/B（避免與此處雙重處理），但會攔 ←→/Tab/↑↓/Enter/Esc。
 func _character_tab_key(tab: int) -> void:
-	if _character_panel.is_open():
+	if _flow.mode == GameFlow.Mode.MENU and _flow.owns(&"character"):
 		if _character_panel.current_tab() == tab:
 			_character_panel.close()
 		else:
 			_character_panel.set_tab(tab)
 		return
-	for other in _menus:
-		if other != _character_panel and other.is_open():
-			return   # 另一選單開著時不切換
-	_player.set_enabled(false)
-	_character_panel.open(tab, GameState)
+	if _flow.open_menu(&"character"):
+		_character_panel.open(tab, GameState)
 
-func _on_menu_closed() -> void:
-	if not _transitioning:
-		_player.set_enabled(true)
+func _on_menu_closed(owner: StringName) -> void:
+	_flow.finish(owner)
 	_hud.refresh()
 
 func _on_quest_event_sfx(_e) -> void:
@@ -616,30 +662,26 @@ func _on_quests_changed() -> void:
 	if _quest_log.is_open():
 		_quest_log.refresh()
 
-func _on_world_spell_cast(spell: SpellDef) -> void:
-	# 工具法術擴充樣板：加新 utility = 加一個 SpellDef.Effect + 一個 case + 一張 .tres。
-	# SP 已由 CharacterPanel 扣除，這裡不再付費；僅做世界效果 dispatch。
-	match spell.effect:
-		SpellDef.Effect.TELEPORT:
-			_cast_teleport(spell)
-		SpellDef.Effect.RECALL:
-			_cast_recall(spell)
-	_hud.refresh()
-
-func _cast_teleport(spell: SpellDef) -> void:
-	# STUB（M5c 殼）：實際前方穿牆位移待後續以 PlayerController.warp_to 實作。
-	GameState.message_log.push("%s 尚未接上世界效果。" % spell.display_name)
-
-func _cast_recall(spell: SpellDef) -> void:
-	GameState.message_log.push("%s 發動……" % spell.display_name)
-	_enter_via_link(HOME_MAP_ID, HOME_ENTRY)
+func _cast_world_spell(caster: Character, spell: SpellDef) -> ActionResult:
+	if not _flow.owns(&"character") or _flow.mode != GameFlow.Mode.MENU or not GameState.party.members.has(caster):
+		return ActionResult.failure(&"wrong_mode")
+	var result := FieldSpellAction.validate(caster, spell)
+	if not result.ok:
+		return result
+	if spell.effect != SpellDef.Effect.RECALL:
+		return ActionResult.failure(&"unsupported_effect", ["這個法術的世界效果尚未實作。"])
+	var destination := MapManager.peek_map(HOME_MAP_ID)
+	if destination == null or not destination.has_entry(HOME_ENTRY):
+		return ActionResult.failure(&"missing_destination", ["無法找到回城入口。"])
+	# No await before ownership transfer and payment. The UI closes only after success.
+	if not _flow.handoff(&"character", GameFlow.Mode.TRANSITION, &"transition"):
+		return ActionResult.failure(&"wrong_mode")
+	caster.sp -= spell.sp_cost
+	_complete_transition(destination, HOME_ENTRY)
+	return ActionResult.success(["%s 發動……" % spell.display_name])
 
 func _on_loaded() -> void:
 	_rebuild_world()
-	# 讀檔後目前區可能是 pooling 沿用的容器（rebuild 不會重建其內容），
-	# 需單區重繪寶箱層讓開/關視覺對齊讀入的 opened_objects。
-	# （未來若 edge-stitch 的 wild_* 也放寶箱，須改為重繪所有區的寶箱層。）
-	_world_renderer.refresh_objects(MapManager.current_map)
 	_player.setup(_world_grid, GameState.player_pos, GameState.player_facing)
 	GameState.mark_explored(GameState.current_map_id, GameState.player_pos, MapManager.current_map.width, MapManager.current_map.height)
 	_mini_map.refresh()
@@ -648,3 +690,7 @@ func _on_loaded() -> void:
 	_hud.refresh()
 	AudioManager.play_map_bgm(MapManager.current_map.bgm)
 	GameState.message_log.push("讀檔完成。")
+	if is_instance_valid(_game_over_layer):
+		_game_over_layer.queue_free()
+		_game_over_layer = null
+	_flow.world_loaded()

@@ -122,7 +122,7 @@ func _append_status(lines: Array) -> void:
 		lines.append(">> %s" % _status)
 
 # 依交易結果設定暫態回饋：成功→串接事件；失敗→reason 映射中文。
-func _set_status(res: Dictionary) -> void:
+func _set_status(res: ActionResult) -> void:
 	if res["ok"]:
 		_status = "／".join(res["events"]) if not res["events"].is_empty() else ""
 	else:
@@ -149,6 +149,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if not (event is InputEventKey and event.pressed and not event.echo):
 		return
+	get_viewport().set_input_as_handled()
 	match String(_vendor.get("kind", "")):
 		"goods":
 			_input_goods(event)
@@ -180,7 +181,7 @@ func _input_goods(event: InputEventKey) -> void:
 			if _cursor < 0 or _cursor >= rows.size():
 				return
 			var row: Dictionary = rows[_cursor]
-			var res: Dictionary
+			var res: ActionResult
 			if _buy_mode:
 				# 可裝備的 stock 走 buy_equipment（生成 COMMON 實例）；消耗品走 buy_goods。
 				var item := ItemCatalog.get_item(String(row["id"]))
@@ -358,7 +359,7 @@ func _input_list_kind(event: InputEventKey, kind: String) -> void:
 				_render()
 
 func _commit(kind: String, sel: Dictionary, targets: Array) -> void:
-	var res: Dictionary
+	var res: ActionResult
 	if kind == "spells":
 		res = VendorTransaction.learn_spell(_state, SpellBook.get_spell(String(sel["id"])), targets[0])
 	else:

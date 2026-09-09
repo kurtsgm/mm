@@ -91,9 +91,7 @@ static func activate(row: Dictionary, member: Character, inventory) -> Array:
 	if item == null:
 		return events
 	if item.is_consumable():
-		events = ItemEffects.apply(item, member)
-		if not events.is_empty():
-			inventory.remove(item.id, 1)
+		events = ItemUseAction.use(item, member, inventory).events
 	return events
 
 static func _slot_label(slot: int) -> String:

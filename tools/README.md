@@ -45,3 +45,7 @@ godot --headless --path . --import
 外觀微調：改腳本內 `_STYLE` 區常數（暖色深淺 `CENTER`/`EDGE_TONE`/`BURNT`、破邊鋸齒 `TEAR_*`、乾淨中央大小 `AGE_INNER`/`AGE_OUTER`）。
 
 > 註：這是**程序化（noise + 數學）**生成，適合羊皮/紙張/材質/邊框這類靠規律與雜訊就能做的 UI 素材；人物/怪物等需要「畫面內容」的美術仍需生圖模型或畫師（見 `docs/art-style-guide.md`）。
+
+## 內容註冊表檢查
+
+`godot --headless --path . --script tools/content_lint_cli.gd` 驗證 `content/registry.json`、遊戲定義與跨檔依賴；不需要開啟遊戲場景。詳見 `docs/architecture/actions-content-narrative.md`。

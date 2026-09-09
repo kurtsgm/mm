@@ -192,6 +192,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if not (event is InputEventKey and event.pressed and not event.echo):
 		return
+	get_viewport().set_input_as_handled()
 	if _runner.available_choices().is_empty():
 		# 死路：任意鍵走正常結束路徑（main._on_dialogue_finished 會重新啟用玩家）。
 		close()
@@ -203,9 +204,12 @@ func _unhandled_input(event: InputEvent) -> void:
 	var choices := _runner.available_choices()
 	if idx >= choices.size():
 		return
-	var descs := _runner.choose(choices[idx])
-	if descs.size() > 0:
-		advanced.emit(descs)
+	var result := _runner.choose(choices[idx])
+	if not result.events.is_empty():
+		advanced.emit(result.events)
+	if not result.ok:
+		_render()
+		return
 	if _runner.is_finished():
 		close()
 		finished.emit()

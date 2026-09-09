@@ -7,7 +7,9 @@ extends Object
 static func passes(require, ctx) -> bool:
 	if require == null:
 		return true
-	if typeof(require) != TYPE_DICTIONARY or require.is_empty():
+	if typeof(require) != TYPE_DICTIONARY:
+		return false
+	if require.is_empty():
 		return true
 	for key in require:
 		match key:

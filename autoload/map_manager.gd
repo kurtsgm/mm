@@ -1,8 +1,6 @@
 extends Node
-# Autoload 單例 "MapManager"：持有當前地圖與衍生走位格。
+# Autoload 單例 "MapManager"：持有當前地圖定義；不套用玩家進度。
 # 故意不給 class_name，避免與 autoload 名稱衝突。
-
-const MAPS_DIR := "res://content/maps"
 
 var current_map: MapData
 
@@ -20,11 +18,11 @@ func load_text_file(path: String) -> MapData:
 	return map
 
 func load_by_id(id: String) -> MapData:
-	return load_text_file("%s/%s.json" % [MAPS_DIR, id])
+	return load_text_file(ContentRegistry.path_for("maps", id))
 
 # 無副作用載入（拼裝鄰圖用）：不動 current_map；失敗回 null（不 assert）。
 func peek_map(id: String) -> MapData:
-	var path := "%s/%s.json" % [MAPS_DIR, id]
+	var path := ContentRegistry.path_for("maps", id)
 	if not FileAccess.file_exists(path):
 		return null
 	var text := FileAccess.get_file_as_string(path)
@@ -39,9 +37,6 @@ func peek_map(id: String) -> MapData:
 func _set_current(map: MapData) -> void:
 	current_map = map
 
-# 載入地圖並重套「已清遭遇」座標（切換/讀檔重入地圖共用，避免已清的怪復活）。
-func enter_map(map_id: String, cleared_positions: Array = []) -> MapData:
-	var map := load_by_id(map_id)
-	for pos in cleared_positions:
-		map.clear_encounter(pos)
-	return map
+# 當前圖與 peek 鄰圖使用相同的完整定義；執行狀態由 WorldSnapshot 投影。
+func enter_map(map_id: String) -> MapData:
+	return load_by_id(map_id)

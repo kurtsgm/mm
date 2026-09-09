@@ -40,10 +40,30 @@ func test_choose_applies_effects_and_advances():
 	var descs := r.choose(buy)
 	assert_eq(r.current_node()["text"], "thanks")
 	assert_false(r.is_finished())
-	assert_eq(descs.size(), 1)
+	assert_eq(descs.events.size(), 1)
 
 func test_choose_goto_null_finishes():
 	var r := _runner(0)
 	var leave: Dictionary = r.available_choices()[0]
 	r.choose(leave)
 	assert_true(r.is_finished())
+
+func test_stale_choice_cannot_charge_or_advance():
+	var ctx := FakeCtx.new()
+	ctx.gold = 50
+	var runner := DialogueRunner.new(_data(), ctx)
+	var buy: Dictionary = runner.available_choices()[0]
+	ctx.gold = 0
+	var result := runner.choose(buy)
+	assert_false(result.ok)
+	assert_eq(ctx.gold, 0)
+	assert_eq(runner.current_node()["text"], "hi")
+
+func test_choice_cannot_be_replayed_after_leaving_node():
+	var ctx := FakeCtx.new()
+	ctx.gold = 100
+	var runner := DialogueRunner.new(_data(), ctx)
+	var buy: Dictionary = runner.available_choices()[0]
+	assert_true(runner.choose(buy).ok)
+	assert_false(runner.choose(buy).ok)
+	assert_eq(ctx.gold, 70)

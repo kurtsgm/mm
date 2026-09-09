@@ -35,6 +35,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if not (event is InputEventKey and event.pressed and not event.echo):
 		return
+	get_viewport().set_input_as_handled()
 	if event.keycode == KEY_Y:
 		close()
 		confirmed.emit()

@@ -19,7 +19,8 @@ var triggered_scenes: Dictionary = {}  # String map_id -> Array[Vector2i]（once
 var quests: Dictionary = {}        # String id -> { "status", "stage" }
 var defeated_encounters: Dictionary = {}   # uid -> true（持久；擊敗的遇抵實例）
 var monster_state: Dictionary = {}   # String map_id -> { uid -> {"cell": Vector2i, "state": int} }（持久；大地圖怪位置/狀態）
-var quest_resolver: Callable = Callable()  # 注入 func(id)->QuestDef（鏡射 SaveSystem.item_resolver）
+var quest_resolver: Callable = Callable(QuestCatalog, "load_quest")  # 注入 func(id)->QuestDef（鏡射 SaveSystem.item_resolver）
+var _narrative: NarrativeRuntime
 var tracked_quest: String = ""     # 追蹤中任務 id（持久；"" = 無）
 
 const STEP_PER_TICK := 5           # 地表中毒外滲：每 N 步 tick 一次
@@ -120,33 +121,13 @@ func mark_encounter_defeated(uid: String) -> void:
 	if uid != "":
 		defeated_encounters[uid] = true
 
-func accept_quest(id: String) -> void:
-	if quests.has(id):
-		return  # 已接/已完成，冪等
-	var def = _quest_def(id)
-	if def == null:
-		return
-	quests[id] = QuestSystem.initial_state()
-	tracked_quest = id
-	var msg := QuestProgress.accepted_message(def)
-	message_log.push(msg)
-	quest_event.emit(msg)
-	quests_changed.emit()
-	_run_quest(id, "recheck")   # 接取追認：已完成的階段（殺過/撿過/到過）立即跳過、不卡死
-
-func advance_quest(id: String) -> void:
-	_run_quest(id, "talk")
-
-# 戰鬥勝利時呼叫：記下該遇抵 uid 為已擊敗，再重新評估所有任務。
 func notify_encounter_defeated(uid: String) -> void:
 	mark_encounter_defeated(uid)
-	for id in quests.keys():
-		_run_quest(id, "recheck")
+	narrative().recheck()
 
 # 踏入某格（走動或轉場抵達）：reach 事件式推進（精確到該圖該格），順帶 recheck 狀態式階段。
 func notify_enter(map_id: String, pos: Vector2i) -> void:
-	for id in quests.keys():
-		_run_quest(id, "enter", map_id, pos)
+	narrative().entered(map_id, pos)
 	_poison_steps += 1
 	if _poison_steps >= STEP_PER_TICK:
 		_poison_steps = 0
@@ -155,8 +136,7 @@ func notify_enter(map_id: String, pos: Vector2i) -> void:
 				message_log.push(line)
 
 func refresh_collect() -> void:
-	for id in quests.keys():
-		_run_quest(id, "recheck")
+	narrative().recheck()
 
 func is_quest_active(id: String) -> bool:
 	return quests.has(id) and String(quests[id].get("status", "")) == "active"
@@ -193,54 +173,6 @@ func _quest_def(id: String):
 	return quest_resolver.call(id)
 
 # 對單一任務套用一種推進（recheck 狀態式 / talk 對話 / enter 踏格），計算新 state 並 commit。
-func _run_quest(id: String, kind: String, a = null, b = null) -> void:
-	if not is_quest_active(id):
-		return
-	var def = _quest_def(id)
-	if def == null:
-		return
-	var before: Dictionary = quests[id]
-	var after: Dictionary
-	match kind:
-		"talk":
-			after = QuestSystem.advance_talk(def, before, self)
-		"enter":
-			after = QuestSystem.advance_reach(def, before, String(a), b, self)
-		_:  # "recheck"
-			after = QuestSystem.catch_up(def, before, self)
-	_commit_quest(id, def, before, after)
-
-func _commit_quest(id: String, def, before: Dictionary, after: Dictionary) -> void:
-	var changed: bool = after["status"] != before["status"] or after["stage"] != before["stage"]
-	if not changed:
-		return
-	quests[id] = after
-	var text: String
-	if String(after["status"]) == "done":
-		_grant_quest_rewards(def)
-		text = QuestProgress.completed_message(def)
-		if tracked_quest == id:
-			retrack()
-	else:
-		text = "任務更新：" + QuestProgress.stage_line(def, after, self)
-	message_log.push(text)
-	quest_event.emit(text)
-	quests_changed.emit()
-
-func _grant_quest_rewards(def) -> void:
-	var g := int(def.rewards.get("gold", 0))
-	if g > 0:
-		gold += g
-	for it in def.rewards.get("items", []):
-		inventory.add(String(it), 1)
-	var xp := int(def.rewards.get("xp", 0))
-	if xp > 0:
-		var leveled := false
-		for m in party.members:
-			if m.is_conscious() and Leveling.grant_xp(m, xp) > 0:
-				leveled = true
-		if leveled:
-			message_log.push("有隊員升級了！")
 
 func _seed_starting_spells() -> void:
 	# 骨架起始法術：讓施法系統開局即可操演。正式法術習得屬內容期。
@@ -250,3 +182,18 @@ func _seed_starting_spells() -> void:
 			"Sorcerer": m.known_spells = ["spark", "flame_wave", "weaken"]
 			"Cleric": m.known_spells = ["heal", "revive", "bless"]
 			"Paladin": m.known_spells = ["heal"]
+
+# 提供脫離持久狀態的快照：重建世界時，各衍生層使用同一份版本。
+func world_snapshot() -> WorldSnapshot:
+	return WorldSnapshot.new(opened_objects, cleared_encounters, defeated_encounters, monster_state)
+
+func narrative() -> NarrativeRuntime:
+	if _narrative == null:
+		_narrative = NarrativeRuntime.new(self)
+	return _narrative
+
+func accept_quest(id: String) -> void:
+	narrative().accept_quest(id)
+
+func advance_quest(id: String) -> void:
+	narrative().advance_quest(id)

@@ -63,15 +63,15 @@ func capture_from(gs) -> SaveData:
 	data.player_facing = gs.player_facing
 	data.party = gs.party
 	data.inventory = gs.inventory
-	data.cleared_encounters = gs.cleared_encounters
-	data.explored = gs.explored
-	data.opened_objects = gs.opened_objects
-	data.flags = gs.flags
-	data.triggered_scenes = gs.triggered_scenes
-	data.quests = gs.quests
+	data.cleared_encounters = gs.cleared_encounters.duplicate(true)
+	data.explored = gs.explored.duplicate(true)
+	data.opened_objects = gs.opened_objects.duplicate(true)
+	data.flags = gs.flags.duplicate(true)
+	data.triggered_scenes = gs.triggered_scenes.duplicate(true)
+	data.quests = gs.quests.duplicate(true)
 	data.tracked_quest = gs.tracked_quest
-	data.defeated_encounters = gs.defeated_encounters
-	data.monster_state = gs.monster_state
+	data.defeated_encounters = gs.defeated_encounters.duplicate(true)
+	data.monster_state = gs.monster_state.duplicate(true)
 	return data
 
 func apply_to(data: SaveData, gs, mm) -> void:
@@ -81,16 +81,16 @@ func apply_to(data: SaveData, gs, mm) -> void:
 	gs.current_map_id = data.map_id
 	gs.player_pos = data.player_pos
 	gs.player_facing = data.player_facing
-	gs.cleared_encounters = data.cleared_encounters
-	gs.explored = data.explored
-	gs.opened_objects = data.opened_objects
-	gs.flags = data.flags
-	gs.triggered_scenes = data.triggered_scenes
-	gs.quests = data.quests
+	gs.cleared_encounters = data.cleared_encounters.duplicate(true)
+	gs.explored = data.explored.duplicate(true)
+	gs.opened_objects = data.opened_objects.duplicate(true)
+	gs.flags = data.flags.duplicate(true)
+	gs.triggered_scenes = data.triggered_scenes.duplicate(true)
+	gs.quests = data.quests.duplicate(true)
 	gs.tracked_quest = data.tracked_quest
-	gs.defeated_encounters = data.defeated_encounters
-	gs.monster_state = data.monster_state
-	mm.enter_map(data.map_id, gs.cleared_for(data.map_id))
+	gs.defeated_encounters = data.defeated_encounters.duplicate(true)
+	gs.monster_state = data.monster_state.duplicate(true)
+	mm.enter_map(data.map_id)
 
 func capture() -> SaveData:
 	return capture_from(GameState)

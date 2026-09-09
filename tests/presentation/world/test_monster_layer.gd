@@ -248,3 +248,16 @@ func test_frame_index_phase_offsets_beat():
 func test_frame_index_guards_zero_period():
 	var idx := MonsterLayer.frame_index(0.5, 0.0, 0.0)
 	assert_true(idx == 0 or idx == 1, "period=0 → max guard，不崩")
+
+func test_rebase_preserves_nodes_pose_and_relative_camera_position():
+	var l := _layer()
+	l.rebuild([_live("u1", Vector2i(6, 2), "g")])
+	var model: MonsterModel = l._sprites["u1"][0]["node"]
+	var before := model.position
+	var phase := model.phase
+	var delta := Vector2i(-5, 0)
+	l.rebuild([_live("u1", Vector2i(1, 2), "g")], delta)
+	assert_same(l._sprites["u1"][0]["node"], model)
+	assert_eq(model.position, before + GridGeometry.cell_to_world(delta))
+	assert_eq(model.phase, phase)
+	assert_false(model.is_queued_for_deletion())

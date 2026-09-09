@@ -101,3 +101,27 @@ func test_dialogue_step_opens_and_completes():
 	await get_tree().process_frame
 	assert_signal_emitted(p, "finished")
 	assert_false(p._dialogue_overlay.is_open())
+
+func test_missing_dialogue_rejects_before_any_effects():
+	var ctx := FakeCtx.new()
+	var player := _player(ctx)
+	var result := await player.play(_data([
+		{"type": "effects", "effects": [{"op": "set_flag", "flag": "should_not_run"}]},
+		{"type": "dialogue", "dialogue": "missing"},
+	]))
+	assert_false(result.ok)
+	assert_false(ctx.flags.has("should_not_run"))
+	assert_false(player.is_playing())
+
+func test_failed_effect_stops_playback_and_cleans_black_overlay():
+	var ctx := FakeCtx.new()
+	var player := _player(ctx)
+	var result := await player.play(_data([
+		{"type": "fade", "to": "black", "duration": 0.01},
+		{"type": "effects", "effects": [{"op": "gold", "value": -1}]},
+		{"type": "effects", "effects": [{"op": "set_flag", "flag": "after_failure"}]},
+	]))
+	assert_false(result.ok)
+	assert_false(ctx.flags.has("after_failure"))
+	assert_false(player.is_playing())
+	assert_almost_eq(player._fade_rect.color.a, 0.0, 0.001)

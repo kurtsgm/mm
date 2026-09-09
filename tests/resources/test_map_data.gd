@@ -32,8 +32,6 @@ func test_encounters_accessors():
 	assert_eq(map.get_encounter(Vector2i(2, 1)), "g")
 	assert_false(map.has_encounter(Vector2i(0, 0)))
 	assert_eq(map.get_encounter(Vector2i(0, 0)), "")
-	map.clear_encounter(Vector2i(2, 1))
-	assert_false(map.has_encounter(Vector2i(2, 1)))
 
 func test_encounter_uid_accessor():
 	var m := MapData.new()
