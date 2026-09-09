@@ -1,0 +1,64 @@
+{
+  "created_at": "2026-09-09T17:29:00.215944+00:00",
+  "command": "review",
+  "monsters": [
+    "ogre"
+  ],
+  "budgets": {
+    "triangles": 50000,
+    "materials": 8,
+    "texture_edge": 2048,
+    "bones": 64,
+    "glb_mib": 10,
+    "benchmark_instances": 16,
+    "benchmark_p95_ms": 33.333
+  },
+  "budget_status": "draft — engineering warning thresholds, not an approved production gate",
+  "strict_budgets": true,
+  "input_sha256": {
+    "art_source/ogre/production/PROVENANCE.md": "2038d1e3d338ea064c1d8d074604c6ce21f7e874420709c06bfeb65d97f05ce7",
+    "art_source/ogre/production/geometry_manifest.json": "2ea0806cf209d91a205f925738bee8067901b30c6cf14ce2402c6ac68003263f",
+    "art_source/ogre/production/ogre_art.blend": "d7ca5e29ddc52d3520f27282b9326edac132ef3f704f47577d563d9ef8402531",
+    "art_source/ogre/production/ogre_base.blend": "5c3954bb128d54dcdd841491467295512df4f3ac9c9ebc18a43914d27cd97ae3",
+    "art_source/ogre/production/ogre_geometry.glb": "df05fbc34b8652ba2aed8bec43ac356ad5c6eb1fe48121a4edddf90dfd82a6eb",
+    "art_source/ogre/production/ogre_rigged.blend": "ceaad833cd25b31d64d4eae9df17998040f203ca97a24024480482cb8bf46c9e",
+    "art_source/ogre/production/textures/skin_detail.png": "cc12dc8f162c6e7029ad489fc605401d4c57577b722e082fa914e8e95f00253b",
+    "content/monsters/asset_manifest.json": "f8b4859b331a9a5f88c953bcccc95a360e7766c548b11167aaa99e4457be781a",
+    "content/monsters/models/ogre.glb": "b288cfe7b16331433f315310a340220ff424d22daa02afa215b50b6b7b4e8269",
+    "content/monsters/models/ogre.glb.import": "fc048041f09b33c1fc37f4a769f3eb3ddc31899b57b6d214e0ada5ce86ce23d8",
+    "content/monsters/models/ogre.tscn": "47394e3478425605b37eb663ff703277242e9d106c949ec472632a59fcbae4da",
+    "content/monsters/ogre.tres": "7fe60417859b4ba0cb52f012bb28d13184c25fee1c6fb5b53ec3d51d353dd946",
+    "presentation/monsters/goblin_preview.gd": "f67b99b336aad895a3db005e6ac5b4077ed26507435439a602df5c3e9f597743",
+    "presentation/monsters/monster_model.gd": "9d6a4628561c27a9b24ba65c0972081073b26a1c69964e6a4ee587ee10ff07b9",
+    "presentation/monsters/monster_model_catalog.gd": "cbecf3a7260fec5ca2e649249f741f15842497cf5cf8dcc6424754fac65fb3ac",
+    "project.godot": "398fac070a1b6c98dbcb795201b9b5cf302c5a7f650fb7141f0e07624164be0e",
+    "tools/build_ogre.gd": "9b52c93f1d002086545237ca9a3ed71a3cf49a454c1c50f2cb9ee93a9e7788be",
+    "tools/build_ogre_art.py": "9fb2bbbd17f010403cf8418715858cead6246361b5b5b860c97d07e60276f68e",
+    "tools/import_monster.gd": "22c03aca22e9dae26d0dbef35934372f5cefd36b39e02f46fe1c591bffe8177e",
+    "tools/monster_asset_validator.gd": "fd05282861066c9bf215e587ac82501d2770eac48331e71d3f5a411ada3bb760",
+    "tools/monster_pipeline.py": "128988e6f252ddaff95c101d315925b107034863162a9e4802a39254b56023b4",
+    "tools/monster_review_cli.gd": "4e3ca5cc9b5c478827be67a7259af50d8df5c14e6904d11487f314449f75854a",
+    "tools/package_monster_rig.py": "249823943f06458c27f1cdfe7532ec65caa645cef3197763a050ce1e98b533bd"
+  },
+  "stages": {
+    "import": {
+      "status": "passed",
+      "log": "import.log"
+    },
+    "validate": {
+      "status": "passed",
+      "log": "validate.log"
+    },
+    "capture": {
+      "status": "passed",
+      "log": "capture.log"
+    },
+    "benchmark": {
+      "status": "passed",
+      "log": "benchmark.log"
+    }
+  },
+  "budget_warnings": 0,
+  "status": "passed",
+  "manual_review": "pending — technical checks do not approve visual quality or whole-game performance"
+}

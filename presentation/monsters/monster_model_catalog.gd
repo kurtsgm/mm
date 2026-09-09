@@ -6,6 +6,7 @@ const _MODELS := {
 	"goblin": preload("res://content/monsters/models/goblin.tscn"),
 	"poison_spider": preload("res://content/monsters/models/poison_spider.tscn"),
 	"dream_wisp": preload("res://content/monsters/models/dream_wisp.tscn"),
+	"ogre": preload("res://content/monsters/models/ogre.tscn"),
 }
 
 static func has_model(monster_id: String) -> bool:

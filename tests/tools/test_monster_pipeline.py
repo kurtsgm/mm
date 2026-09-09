@@ -29,7 +29,8 @@ class MonsterPipelineTests(unittest.TestCase):
         return pipeline.load_manifest(path)
 
     def test_existing_manifest_is_valid(self):
-        self.assertEqual(len(self.load(self.manifest)["monsters"]), 3)
+        self.assertEqual({m["id"] for m in self.load(self.manifest)["monsters"]},
+                         {"goblin", "poison_spider", "dream_wisp", "ogre"})
 
     def test_duplicate_ids_and_traversal_are_rejected(self):
         duplicate = copy.deepcopy(self.manifest)

@@ -1,0 +1,140 @@
+{
+	"captures": [
+		{
+			"camera_distance": 9.2,
+			"camera_pitch": 0.08,
+			"camera_target": [
+				-0.15,
+				1.6,
+				0.0
+			],
+			"file": "ogre-front.webp",
+			"id": "ogre",
+			"pose": {
+				"clip": "idle",
+				"fraction": 0.0,
+				"name": "front",
+				"yaw": 0.0
+			}
+		},
+		{
+			"camera_distance": 9.2,
+			"camera_pitch": 0.08,
+			"camera_target": [
+				-0.15,
+				1.6,
+				0.0
+			],
+			"file": "ogre-side.webp",
+			"id": "ogre",
+			"pose": {
+				"clip": "idle",
+				"fraction": 0.0,
+				"name": "side",
+				"yaw": 1.5707963267949
+			}
+		},
+		{
+			"camera_distance": 9.2,
+			"camera_pitch": 0.08,
+			"camera_target": [
+				-0.15,
+				1.6,
+				0.0
+			],
+			"file": "ogre-back.webp",
+			"id": "ogre",
+			"pose": {
+				"clip": "idle",
+				"fraction": 0.0,
+				"name": "back",
+				"yaw": 3.14159265358979
+			}
+		},
+		{
+			"camera_distance": 9.2,
+			"camera_pitch": 0.08,
+			"camera_target": [
+				-0.15,
+				1.6,
+				0.0
+			],
+			"file": "ogre-walk.webp",
+			"id": "ogre",
+			"pose": {
+				"clip": "walk",
+				"fraction": 0.32,
+				"name": "walk",
+				"yaw": 0.3
+			}
+		},
+		{
+			"camera_distance": 9.2,
+			"camera_pitch": 0.08,
+			"camera_target": [
+				-0.15,
+				1.6,
+				0.0
+			],
+			"file": "ogre-attack.webp",
+			"id": "ogre",
+			"pose": {
+				"clip": "attack",
+				"fraction": 0.4,
+				"name": "attack",
+				"yaw": 0.3
+			}
+		},
+		{
+			"camera_distance": 9.2,
+			"camera_pitch": 0.08,
+			"camera_target": [
+				-0.15,
+				1.6,
+				0.0
+			],
+			"file": "ogre-hit.webp",
+			"id": "ogre",
+			"pose": {
+				"clip": "hit",
+				"fraction": 0.4,
+				"name": "hit",
+				"yaw": 0.3
+			}
+		},
+		{
+			"camera_distance": 9.2,
+			"camera_pitch": 0.08,
+			"camera_target": [
+				-0.15,
+				1.6,
+				0.0
+			],
+			"file": "ogre-rig.webp",
+			"id": "ogre",
+			"pose": {
+				"bones": true,
+				"clip": "attack",
+				"fraction": 0.4,
+				"name": "rig",
+				"yaw": 0.3
+			}
+		}
+	],
+	"environment": {
+		"cpu": "Apple M2",
+		"display_server": "macOS",
+		"engine": "4.7-stable (official)",
+		"gpu": "Apple M2",
+		"lod_threshold": 1.0,
+		"msaa": 2,
+		"os": "macOS",
+		"renderer": "gl_compatibility",
+		"resolution": [
+			1280,
+			720
+		],
+		"vsync_mode": 1
+	},
+	"lighting": "shared warm studio"
+}

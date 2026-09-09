@@ -83,11 +83,11 @@ func test_walking_finishes_before_same_models_enter_first_turn():
 		assert_eq(node.scale, Vector3.ONE * MonsterLayer.CLUSTER_SCALE)
 		assert_eq(node.position, game._monster_layer._world_pos(Vector2i(5, 3)) + members[i]["offset"])
 
-func test_side_contact_blocks_entry_turns_then_flee_returns_same_sprite():
+func test_side_contact_blocks_entry_turns_then_flee_returns_same_ogre():
 	var member: Dictionary = _spawn(Vector2i(6, 5), "o")[0]
-	var sprite: Sprite3D = member["node"]
-	var before := sprite.global_transform
-	var pixels := sprite.pixel_size
+	var model: MonsterModel = member["node"]
+	var before := model.global_transform
+	var scale_before := model.scale
 	assert_false(game._player._attempt_move(GridMovement.Move.STRAFE_RIGHT))
 	assert_eq(game._flow.mode, GameFlow.Mode.ENGAGING)
 	assert_eq(game._player._pos, Vector2i(5, 5))
@@ -95,23 +95,25 @@ func test_side_contact_blocks_entry_turns_then_flee_returns_same_sprite():
 	await wait_seconds(0.4)
 	assert_eq(game._player._facing, GridDirection.Dir.EAST)
 	assert_eq(GameState.player_facing, GridDirection.Dir.EAST)
-	assert_eq(sprite.global_transform, before)
-	assert_eq(sprite.pixel_size, pixels)
+	assert_eq(model.global_transform, before)
+	assert_eq(model.scale, scale_before)
 	var stage := game._combat_layer._stage
 	stage.play_attack(game._combat.monsters[0])
 	await wait_seconds(0.1)
-	assert_lt(sprite.position.x, before.origin.x, "東側怪物往玩家方向撲，而非固定世界 Z")
+	assert_eq(model.position, before.origin, "食人魔腳底不因攻擊平移")
+	assert_eq(model.animation, "attack")
+	assert_ne(model.skeleton.get_bone_pose_rotation(model.skeleton.find_bone("upper_arm_R")), Quaternion.IDENTITY)
 	game._combat._result = CombatSystem.Result.FLED
 	game._combat_layer._finish()
 	assert_false(game._player._enabled, "攻擊收完才交還探索")
 	game._combat_layer._on_action_selected("run") # stale click while ending
 	await wait_seconds(0.5)
 	assert_true(game._player._enabled)
-	assert_same(game._monster_layer._sprites["engaged"][0]["node"], sprite)
-	assert_eq(sprite.global_transform, before)
-	assert_eq(sprite.pixel_size, pixels)
-	assert_true(sprite.visible)
-	assert_false(sprite.is_queued_for_deletion())
+	assert_same(game._monster_layer._sprites["engaged"][0]["node"], model)
+	assert_eq(model.global_transform, before)
+	assert_eq(model.scale, scale_before)
+	assert_true(model.visible)
+	assert_false(model.is_queued_for_deletion())
 	assert_eq(game._overworld_monsters.step(Vector2i(4, 5), game._is_passable)["contact"], "")
 
 func test_victory_removes_only_engaged_group():

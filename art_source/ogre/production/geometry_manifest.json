@@ -1,0 +1,651 @@
+{
+  "triangles": 44794,
+  "parts": {
+    "ogre_part_000": {
+      "source": "Skin",
+      "attachment": "body",
+      "triangles": 23018
+    },
+    "ogre_part_001": {
+      "source": "Eye_R",
+      "attachment": "head",
+      "triangles": 720
+    },
+    "ogre_part_002": {
+      "source": "Iris_R",
+      "attachment": "head",
+      "triangles": 360
+    },
+    "ogre_part_003": {
+      "source": "Pupil_R",
+      "attachment": "head",
+      "triangles": 224
+    },
+    "ogre_part_004": {
+      "source": "Tusk_R",
+      "attachment": "jaw",
+      "triangles": 68
+    },
+    "ogre_part_005": {
+      "source": "Eye_L",
+      "attachment": "head",
+      "triangles": 720
+    },
+    "ogre_part_006": {
+      "source": "Iris_L",
+      "attachment": "head",
+      "triangles": 360
+    },
+    "ogre_part_007": {
+      "source": "Pupil_L",
+      "attachment": "head",
+      "triangles": 224
+    },
+    "ogre_part_008": {
+      "source": "Tusk_L",
+      "attachment": "jaw",
+      "triangles": 68
+    },
+    "ogre_part_009": {
+      "source": "Belt",
+      "attachment": "pelvis",
+      "triangles": 320
+    },
+    "ogre_part_010": {
+      "source": "Skirt_lining",
+      "attachment": "pelvis",
+      "triangles": 320
+    },
+    "ogre_part_011": {
+      "source": "Hide_panel_00",
+      "attachment": "skirt_L",
+      "triangles": 336
+    },
+    "ogre_part_012": {
+      "source": "Skirt_rivet",
+      "attachment": "pelvis",
+      "triangles": 100
+    },
+    "ogre_part_013": {
+      "source": "Skirt_rivet.001",
+      "attachment": "pelvis",
+      "triangles": 100
+    },
+    "ogre_part_014": {
+      "source": "Hide_panel_01",
+      "attachment": "skirt_L",
+      "triangles": 304
+    },
+    "ogre_part_015": {
+      "source": "Skirt_rivet.002",
+      "attachment": "pelvis",
+      "triangles": 100
+    },
+    "ogre_part_016": {
+      "source": "Skirt_rivet.003",
+      "attachment": "pelvis",
+      "triangles": 100
+    },
+    "ogre_part_017": {
+      "source": "Hide_panel_02",
+      "attachment": "skirt_L",
+      "triangles": 304
+    },
+    "ogre_part_018": {
+      "source": "Skirt_rivet.004",
+      "attachment": "pelvis",
+      "triangles": 100
+    },
+    "ogre_part_019": {
+      "source": "Skirt_rivet.005",
+      "attachment": "pelvis",
+      "triangles": 100
+    },
+    "ogre_part_020": {
+      "source": "Hide_panel_03",
+      "attachment": "skirt_L",
+      "triangles": 320
+    },
+    "ogre_part_021": {
+      "source": "Skirt_rivet.006",
+      "attachment": "pelvis",
+      "triangles": 100
+    },
+    "ogre_part_022": {
+      "source": "Skirt_rivet.007",
+      "attachment": "pelvis",
+      "triangles": 100
+    },
+    "ogre_part_023": {
+      "source": "Hide_panel_04",
+      "attachment": "skirt_R",
+      "triangles": 304
+    },
+    "ogre_part_024": {
+      "source": "Skirt_rivet.008",
+      "attachment": "pelvis",
+      "triangles": 100
+    },
+    "ogre_part_025": {
+      "source": "Skirt_rivet.009",
+      "attachment": "pelvis",
+      "triangles": 100
+    },
+    "ogre_part_026": {
+      "source": "Hide_panel_05",
+      "attachment": "skirt_R",
+      "triangles": 304
+    },
+    "ogre_part_027": {
+      "source": "Skirt_rivet.010",
+      "attachment": "pelvis",
+      "triangles": 100
+    },
+    "ogre_part_028": {
+      "source": "Skirt_rivet.011",
+      "attachment": "pelvis",
+      "triangles": 100
+    },
+    "ogre_part_029": {
+      "source": "Hide_panel_06",
+      "attachment": "skirt_R",
+      "triangles": 320
+    },
+    "ogre_part_030": {
+      "source": "Skirt_rivet.012",
+      "attachment": "pelvis",
+      "triangles": 100
+    },
+    "ogre_part_031": {
+      "source": "Skirt_rivet.013",
+      "attachment": "pelvis",
+      "triangles": 100
+    },
+    "ogre_part_032": {
+      "source": "Hide_panel_07",
+      "attachment": "skirt_R",
+      "triangles": 320
+    },
+    "ogre_part_033": {
+      "source": "Skirt_rivet.014",
+      "attachment": "pelvis",
+      "triangles": 100
+    },
+    "ogre_part_034": {
+      "source": "Skirt_rivet.015",
+      "attachment": "pelvis",
+      "triangles": 100
+    },
+    "ogre_part_035": {
+      "source": "Hide_panel_08",
+      "attachment": "skirt_R",
+      "triangles": 304
+    },
+    "ogre_part_036": {
+      "source": "Skirt_rivet.016",
+      "attachment": "pelvis",
+      "triangles": 100
+    },
+    "ogre_part_037": {
+      "source": "Skirt_rivet.017",
+      "attachment": "pelvis",
+      "triangles": 100
+    },
+    "ogre_part_038": {
+      "source": "Hide_panel_09",
+      "attachment": "skirt_R",
+      "triangles": 356
+    },
+    "ogre_part_039": {
+      "source": "Skirt_rivet.018",
+      "attachment": "pelvis",
+      "triangles": 100
+    },
+    "ogre_part_040": {
+      "source": "Skirt_rivet.019",
+      "attachment": "pelvis",
+      "triangles": 100
+    },
+    "ogre_part_041": {
+      "source": "Hide_panel_10",
+      "attachment": "skirt_L",
+      "triangles": 320
+    },
+    "ogre_part_042": {
+      "source": "Skirt_rivet.020",
+      "attachment": "pelvis",
+      "triangles": 100
+    },
+    "ogre_part_043": {
+      "source": "Skirt_rivet.021",
+      "attachment": "pelvis",
+      "triangles": 100
+    },
+    "ogre_part_044": {
+      "source": "Hide_panel_11",
+      "attachment": "skirt_L",
+      "triangles": 320
+    },
+    "ogre_part_045": {
+      "source": "Skirt_rivet.022",
+      "attachment": "pelvis",
+      "triangles": 100
+    },
+    "ogre_part_046": {
+      "source": "Skirt_rivet.023",
+      "attachment": "pelvis",
+      "triangles": 100
+    },
+    "ogre_part_047": {
+      "source": "Buckle",
+      "attachment": "pelvis",
+      "triangles": 76
+    },
+    "ogre_part_048": {
+      "source": "Buckle_pin",
+      "attachment": "pelvis",
+      "triangles": 28
+    },
+    "ogre_part_049": {
+      "source": "Wrist_wrap_R0",
+      "attachment": "hand_R",
+      "triangles": 320
+    },
+    "ogre_part_050": {
+      "source": "Wrist_wrap_R1",
+      "attachment": "hand_R",
+      "triangles": 320
+    },
+    "ogre_part_051": {
+      "source": "Wrist_wrap_R2",
+      "attachment": "hand_R",
+      "triangles": 320
+    },
+    "ogre_part_052": {
+      "source": "Ankle_wrap_R0",
+      "attachment": "foot_R",
+      "triangles": 320
+    },
+    "ogre_part_053": {
+      "source": "Ankle_wrap_R1",
+      "attachment": "foot_R",
+      "triangles": 320
+    },
+    "ogre_part_054": {
+      "source": "Ankle_wrap_R2",
+      "attachment": "foot_R",
+      "triangles": 320
+    },
+    "ogre_part_055": {
+      "source": "Instep_R",
+      "attachment": "foot_R",
+      "triangles": 320
+    },
+    "ogre_part_056": {
+      "source": "Wrist_wrap_L0",
+      "attachment": "hand_L",
+      "triangles": 320
+    },
+    "ogre_part_057": {
+      "source": "Wrist_wrap_L1",
+      "attachment": "hand_L",
+      "triangles": 320
+    },
+    "ogre_part_058": {
+      "source": "Wrist_wrap_L2",
+      "attachment": "hand_L",
+      "triangles": 320
+    },
+    "ogre_part_059": {
+      "source": "Ankle_wrap_L0",
+      "attachment": "foot_L",
+      "triangles": 320
+    },
+    "ogre_part_060": {
+      "source": "Ankle_wrap_L1",
+      "attachment": "foot_L",
+      "triangles": 320
+    },
+    "ogre_part_061": {
+      "source": "Ankle_wrap_L2",
+      "attachment": "foot_L",
+      "triangles": 320
+    },
+    "ogre_part_062": {
+      "source": "Instep_L",
+      "attachment": "foot_L",
+      "triangles": 320
+    },
+    "ogre_part_063": {
+      "source": "Harness_front",
+      "attachment": "body",
+      "triangles": 156
+    },
+    "ogre_part_064": {
+      "source": "Harness_back",
+      "attachment": "body",
+      "triangles": 156
+    },
+    "ogre_part_065": {
+      "source": "Shoulder_plate_0",
+      "attachment": "upper_arm_L",
+      "triangles": 324
+    },
+    "ogre_part_066": {
+      "source": "Shoulder_rivet",
+      "attachment": "upper_arm_L",
+      "triangles": 168
+    },
+    "ogre_part_067": {
+      "source": "Shoulder_rivet.001",
+      "attachment": "upper_arm_L",
+      "triangles": 168
+    },
+    "ogre_part_068": {
+      "source": "Shoulder_plate_1",
+      "attachment": "upper_arm_L",
+      "triangles": 324
+    },
+    "ogre_part_069": {
+      "source": "Shoulder_rivet.002",
+      "attachment": "upper_arm_L",
+      "triangles": 168
+    },
+    "ogre_part_070": {
+      "source": "Shoulder_rivet.003",
+      "attachment": "upper_arm_L",
+      "triangles": 168
+    },
+    "ogre_part_071": {
+      "source": "Shoulder_plate_2",
+      "attachment": "upper_arm_L",
+      "triangles": 324
+    },
+    "ogre_part_072": {
+      "source": "Shoulder_rivet.004",
+      "attachment": "upper_arm_L",
+      "triangles": 168
+    },
+    "ogre_part_073": {
+      "source": "Shoulder_rivet.005",
+      "attachment": "upper_arm_L",
+      "triangles": 168
+    },
+    "ogre_part_074": {
+      "source": "Fist_palm",
+      "attachment": "hand_R",
+      "triangles": 720
+    },
+    "ogre_part_075": {
+      "source": "Gripping_finger_0",
+      "attachment": "hand_R",
+      "triangles": 76
+    },
+    "ogre_part_076": {
+      "source": "Gripping_finger_1",
+      "attachment": "hand_R",
+      "triangles": 76
+    },
+    "ogre_part_077": {
+      "source": "Gripping_finger_2",
+      "attachment": "hand_R",
+      "triangles": 76
+    },
+    "ogre_part_078": {
+      "source": "Gripping_finger_3",
+      "attachment": "hand_R",
+      "triangles": 76
+    },
+    "ogre_part_079": {
+      "source": "Gripping_thumb",
+      "attachment": "hand_R",
+      "triangles": 68
+    },
+    "ogre_part_080": {
+      "source": "Maul_shaft",
+      "attachment": "hand_R",
+      "triangles": 80
+    },
+    "ogre_part_081": {
+      "source": "Maul_stone",
+      "attachment": "hand_R",
+      "triangles": 320
+    },
+    "ogre_part_082": {
+      "source": "Maul_lashing_0",
+      "attachment": "hand_R",
+      "triangles": 524
+    },
+    "ogre_part_083": {
+      "source": "Maul_lashing_1",
+      "attachment": "hand_R",
+      "triangles": 524
+    },
+    "ogre_part_084": {
+      "source": "Maul_lashing_2",
+      "attachment": "hand_R",
+      "triangles": 524
+    },
+    "ogre_part_085": {
+      "source": "Grip_wrap_0",
+      "attachment": "hand_R",
+      "triangles": 320
+    },
+    "ogre_part_086": {
+      "source": "Grip_wrap_1",
+      "attachment": "hand_R",
+      "triangles": 320
+    },
+    "ogre_part_087": {
+      "source": "Grip_wrap_2",
+      "attachment": "hand_R",
+      "triangles": 320
+    },
+    "ogre_part_088": {
+      "source": "Grip_wrap_3",
+      "attachment": "hand_R",
+      "triangles": 320
+    },
+    "ogre_part_089": {
+      "source": "Grip_wrap_4",
+      "attachment": "hand_R",
+      "triangles": 320
+    },
+    "ogre_part_090": {
+      "source": "Grip_wrap_5",
+      "attachment": "hand_R",
+      "triangles": 320
+    },
+    "ogre_part_091": {
+      "source": "Grip_wrap_6",
+      "attachment": "hand_R",
+      "triangles": 320
+    }
+  },
+  "bones": {
+    "root": {
+      "parent": "",
+      "position": [
+        0,
+        0,
+        0
+      ]
+    },
+    "pelvis": {
+      "parent": "root",
+      "position": [
+        0.0,
+        1.2755922312898218,
+        0.0062025034121416635
+      ]
+    },
+    "spine": {
+      "parent": "pelvis",
+      "position": [
+        0.0,
+        1.7828183868497542,
+        0.1938376001503634
+      ]
+    },
+    "chest": {
+      "parent": "spine",
+      "position": [
+        0.0,
+        2.3398201018089058,
+        0.03949107558289018
+      ]
+    },
+    "neck": {
+      "parent": "chest",
+      "position": [
+        0.0,
+        2.630509895069204,
+        0.0026184456611310965
+      ]
+    },
+    "head": {
+      "parent": "neck",
+      "position": [
+        0.0,
+        2.820630015388105,
+        0.12977292259598922
+      ]
+    },
+    "jaw": {
+      "parent": "head",
+      "position": [
+        0.0,
+        2.721103028062238,
+        0.35793768704090906
+      ]
+    },
+    "upper_arm_R": {
+      "parent": "chest",
+      "position": [
+        -0.7308168645518625,
+        2.4629450705844573,
+        -0.01013164200828129
+      ]
+    },
+    "forearm_R": {
+      "parent": "upper_arm_R",
+      "position": [
+        -1.0728083333333334,
+        1.8419444546270436,
+        0.13475
+      ]
+    },
+    "hand_R": {
+      "parent": "forearm_R",
+      "position": [
+        -1.2491533706606945,
+        1.2125,
+        0.19507906976744188
+      ]
+    },
+    "thigh_R": {
+      "parent": "pelvis",
+      "position": [
+        -0.38006986761010536,
+        1.2199489656395672,
+        -0.06179586255826901
+      ]
+    },
+    "shin_R": {
+      "parent": "thigh_R",
+      "position": [
+        -0.42904624394026913,
+        0.6435526287941665,
+        1.113912342980967e-08
+      ]
+    },
+    "foot_R": {
+      "parent": "shin_R",
+      "position": [
+        -0.464921875,
+        0.13735849056603774,
+        -0.09588372093023258
+      ]
+    },
+    "toe_R": {
+      "parent": "foot_R",
+      "position": [
+        -0.463203125,
+        0.061886792452830186,
+        0.2716279069767442
+      ]
+    },
+    "skirt_R": {
+      "parent": "pelvis",
+      "position": [
+        -0.45155346731415746,
+        1.2755922312898218,
+        0.0062025034121416635
+      ]
+    },
+    "upper_arm_L": {
+      "parent": "chest",
+      "position": [
+        0.7308168645518625,
+        2.4629450705844573,
+        -0.01013164200828129
+      ]
+    },
+    "forearm_L": {
+      "parent": "upper_arm_L",
+      "position": [
+        1.0728083333333334,
+        1.8419444546270436,
+        0.13475
+      ]
+    },
+    "hand_L": {
+      "parent": "forearm_L",
+      "position": [
+        1.2491533706606945,
+        1.2125,
+        0.19507906976744188
+      ]
+    },
+    "thigh_L": {
+      "parent": "pelvis",
+      "position": [
+        0.38006986761010536,
+        1.2199489656395672,
+        -0.06179586255826901
+      ]
+    },
+    "shin_L": {
+      "parent": "thigh_L",
+      "position": [
+        0.42904624394026913,
+        0.6435526287941665,
+        1.113912342980967e-08
+      ]
+    },
+    "foot_L": {
+      "parent": "shin_L",
+      "position": [
+        0.464921875,
+        0.13735849056603774,
+        -0.09588372093023258
+      ]
+    },
+    "toe_L": {
+      "parent": "foot_L",
+      "position": [
+        0.463203125,
+        0.061886792452830186,
+        0.2716279069767442
+      ]
+    },
+    "skirt_L": {
+      "parent": "pelvis",
+      "position": [
+        0.45155346731415746,
+        1.2755922312898218,
+        0.0062025034121416635
+      ]
+    }
+  }
+}

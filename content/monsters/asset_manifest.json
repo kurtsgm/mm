@@ -145,6 +145,59 @@
         "pitch": 0.1,
         "attack_label": "催眠施法"
       }
+    },
+    {
+      "id": "ogre",
+      "display_name": "食人魔 · 石槌重衛",
+      "scene": "res://content/monsters/models/ogre.tscn",
+      "glb": "res://content/monsters/models/ogre.glb",
+      "definition": "res://content/monsters/ogre.tres",
+      "locomotion": "ground",
+      "size_min": [
+        2.5,
+        3.08,
+        0.7
+      ],
+      "size_max": [
+        3.7,
+        3.22,
+        1.6
+      ],
+      "ground_tolerance": 0.012,
+      "required_bones": [
+        "root",
+        "pelvis",
+        "head",
+        "jaw",
+        "upper_arm_R",
+        "forearm_R",
+        "hand_R",
+        "foot_L",
+        "foot_R"
+      ],
+      "sources": [
+        "res://art_source/ogre/production/ogre_base.blend",
+        "res://art_source/ogre/production/ogre_art.blend",
+        "res://art_source/ogre/production/ogre_rigged.blend",
+        "res://art_source/ogre/production/ogre_geometry.glb",
+        "res://art_source/ogre/production/geometry_manifest.json",
+        "res://art_source/ogre/production/textures/skin_detail.png",
+        "res://tools/build_ogre_art.py",
+        "res://tools/build_ogre.gd",
+        "res://tools/package_monster_rig.py",
+        "res://tools/import_monster.gd"
+      ],
+      "provenance": "res://art_source/ogre/production/PROVENANCE.md",
+      "preview": {
+        "target": [
+          -0.15,
+          1.6,
+          0
+        ],
+        "distance": 9.2,
+        "pitch": 0.08,
+        "attack_label": "重槌下砸"
+      }
     }
   ]
 }

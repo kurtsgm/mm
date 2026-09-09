@@ -25,9 +25,9 @@ func test_single_monster_group_centered_full_size():
 	l.rebuild([_live("u1", Vector2i(0, 0), "o")])   # "o" = ogre x1
 	assert_eq(l._sprites["u1"].size(), 1)
 	var member: Dictionary = l._sprites["u1"][0]
-	assert_true(member["offset"].is_equal_approx(Vector3.ZERO), "單隻置中（offset 0）")
-	var s: Sprite3D = member["node"]
-	assert_almost_eq(s.pixel_size, CombatStage.pixel_size_for(s.texture, CombatStage.DISPLAY_HEIGHT), 0.0001, "單隻維持原大小")
+	assert_eq(member["node"].position, Vector3.ZERO, "單隻模型腳底置於格中心")
+	var model: MonsterModel = member["node"]
+	assert_eq(model.scale, Vector3.ONE, "單隻食人魔維持原始模型大小")
 
 func test_cluster_members_scaled_down_when_multiple():
 	var l := _layer()
@@ -50,8 +50,8 @@ func test_cluster_centered_on_cell():
 func test_rebuild_places_feet_on_floor():
 	var l := _layer()
 	l.rebuild([_live("u1", Vector2i(1, 1), "o")])   # 單隻 offset 0
-	var s: Sprite3D = l._sprites["u1"][0]["node"]
-	assert_almost_eq(s.position.y, CombatStage.DISPLAY_HEIGHT / 2.0, 0.0001, "腳貼地")
+	var s: MonsterModel = l._sprites["u1"][0]["node"]
+	assert_almost_eq(s.position.y, 0.0, 0.0001, "模型腳貼地")
 	var w := GridGeometry.cell_to_world(Vector2i(1, 1))
 	assert_almost_eq(s.position.x, w.x, 0.0001)
 	assert_almost_eq(s.position.z, w.z, 0.0001)
@@ -62,9 +62,9 @@ func test_cluster_members_feet_on_floor():
 	var model: MonsterModel = l._sprites["u1"][1]["node"]
 	assert_almost_eq(model.position.y, 0.0, 0.0001, "縮放後模型腳底仍在地板")
 
-func test_rebuild_uses_billboard():
+func test_rebuild_uses_billboard_for_placeholder():
 	var l := _layer()
-	l.rebuild([_live("u1", Vector2i(0, 0), "o")])
+	l.rebuild([_live("u1", Vector2i(0, 0), "no_such_group")])
 	var s: Sprite3D = l._sprites["u1"][0]["node"]
 	assert_eq(s.billboard, BaseMaterial3D.BILLBOARD_ENABLED)
 
@@ -152,7 +152,7 @@ func test_process_applies_bounded_horizontal_only_sway():
 # ---- idle 兩幀假動畫 / 晃動 fallback（member 層級）----
 func test_update_member_swaps_texture_when_second_frame_present():
 	var l := _layer()
-	l.rebuild([_live("u1", Vector2i(0, 0), "o")])   # ogre，placeholder，b=null
+	l.rebuild([_live("u1", Vector2i(0, 0), "no_such_group")])   # placeholder，b=null
 	var member: Dictionary = l._sprites["u1"][0]
 	var s: Sprite3D = member["node"]
 	var tex_a = member["a"]

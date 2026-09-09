@@ -1,0 +1,22 @@
+[
+	{
+		"errors": [],
+		"id": "ogre",
+		"metrics": {
+			"bones": 23,
+			"glb_mib": 8.15564346313477,
+			"materials": 7,
+			"rest_min_y": 0.000299492996418849,
+			"size": [
+				3.34650039672852,
+				3.1379873752594,
+				1.23493671417236
+			],
+			"surfaces": 7,
+			"texture_edge": 1254,
+			"textures": 10,
+			"triangles": 44794
+		},
+		"warnings": []
+	}
+]

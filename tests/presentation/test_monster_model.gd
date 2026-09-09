@@ -7,7 +7,7 @@ func _model() -> MonsterModel:
 
 func test_unknown_species_has_no_model():
 	assert_null(MonsterModelCatalog.instantiate("unknown"))
-	assert_false(MonsterModelCatalog.has_model("ogre"))
+	assert_false(MonsterModelCatalog.has_model("unknown"))
 
 func test_baked_geometry_has_volume_and_all_vertices_are_drawn():
 	var model := _model()
