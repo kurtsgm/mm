@@ -5,48 +5,243 @@
     "root": {
       "text": "一個披灰氅的老者背手立在告示板前，神色疲倦——橡境伯哈洛·灰木，這片邊地名義上的主人。",
       "choices": [
-        { "text": "「哈爾說您有難處。」", "require": {"quest_done": "goblin_menace", "quest_inactive": "oak_levy"},
-          "effects": [{"op": "set_flag", "flag": "levy_leverage"}, {"op": "accept_quest", "quest": "oak_levy"}], "goto": "brief" },
-        { "text": "「我能幫上什麼？」", "require": {"quest_inactive": "goblin_menace"}, "goto": "brush" },
-        { "text": "「我能幫上什麼？」", "require": {"quest_active": "goblin_menace"}, "goto": "brush" },
-        { "text": "「稅吏的事我還在辦。」", "require": {"quest_stage": {"id": "oak_levy", "eq": 0}}, "goto": "nag" },
-        { "text": "「稅吏的事，我處理好了。」（智取）", "require": {"quest_stage": {"id": "oak_levy", "eq": 1}, "flag": "levy_outwitted"},
-          "effects": [{"op": "advance_quest", "quest": "oak_levy"}], "goto": "turn_outwit" },
-        { "text": "「稅吏的事，我處理好了。」（出錢打發）", "require": {"quest_stage": {"id": "oak_levy", "eq": 1}, "flag": "levy_bribed"},
-          "effects": [{"op": "advance_quest", "quest": "oak_levy"}], "goto": "turn_bribe" },
-        { "text": "「稅吏的事，我處理好了。」（拿把柄壓他）", "require": {"quest_stage": {"id": "oak_levy", "eq": 1}, "flag": "levy_bullied"},
-          "effects": [{"op": "advance_quest", "quest": "oak_levy"}], "goto": "turn_bully" },
-        { "text": "「再會。」（已完成）", "require": {"quest_done": "oak_levy"}, "goto": "done" },
-        { "text": "告辭。", "goto": null }
-      ]
+        {
+          "text": "「哈爾說您有難處。」",
+          "require": {
+            "quest_done": "goblin_menace",
+            "quest_inactive": "oak_levy"
+          },
+          "effects": [
+            {
+              "op": "set_flag",
+              "flag": "levy_leverage"
+            },
+            {
+              "op": "accept_quest",
+              "quest": "oak_levy"
+            }
+          ],
+          "goto": "brief"
+        },
+        {
+          "text": "「我能幫上什麼？」",
+          "require": {
+            "quest_inactive": "goblin_menace"
+          },
+          "goto": "brush"
+        },
+        {
+          "text": "「我能幫上什麼？」",
+          "require": {
+            "quest_active": "goblin_menace"
+          },
+          "goto": "brush"
+        },
+        {
+          "text": "「稅吏的事我還在辦。」",
+          "require": {
+            "quest_stage": {
+              "id": "oak_levy",
+              "eq": 0
+            }
+          },
+          "goto": "nag"
+        },
+        {
+          "text": "「稅吏的事，我處理好了。」（智取）",
+          "require": {
+            "quest_stage": {
+              "id": "oak_levy",
+              "eq": 1
+            },
+            "flag": "levy_outwitted"
+          },
+          "effects": [
+            {
+              "op": "advance_quest",
+              "quest": "oak_levy"
+            }
+          ],
+          "goto": "turn_outwit"
+        },
+        {
+          "text": "「稅吏的事，我處理好了。」（出錢打發）",
+          "require": {
+            "quest_stage": {
+              "id": "oak_levy",
+              "eq": 1
+            },
+            "flag": "levy_bribed"
+          },
+          "effects": [
+            {
+              "op": "advance_quest",
+              "quest": "oak_levy"
+            }
+          ],
+          "goto": "turn_bribe"
+        },
+        {
+          "text": "「稅吏的事，我處理好了。」（拿把柄壓他）",
+          "require": {
+            "quest_stage": {
+              "id": "oak_levy",
+              "eq": 1
+            },
+            "flag": "levy_bullied"
+          },
+          "effects": [
+            {
+              "op": "advance_quest",
+              "quest": "oak_levy"
+            }
+          ],
+          "goto": "turn_bully"
+        },
+        {
+          "text": "「撤了加徵，鄉里能撐過冬天嗎？」",
+          "require": {
+            "quest_done": "oak_levy"
+          },
+          "goto": "done"
+        },
+        {
+          "text": "「橡境的收成很差？」",
+          "goto": "harvest"
+        },
+        {
+          "text": "「卡西安已經進鎮了。」",
+          "goto": "after_omen",
+          "require": {
+            "flag": "oak_omen_seen"
+          }
+        },
+        {
+          "text": "告辭。",
+          "goto": null
+        }
+      ],
+      "image": "oak_lord_square"
     },
     "brush": {
       "text": "哈洛聽見腳步也不太回頭：「你就是那個生面孔，哈爾提過你。先把東北野的事辦完吧——一件一件來。我這把年紀，學會的就是別急。」",
-      "choices": [ {"text": "「明白。」", "goto": null} ]
+      "choices": [
+        {
+          "text": "「明白。」",
+          "goto": null
+        }
+      ],
+      "image": "oak_lord_square"
     },
     "brief": {
-      "text": "「難處？難處多得很。」他壓低聲，「帝國今年加派了徵糧——數目壓下來，鄉里就得有人餓肚子。偏巧上頭派了個姓葛的稅吏下來督收，多收的、私吞的，全算在我頭上。\n我不能跟帝國的人翻臉，那是給審判庭遞刀子。但你不是我的人——你去會會他，把這事『圓過去』，怎麼圓，你自己拿捏。\n對了，他多收的那一成，沒進帝國的庫，進了他自己的袋。這話，你聽見就好。」",
-      "choices": [ {"text": "「我去會會他。」", "goto": null} ]
+      "text": "哈洛壓低聲音：「帝國加派徵糧，鄉里連留種的穀子都快保不住。葛簍就在井東邊督收。我若公然抗命，來的就不只是稅吏了。你替我和他交涉，讓他撤掉加徵；別動手，能說通最好。」",
+      "image": "oak_lord_square",
+      "choices": [
+        {
+          "text": "「他會聽我們的？」",
+          "goto": "leverage"
+        }
+      ]
     },
     "nag": {
       "text": "「葛稅吏還在廣場上。」哈洛端詳著你，「記住，別動手——死一個帝國稅吏，來的就不是稅吏了。」",
-      "choices": [ {"text": "…", "goto": null} ]
+      "choices": [
+        {
+          "text": "…",
+          "goto": null
+        }
+      ],
+      "image": "oak_lord_square"
     },
     "turn_outwit": {
-      "text": "「……你三言兩語就把他繞回去了？」哈洛挑眉，隨即低笑，「好。沒花一個銅板，沒落一句話柄。難得。\n鄉里這個冬天，能緩過來了。」他從袖中取出一領鎖甲遞給你，「我這把年紀用不上了，你拿去——邊地兇險，活著比什麼都強。\n再多嘴一句：審判庭的人這幾日要過境橡境。你若身上沾過什麼不乾淨的東西，別讓他們看見。離他們遠點。」",
-      "choices": [ {"text": "「我記下了。」", "goto": null} ]
+      "text": "「你讓他自己把加徵撤了？」哈洛挑眉，低低笑了一聲。「好。沒花銅板，也沒讓鄉里背上抗命的罪名。這才是把事辦成。」",
+      "image": "oak_lord_square",
+      "choices": [
+        {
+          "text": "「至少今年的糧保住了。」",
+          "goto": "reward"
+        }
+      ]
     },
     "turn_bribe": {
-      "text": "「你自掏腰包打發了他？」哈洛搖頭，「這錢本不該你出。但——確實是最不留痕跡的法子。\n鄉里這個冬天，能緩過來了。」他從袖中取出一領鎖甲遞給你，「我這把年紀用不上了，你拿去——邊地兇險，活著比什麼都強。\n再多嘴一句：審判庭的人這幾日要過境橡境。你若身上沾過什麼不乾淨的東西，別讓他們看見。離他們遠點。」",
-      "choices": [ {"text": "「我記下了。」", "goto": null} ]
+      "text": "「五十金，是你們自己墊的？」哈洛沉默片刻。「這錢本不該你出。我替留下口糧的人謝你，但別讓這種人以為，每回伸手都有人替他填滿。」",
+      "image": "oak_lord_square",
+      "choices": [
+        {
+          "text": "「至少今年的糧保住了。」",
+          "goto": "reward"
+        }
+      ]
     },
     "turn_bully": {
-      "text": "「你拿那一成的事壓他？」哈洛眼神一沉，「險。不過他心虛，吃這套。但記著——拿把柄壓人的，自己也成了把柄。\n鄉里這個冬天，能緩過來了。」他從袖中取出一領鎖甲遞給你，「我這把年紀用不上了，你拿去——邊地兇險，活著比什麼都強。\n再多嘴一句：審判庭的人這幾日要過境橡境。你若身上沾過什麼不乾淨的東西，別讓他們看見。離他們遠點。」",
-      "choices": [ {"text": "「我記下了。」", "goto": null} ]
+      "text": "「你拿那一成壓住了他。」哈洛點頭，神色卻仍嚴肅。「有用，但險。今天他怕你，明天就會想誰把話漏了。以後再碰上他，留神些。」",
+      "image": "oak_lord_square",
+      "choices": [
+        {
+          "text": "「至少今年的糧保住了。」",
+          "goto": "reward"
+        }
+      ]
     },
     "done": {
-      "text": "「葛稅吏？昨兒個夾著尾巴走了。」哈洛望著鎮外，「帝國還會再派人來。年年如此。我能替橡境擋一年，是一年。」",
-      "choices": [ {"text": "…", "goto": null} ]
+      "text": "「葛簍把加徵撤了，正忙著收他的帳。」哈洛望向井邊晾曬的穀袋。「帝國明年還會派人來。但今年，多留一袋糧，就能多熬過一場雪。橡境記你們的好。」",
+      "choices": [
+        {
+          "text": "…",
+          "goto": null
+        }
+      ],
+      "image": "oak_lord_square"
+    },
+    "leverage": {
+      "text": "「他多收的那一成，沒有進帝國的庫。」哈洛將一張核糧抄單折起，推到你面前。「真要拿這件事壓他，話別說死，留條路給他下臺。花錢打發也由你拿捏——但我更想知道，你能不能讓他自己改口。」",
+      "image": "oak_lord_square",
+      "choices": [
+        {
+          "text": "「我去會會他。」",
+          "goto": null
+        }
+      ]
+    },
+    "harvest": {
+      "text": "「田還長得出糧，人卻越來越留不住糧。」哈洛捻著袖口磨白的線頭。「先有哥布林斷路，再有徵糧司算帳。公文裡寫的是一成、兩成；落到人家灶上，就是今晚有沒有飯。」",
+      "image": "oak_lord_square",
+      "choices": [
+        {
+          "text": "「我明白了。」",
+          "goto": "root"
+        }
+      ]
+    },
+    "reward": {
+      "text": "哈洛招手，讓家臣把賞金與一領折好的鎖甲送來。「這是答應你們的謝禮。甲舊了，環扣還結實。替橡境跑腿的人，總該有件能保命的東西。」他的笑意斂去。「還有件事，出門前聽我一句。」",
+      "image": "oak_lord_square",
+      "choices": [
+        {
+          "text": "「您說。」",
+          "goto": "warning"
+        }
+      ]
+    },
+    "warning": {
+      "text": "「審判庭的人這幾日要過境。領頭的叫卡西安，別號『灰燭』。」哈洛望了一眼鎮口。「若在野地裡碰見說不清的東西，別拿出來炫耀。你替我們辦的是糧食的事，就讓它只是糧食的事。」",
+      "image": "oak_lord_square",
+      "choices": [
+        {
+          "text": "「我記下了。」",
+          "goto": null
+        }
+      ]
+    },
+    "after_omen": {
+      "text": "哈洛沒有回頭看那隊人。「我知道。他記人比記路還清楚。」他把核糧單壓回告示底下。「鎮上的事我來應付。你們要補給就趁早，若有人問起我們談什麼——哥布林和糧價，就這兩樣。」",
+      "image": "oak_lord_square",
+      "choices": [
+        {
+          "text": "「明白。」",
+          "goto": null
+        }
+      ]
     }
   }
 }

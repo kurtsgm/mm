@@ -81,7 +81,7 @@ func test_shake_restores_camera_transform():
 	assert_almost_eq(p._camera.position.z, before.z, 0.001)
 
 func test_dialogue_step_opens_and_completes():
-	# 重用既有可完成對話 nav_echo_nest（單節點、唯一選項 goto null）→ 免暫存/探針檔。
+	# 重用 nav_echo_nest，驗證多頁事件只在最後一頁結束過場。
 	# 玩家自擁 _dialogue_overlay（layer 95），dialogue step 開它並 await finished。
 	var p := _player(FakeCtx.new())
 	watch_signals(p)
@@ -90,7 +90,14 @@ func test_dialogue_step_opens_and_completes():
 	await get_tree().process_frame
 	assert_true(p._dialogue_overlay.is_open(), "對話 overlay 已開")
 	assert_eq(p._dialogue_overlay.layer, 95, "自擁 overlay 疊在黑幕之上")
-	p._dialogue_overlay._unhandled_input(_key(KEY_1))   # 選唯一選項（goto null → finished）
+	p._dialogue_overlay._unhandled_input(_key(KEY_1))
+	assert_true(p.is_playing(), "第一頁之後仍維持過場鎖定")
+	assert_signal_not_emitted(p, "finished")
+	for i in range(10):
+		if not p._dialogue_overlay.is_open():
+			break
+		p._dialogue_overlay._unhandled_input(_key(KEY_1))
+		await get_tree().process_frame
 	await get_tree().process_frame
 	assert_signal_emitted(p, "finished")
 	assert_false(p._dialogue_overlay.is_open())

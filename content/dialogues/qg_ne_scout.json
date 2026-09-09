@@ -3,17 +3,88 @@
   "start": "root",
   "nodes": {
     "root": {
-      "text": "一名斥候警戒地看著你。",
+      "text": "一名斥候守在東北野的林間路口，弓背在肩上，手卻沒離開箭袋。「從西邊來的？」她看向你身後。「路上有沒有見到一個帶皮信袋的人？」",
       "choices": [
-        { "text": "「我帶了西北野的口信。」", "require": {"quest_stage": {"id": "wild_message", "eq": 0}},
-          "effects": [{"op": "advance_quest", "quest": "wild_message"}], "goto": "received" },
-        { "text": "「你在等什麼嗎？」", "require": {"quest_inactive": "wild_message"}, "goto": "idle" },
-        { "text": "「再會。」", "require": {"quest_done": "wild_message"}, "goto": "done_thanks" },
-        { "text": "離開", "goto": null }
-      ]
+        {
+          "text": "「南路積水，糧車延後，先守住林口。」",
+          "require": {
+            "quest_stage": {
+              "id": "wild_message",
+              "eq": 0
+            }
+          },
+          "effects": [
+            {
+              "op": "advance_quest",
+              "quest": "wild_message"
+            }
+          ],
+          "goto": "received"
+        },
+        {
+          "text": "「你在等什麼嗎？」",
+          "require": {
+            "quest_inactive": "wild_message"
+          },
+          "goto": "idle"
+        },
+        {
+          "text": "「再會。」",
+          "require": {
+            "quest_done": "wild_message"
+          },
+          "goto": "done_thanks"
+        },
+        {
+          "text": "「附近有什麼要留意的？」",
+          "goto": "danger"
+        },
+        {
+          "text": "離開",
+          "goto": null
+        }
+      ],
+      "image": "oak_scout_watch"
     },
-    "received": { "text": "斥候：「正是這個！這是給你的謝禮。」", "choices": [ {"text": "…", "goto": null} ] },
-    "idle": { "text": "斥候：「我在等西北野的信使捎來口信。」", "choices": [ {"text": "…", "goto": null} ] },
-    "done_thanks": { "text": "斥候：「口信我收到了，謝了。」", "choices": [ {"text": "…", "goto": null} ] }
+    "received": {
+      "text": "斥候把那三句話低聲覆誦，緊繃的肩膀鬆了些。「那我就留在這裡，不派人南下找車了。謝謝你，把這點路費收著。替鎮上運糧的人平安，比讓我多等半天要緊。」",
+      "choices": [
+        {
+          "text": "…",
+          "goto": null
+        }
+      ],
+      "image": "oak_scout_watch"
+    },
+    "idle": {
+      "text": "「等西北野送來車隊的消息。」她指向西邊。「那名信使若還在路上，麻煩告訴他我守著林口。沒聽見準信以前，我不敢把人撤走。」",
+      "choices": [
+        {
+          "text": "…",
+          "goto": null
+        }
+      ],
+      "image": "oak_scout_watch"
+    },
+    "done_thanks": {
+      "text": "「口信我記牢了，林口有人守。」斥候讓開半步。「若要探那窩哥布林，別只盯著前面。林子裡的動靜，常是從你剛走過的地方傳來。」",
+      "choices": [
+        {
+          "text": "…",
+          "goto": null
+        }
+      ],
+      "image": "oak_scout_watch"
+    },
+    "danger": {
+      "text": "「北邊有哥布林活動，往南的低地則有毒蛛。」她側耳聽了一會兒。「打完一場，先看同伴能不能走，再想下一場。鎮上缺人手，可不缺逞強後等人抬回去的故事。」",
+      "image": "oak_scout_watch",
+      "choices": [
+        {
+          "text": "「多謝提醒。」",
+          "goto": "root"
+        }
+      ]
+    }
   }
 }

@@ -3,17 +3,85 @@
   "start": "root",
   "nodes": {
     "root": {
-      "text": "一名信使攔住你。",
+      "text": "西北野路旁，一名信使坐在倒木上，腳踝纏著滲泥的布條。她看了一眼東去的路，才向你招手。「還走得動嗎？我這雙腿，今天算是誤事了。」",
       "choices": [
-        { "text": "「我幫你帶口信。」", "require": {"quest_inactive": "wild_message"},
-          "effects": [{"op": "accept_quest", "quest": "wild_message"}], "goto": "accepted" },
-        { "text": "「口信還沒送到…」", "require": {"quest_active": "wild_message"}, "goto": "waiting" },
-        { "text": "「口信送到了。」", "require": {"quest_done": "wild_message"}, "goto": "thanks" },
-        { "text": "離開", "goto": null }
-      ]
+        {
+          "text": "「我幫你帶口信。」",
+          "require": {
+            "quest_inactive": "wild_message"
+          },
+          "effects": [
+            {
+              "op": "accept_quest",
+              "quest": "wild_message"
+            }
+          ],
+          "goto": "accepted"
+        },
+        {
+          "text": "「口信還沒送到…」",
+          "require": {
+            "quest_active": "wild_message"
+          },
+          "goto": "waiting"
+        },
+        {
+          "text": "「口信送到了。」",
+          "require": {
+            "quest_done": "wild_message"
+          },
+          "goto": "thanks"
+        },
+        {
+          "text": "「傷要緊嗎？」",
+          "goto": "ankle"
+        },
+        {
+          "text": "離開",
+          "goto": null
+        }
+      ],
+      "image": "oak_messenger_road"
     },
-    "accepted": { "text": "信使：「太好了！東北野有個斥候在等這口信，麻煩你了。」", "choices": [ {"text": "…", "goto": null} ] },
-    "waiting": { "text": "信使：「斥候還在東北野等著呢。」", "choices": [ {"text": "…", "goto": null} ] },
-    "thanks": { "text": "信使：「多虧有你跑這一趟。」", "choices": [ {"text": "…", "goto": null} ] }
+    "accepted": {
+      "text": "信使：「替我告訴東北野的斥候：『南邊的路積水，糧車延後，先守住林口。』就這三句，一字別漏。沿這條路往東，到了東北野再朝南找，她在林間路口警戒。」",
+      "choices": [
+        {
+          "text": "…",
+          "goto": null
+        }
+      ],
+      "image": "oak_messenger_road"
+    },
+    "waiting": {
+      "text": "「南邊的路積水，糧車延後，先守住林口。」信使又念一遍。「東北野的斥候還等著。這消息不送到，她會以為車隊在半路出事，白白冒險找人。」",
+      "choices": [
+        {
+          "text": "…",
+          "goto": null
+        }
+      ],
+      "image": "oak_messenger_road"
+    },
+    "thanks": {
+      "text": "信使鬆開攥著背帶的手。「收到了就好。路上少一個人亂跑，就少一個人撞進麻煩。等腳好些，我也該回橡鎮了——這回真多虧你們。」",
+      "choices": [
+        {
+          "text": "…",
+          "goto": null
+        }
+      ],
+      "image": "oak_messenger_road"
+    },
+    "ankle": {
+      "text": "「扭了，倒沒斷。」她試著動一動腳，立刻吸氣。「回橡鎮找瑪歌看看就行。你們若也要走野路，別學我只顧趕路不看腳下。」",
+      "image": "oak_messenger_road",
+      "choices": [
+        {
+          "text": "「當心些。」",
+          "goto": "root"
+        }
+      ]
+    }
   }
 }

@@ -3,23 +3,195 @@
   "start": "root",
   "nodes": {
     "root": {
-      "text": "瑪歌正俯身替一個臉色發青的老農擦汗。",
-      "image": "margo_clinic",
+      "text": "瑪歌將藥草布包擱在井旁，搓去指上的草汁。神殿門邊有人等她看診；她抬頭看見你，挪開一張矮凳。「坐吧。有傷先說，有事也慢慢說。」",
+      "image": "margo_portrait",
       "choices": [
-        { "text": "「我能幫什麼？」", "require": {"quest_inactive": "oak_antidote"},
-          "effects": [{"op": "accept_quest", "quest": "oak_antidote"}], "goto": "accepted" },
-        { "text": "「他付得起診金嗎？」", "require": {"quest_inactive": "oak_antidote"}, "goto": "money" },
-        { "text": "「澤蘭草還在採…」", "require": {"quest_stage": {"id": "oak_antidote", "eq": 0}}, "goto": "nag" },
-        { "text": "「澤蘭草採齊了。」", "require": {"quest_stage": {"id": "oak_antidote", "eq": 1}},
-          "effects": [{"op": "advance_quest", "quest": "oak_antidote"}], "goto": "turned_in" },
-        { "text": "「再會。」（已完成）", "require": {"quest_done": "oak_antidote"}, "goto": "thanks" },
-        { "text": "離開", "goto": null }
+        {
+          "text": "「我能幫什麼？」",
+          "require": {
+            "quest_inactive": "oak_antidote"
+          },
+          "effects": [
+            {
+              "op": "accept_quest",
+              "quest": "oak_antidote"
+            }
+          ],
+          "goto": "accepted"
+        },
+        {
+          "text": "「聽說有個老人中了毒？」",
+          "goto": "patient",
+          "require": {
+            "quest_inactive": "oak_antidote"
+          }
+        },
+        {
+          "text": "「他付得起診金嗎？」",
+          "require": {
+            "quest_inactive": "oak_antidote"
+          },
+          "goto": "money"
+        },
+        {
+          "text": "「澤蘭草還在採…」",
+          "require": {
+            "quest_stage": {
+              "id": "oak_antidote",
+              "eq": 0
+            }
+          },
+          "goto": "nag"
+        },
+        {
+          "text": "「澤蘭草採齊了。」",
+          "require": {
+            "quest_stage": {
+              "id": "oak_antidote",
+              "eq": 1
+            }
+          },
+          "effects": [
+            {
+              "op": "advance_quest",
+              "quest": "oak_antidote"
+            }
+          ],
+          "goto": "turned_in"
+        },
+        {
+          "text": "「老人家後來怎麼樣了？」",
+          "require": {
+            "quest_done": "oak_antidote"
+          },
+          "goto": "thanks"
+        },
+        {
+          "text": "「採藥該注意什麼？」",
+          "goto": "herbs",
+          "require": {
+            "quest_active": "oak_antidote"
+          }
+        },
+        {
+          "text": "「你一直留在橡鎮看診？」",
+          "goto": "calling"
+        },
+        {
+          "text": "「審判庭來了，你不擔心？」",
+          "goto": "after_omen",
+          "require": {
+            "flag": "oak_omen_seen"
+          }
+        },
+        {
+          "text": "離開",
+          "goto": null
+        }
       ]
     },
-    "money": { "text": "瑪歌：「付得起付不起，他都得活。我問的從來不是這個。你要是手腳俐落，倒能幫他一個大忙——也幫我。」", "image": "margo_portrait", "choices": [ {"text": "…", "goto": "root"} ] },
-    "accepted": { "text": "瑪歌：「毒澤深處有種葉背發紫、貼著水長的草，鄉里叫它『澤蘭』——解毒蛛的毒就靠它。給我採三株回來，葉子要完整的。那地方毒蛛多，當心些。」", "image": "marsh_swampherb", "choices": [ {"text": "…", "goto": null} ] },
-    "nag": { "text": "瑪歌：「澤蘭採到了嗎？葉背發紫、貼著水長的那種。老人家還撐著，但別讓我等太久。」", "image": "margo_portrait", "choices": [ {"text": "…", "goto": null} ] },
-    "turned_in": { "text": "瑪歌接過草，捻了捻葉子，鬆一口氣：「對，就是這個。」她搗藥敷上，老農的呼吸漸漸平了。「成了，睡一覺就能下床。這點謝禮你收著——別跟我客氣，跑這趟的是你的腿，不是我的嘴。」", "image": "margo_clinic", "choices": [ {"text": "…", "goto": null} ] },
-    "thanks": { "text": "瑪歌：「那老人家？前兒個還來幫我曬藥草呢。這年頭糧倉空了一半，病的人卻多了一倍。能扶一個是一個。」", "image": "margo_portrait", "choices": [ {"text": "…", "goto": null} ] }
+    "money": {
+      "text": "瑪歌：「付得起付不起，他都得活。我問的從來不是這個。你要是手腳俐落，倒能幫他一個大忙——也幫我。」",
+      "image": "margo_portrait",
+      "choices": [
+        {
+          "text": "…",
+          "goto": "root"
+        }
+      ]
+    },
+    "accepted": {
+      "text": "瑪歌：「到東南野的毒澤，找葉背發紫、貼水生的澤蘭，三株，葉子要完整。採藥人留下的箱子也翻一翻，裡頭可能存著乾淨的草。車隊長知道東緣營地怎麼走；別為抄近路闖進蛛群。」",
+      "image": "marsh_swampherb",
+      "choices": [
+        {
+          "text": "…",
+          "goto": null
+        }
+      ]
+    },
+    "nag": {
+      "text": "瑪歌：「澤蘭採到了嗎？葉背發紫、貼著水長的那種。老人家還撐著，但別讓我等太久。」",
+      "image": "margo_portrait",
+      "choices": [
+        {
+          "text": "…",
+          "goto": null
+        }
+      ]
+    },
+    "turned_in": {
+      "text": "瑪歌捻開葉片：「對，就是這個。」她搗藥、敷傷，又守著老農數了幾回呼吸。他眉間終於鬆開，她才肯直起腰。「這下穩了。謝禮和兩份解毒劑你帶著，下回出門先護好自己。」",
+      "image": "margo_clinic",
+      "choices": [
+        {
+          "text": "…",
+          "goto": null
+        }
+      ]
+    },
+    "thanks": {
+      "text": "瑪歌：「那老人家？前兒個還來幫我曬藥草呢。這年頭糧倉空了一半，病的人卻多了一倍。能扶一個是一個。」",
+      "image": "margo_portrait",
+      "choices": [
+        {
+          "text": "…",
+          "goto": null
+        }
+      ]
+    },
+    "patient": {
+      "text": "瑪歌掀開神殿側室的布簾。老農躺在窄床上，汗把枕巾浸透了。「他為了補上徵糧，去毒澤找能賣的草，被解毒蛛咬了。我能穩住他的氣息，還缺真正解毒的藥。」",
+      "image": "margo_clinic",
+      "choices": [
+        {
+          "text": "「我去採，你說怎麼找。」",
+          "goto": "accepted",
+          "require": {
+            "quest_inactive": "oak_antidote"
+          },
+          "effects": [
+            {
+              "op": "accept_quest",
+              "quest": "oak_antidote"
+            }
+          ]
+        },
+        {
+          "text": "「我再想想。」",
+          "goto": "root"
+        }
+      ]
+    },
+    "herbs": {
+      "text": "「先看葉背，再看根。三株得分開採，別捏爛了。」她替你的布袋打好結。「毒澤有幾處採藥箱，拿齊再回來。要是中了毒，先用解毒劑或回神殿求治，別拿自己的命補別人的命。」",
+      "image": "marsh_swampherb",
+      "choices": [
+        {
+          "text": "「我會留意。」",
+          "goto": null
+        }
+      ]
+    },
+    "calling": {
+      "text": "「哪裡缺人，就在哪裡多待幾天。」瑪歌將針線收回布包。「濟世會教我認傷，不是先認旗子。如今鎮上吃不飽的人多，傷口也好得慢。能讓一個人明早自己起床，就算沒白忙。」",
+      "image": "margo_portrait",
+      "choices": [
+        {
+          "text": "「辛苦你了。」",
+          "goto": "root"
+        }
+      ]
+    },
+    "after_omen": {
+      "text": "瑪歌把布簾放下。「怕，誰不怕？」她又端起藥碗。「可裡頭的人還在等。我能答的，就說我怎麼治病；答不了的，也不能拿病人去換一句平安。」",
+      "image": "margo_portrait",
+      "choices": [
+        {
+          "text": "「有需要就叫我們。」",
+          "goto": null
+        }
+      ]
+    }
   }
 }

@@ -5,14 +5,81 @@
     "root": {
       "text": "車隊長靠在貨車旁，用炭筆在木板上勾著路線。「要搭車？橡境這幾條道，我閉著眼都走得。」",
       "choices": [
-        { "text": "「毒澤那頭有落腳處嗎？」", "require": {"flag": "travel_se_camp", "is": false},
-          "effects": [{"op": "set_flag", "flag": "travel_se_camp"}], "goto": "unlocked" },
-        { "text": "「沒事，看看。」", "goto": null }
-      ]
+        {
+          "text": "「毒澤那頭有落腳處嗎？」",
+          "require": {
+            "flag": "travel_se_camp",
+            "is": false
+          },
+          "effects": [
+            {
+              "op": "set_flag",
+              "flag": "travel_se_camp"
+            }
+          ],
+          "goto": "unlocked"
+        },
+        {
+          "text": "「去毒澤營地的路，再說一次。」",
+          "goto": "camp",
+          "require": {
+            "flag": "travel_se_camp"
+          }
+        },
+        {
+          "text": "「怎麼搭你們的車？」",
+          "goto": "travel"
+        },
+        {
+          "text": "「東北野能直接坐車到嗎？」",
+          "goto": "roads"
+        },
+        {
+          "text": "「沒事，看看。」",
+          "goto": null
+        }
+      ],
+      "image": "oak_caravan_route"
     },
     "unlocked": {
-      "text": "車隊長在木板上多畫了一個叉：「毒澤東緣有個獵人營地，車能到。想去，就到旁邊的車隊點跟夥計說一聲。」",
-      "choices": [ { "text": "…", "goto": null } ]
+      "text": "車隊長在木板東南角點了個叉。「毒澤東緣有個獵人營地，車能到。我把這一站記上了。搭車去，找旁邊的車隊點；下車仍得自己走進毒澤，車輪可不認得哪片水藏著蜘蛛。」",
+      "choices": [
+        {
+          "text": "…",
+          "goto": null
+        }
+      ],
+      "image": "oak_caravan_route"
+    },
+    "camp": {
+      "text": "「東南野東緣，獵人營地。旁邊車隊點選那一站就行。」他勒緊貨繩。「採藥回來也在營地搭車。別把貨箱的草認成野草——有人先採好存著，倒省你在水邊多蹲一回。」",
+      "image": "oak_caravan_route",
+      "choices": [
+        {
+          "text": "「知道了。」",
+          "goto": "root"
+        }
+      ]
+    },
+    "travel": {
+      "text": "「我管認路，旁邊的夥計管發車。走到車隊點，選要去的地方，車資和時辰都會先說明。看好了再決定。」他拍拍車轅。「路熟歸路熟，糧、藥和趁手的傢伙，還是自己備齊。」",
+      "image": "oak_caravan_route",
+      "choices": [
+        {
+          "text": "「我去看看班次。」",
+          "goto": null
+        }
+      ]
+    },
+    "roads": {
+      "text": "「東北野那段得用腿走。出橡鎮南門到西北野，再往東，別跟著車轍一路往南。」他收起炭筆。「哥布林把商路鬧得夠嗆。你們若能清乾淨，我們拉糧也能少提一口氣。」",
+      "image": "oak_caravan_route",
+      "choices": [
+        {
+          "text": "「謝了。」",
+          "goto": "root"
+        }
+      ]
     }
   }
 }

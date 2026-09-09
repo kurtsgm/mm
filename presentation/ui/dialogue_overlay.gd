@@ -16,14 +16,16 @@ const IMG_ANCHOR_LEFT := 0.09
 const IMG_ANCHOR_RIGHT := 0.91
 const IMG_ANCHOR_TOP := 0.09
 const IMG_ANCHOR_BOTTOM := 0.62
-# 羊皮紙以「實際畫出的情境圖」為中心框起（緊貼、四周等距），而非寫死近滿版。
-# 全部用視窗高比例，所以各解析度／視窗比例都是一張置中、平衡的卡片。
+# 羊皮紙以情境圖和文字欄共同決定寬度；直式肖像保留文字所需的最低欄寬。
+# 尺寸依視窗比例推導，保持卡片置中。
 const FRAME_PAD_RATIO := 0.045   # 圖與羊皮紙邊之間的等距留白（佔視窗高）
 const TEXT_GAP_RATIO := 0.02     # 情境圖與對話文字之間的間距
-const TEXT_BAND_RATIO := 0.22    # 對話文字帶高度
-const TEXT_INSET_RATIO := 0.06   # 對話文字左右內縮（佔圖寬）→ 文字不貼邊、兩側留白
+const TEXT_BAND_RATIO := 0.30    # 對話文字帶高度；容納任務選項，超長內容仍可捲動
+const MIN_CARD_WIDTH_RATIO := 0.64  # 直式肖像也保留可閱讀的文字欄寬
+const TEXT_INSET_RATIO := 0.06   # 對話文字左右內縮（佔卡片內容寬）
 var _image_rect: TextureRect
 var _box: Control
+var _scroll: ScrollContainer
 var _text_label: Label
 var _choice_box: VBoxContainer
 
@@ -34,7 +36,7 @@ func _ready() -> void:
 	layer = 10
 	visible = false
 
-	# 羊皮紙底。初始 anchor 為近滿版 fallback；實際版面在 _relayout 依情境圖重算（緊貼框邊）。
+	# 羊皮紙底。初始 anchor 為近滿版 fallback；實際版面在 _relayout 重算。
 	_parchment_rect = TextureRect.new()
 	if ResourceLoader.exists(PARCHMENT_PATH):
 		_parchment_rect.texture = load(PARCHMENT_PATH)
@@ -61,7 +63,7 @@ func _ready() -> void:
 		_image_rect.material = feather_mat
 	add_child(_image_rect)
 
-	# 對話框（文字 + 數字鍵選項）。初始 anchor 為 fallback；_relayout 會對齊到情境圖正下方、同寬。
+	# 對話框（文字 + 數字鍵選項）。初始 anchor 為 fallback；_relayout 對齊到情境圖正下方。
 	_box = Control.new()
 	_box.anchor_left = IMG_ANCHOR_LEFT
 	_box.anchor_right = IMG_ANCHOR_RIGHT
@@ -69,14 +71,18 @@ func _ready() -> void:
 	_box.anchor_bottom = 0.92
 	add_child(_box)
 
+	_scroll = ScrollContainer.new()
+	_scroll.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_box.add_child(_scroll)
 	var vb := VBoxContainer.new()
-	vb.set_anchors_preset(Control.PRESET_FULL_RECT)
+	vb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	vb.add_theme_constant_override("separation", 6)
 	# 羊皮紙是淺米色，預設白字看不清 → 用 Theme 讓 vb 底下所有 Label（含 _render 動態建的選項/提示）統一深棕字。
 	var parchment_theme := Theme.new()
 	parchment_theme.set_color("font_color", "Label", Color(0.18, 0.12, 0.06))
 	vb.theme = parchment_theme
-	_box.add_child(vb)
+	_scroll.add_child(vb)
 
 	_text_label = Label.new()
 	_text_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -102,9 +108,12 @@ func close() -> void:
 	set_process_unhandled_input(false)
 
 func _render() -> void:
+	_scroll.scroll_vertical = 0
 	var node := _runner.current_node()
 	_text_label.text = String(node.get("text", ""))
 	_image_rect.texture = SceneImageCatalog.get_texture(_resolve_image(node))
+	# 包含沒有選項的末頁，也必須依新圖重算版面。
+	_relayout.call_deferred()
 	for c in _choice_box.get_children():
 		_choice_box.remove_child(c)
 		c.free()
@@ -118,11 +127,10 @@ func _render() -> void:
 		return
 	for i in choices.size():
 		var lbl := Label.new()
+		lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		lbl.add_theme_font_size_override("font_size", 18)
 		lbl.text = "%d) %s" % [i + 1, String(choices[i].get("text", ""))]
 		_choice_box.add_child(lbl)
-	# 換節點可能換情境圖（長寬比不同）→ 等版面就緒後重新框版。
-	_relayout.call_deferred()
 
 # 把「實際畫出的情境圖矩形」算出來（KEEP_ASPECT_CENTERED 會在區域內留透明邊）。
 # 回傳螢幕座標的 Rect2；無材質/未就緒時退回整個區域。
@@ -139,7 +147,7 @@ func _drawn_image_rect() -> Rect2:
 	var drawn := ts * s
 	return Rect2(pos + (rs - drawn) * 0.5, drawn)
 
-# 以實際情境圖為中心，把羊皮紙與對話框重新定位成一張置中、四周等距的平衡卡片。
+# 以實際情境圖和最低文字欄寬，把羊皮紙與對話框重新定位成置中的卡片。
 # 全用視窗比例推導，解析度／視窗比例無關。
 func _relayout() -> void:
 	if not is_inside_tree():
@@ -155,13 +163,15 @@ func _relayout() -> void:
 	var band := vp.y * TEXT_BAND_RATIO
 
 	# 對話框：貼在情境圖正下方，左右各內縮一段（文字兩側留白、不貼邊）。
-	var inset := img.size.x * TEXT_INSET_RATIO
-	_set_abs(_box, img.position.x + inset, img.position.y + img.size.y + gap, img.size.x - inset * 2.0, band)
+	var card_width: float = maxf(img.size.x, vp.x * MIN_CARD_WIDTH_RATIO)
+	var card_left := (vp.x - card_width) * 0.5
+	var inset := card_width * TEXT_INSET_RATIO
+	_set_abs(_box, card_left + inset, img.position.y + img.size.y + gap, card_width - inset * 2.0, band)
 
 	# 羊皮紙：把「情境圖 + 對話框」整塊以等距 pad 框起來。
-	var left: float = max(0.0, img.position.x - pad)
+	var left: float = max(0.0, card_left - pad)
 	var top: float = max(0.0, img.position.y - pad)
-	var right: float = min(vp.x, img.position.x + img.size.x + pad)
+	var right: float = min(vp.x, card_left + card_width + pad)
 	var bottom: float = min(vp.y, img.position.y + img.size.y + gap + band + pad)
 	_set_abs(_parchment_rect, left, top, right - left, bottom - top)
 

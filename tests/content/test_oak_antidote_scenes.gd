@@ -13,7 +13,7 @@ func test_every_margo_node_has_registered_image():
 func test_margo_node_image_mapping():
 	var data := DialogueCatalog.load_dialogue("qg_margo")
 	var want := {
-		"root": "margo_clinic", "money": "margo_portrait", "accepted": "marsh_swampherb",
+		"root": "margo_portrait", "money": "margo_portrait", "accepted": "marsh_swampherb",
 		"nag": "margo_portrait", "turned_in": "margo_clinic", "thanks": "margo_portrait",
 	}
 	for nid in want:
