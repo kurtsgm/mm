@@ -22,6 +22,33 @@ var _bones: MeshInstance3D
 var _show_bones := false
 var _rest_pose := false
 
+func configure_review(spec: Dictionary) -> void:
+	monster_id = spec.id
+	display_name = spec.display_name
+	species_label = monster_id.to_upper().replace("_", " ")
+	attack_label = spec.preview.attack_label
+	var target: Array = spec.preview.target
+	camera_target = Vector3(target[0], target[1], target[2])
+	initial_distance = spec.preview.distance
+	initial_pitch = spec.preview.pitch
+	# Every species uses the same lighting for production comparisons.
+	soft_studio_lighting = true
+
+func set_review_pose(clip: String, fraction: float, yaw: float, bones: bool = false) -> void:
+	set_process(false)
+	_model.set_process(false)
+	_model.animation_player.stop()
+	_model.skeleton.reset_bone_poses()
+	_model.animation_player.play(clip)
+	_model.animation_player.seek(_model.animation_player.get_animation(clip).length * fraction, true)
+	_model.animation_player.advance(0)
+	_yaw = yaw
+	_update_camera()
+	_bones.visible = bones
+	if bones:
+		_draw_bones()
+	_status.text = "%s · %d%%" % [clip, roundi(fraction * 100)]
+
 func _ready() -> void:
 	_distance = initial_distance
 	_pitch = initial_pitch

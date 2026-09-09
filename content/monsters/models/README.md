@@ -1,5 +1,7 @@
 # 哥布林：骨架與蒙皮角色
 
+三種怪物的共用製作入口與驗收規範見 [怪物製作規範與工具 v1](../../../docs/monster-production.md)。執行 `python3 tools/monster_pipeline.py review` 可一次產生驗證、標準截圖與效能報告。所有模型目前使用 `tools/import_monster.gd` 保留彩繪與動畫循環。
+
 第二隻怪物已加入：[棘毛毒蛛：模型、骨架、預覽與重建](POISON_SPIDER.md)。體型約哥布林高度的三分之一，使用相同的遊戲動畫驅動。
 
 第三隻怪物：[夢魘妖・月蛾：人類女性臉部、四翼、懸浮與施法](DREAM_WISP.md)。沿用既有夢魘妖遭遇與催眠能力。

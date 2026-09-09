@@ -1,0 +1,150 @@
+{
+  "schema_version": 1,
+  "budget_status": "draft — engineering warning thresholds, not an approved production gate",
+  "budgets": {
+    "triangles": 50000,
+    "materials": 8,
+    "texture_edge": 2048,
+    "bones": 64,
+    "glb_mib": 10,
+    "benchmark_instances": 16,
+    "benchmark_p95_ms": 33.333
+  },
+  "monsters": [
+    {
+      "id": "goblin",
+      "display_name": "獵荒哥布林",
+      "scene": "res://content/monsters/models/goblin.tscn",
+      "glb": "res://content/monsters/models/goblin.glb",
+      "definition": "res://content/monsters/goblin.tres",
+      "locomotion": "ground",
+      "size_min": [
+        0.5,
+        1.97,
+        0.5
+      ],
+      "size_max": [
+        3.0,
+        2.03,
+        3.0
+      ],
+      "ground_tolerance": 0.01,
+      "required_bones": [
+        "root",
+        "head",
+        "upper_arm_R",
+        "forearm_R"
+      ],
+      "sources": [
+        "res://tools/build_goblin.gd",
+        "res://tools/goblin_rig.gd",
+        "res://tools/sculpt_goblin_head.py",
+        "res://content/monsters/models/goblin_head.meshbin",
+        "res://tools/import_monster.gd"
+      ],
+      "provenance": "res://content/monsters/models/README.md",
+      "preview": {
+        "target": [
+          0,
+          1,
+          0
+        ],
+        "distance": 4.6,
+        "pitch": 0.1,
+        "attack_label": "揮砍"
+      }
+    },
+    {
+      "id": "poison_spider",
+      "display_name": "棘毛毒蛛",
+      "scene": "res://content/monsters/models/poison_spider.tscn",
+      "glb": "res://content/monsters/models/poison_spider.glb",
+      "definition": "res://content/monsters/poison_spider.tres",
+      "locomotion": "ground",
+      "size_min": [
+        1.4,
+        0.6,
+        1.5
+      ],
+      "size_max": [
+        1.7,
+        0.72,
+        1.8
+      ],
+      "ground_tolerance": 0.01,
+      "required_bones": [
+        "root",
+        "body",
+        "foot_L1",
+        "foot_R4",
+        "fang_L"
+      ],
+      "sources": [
+        "res://tools/build_poison_spider.gd",
+        "res://tools/import_monster.gd"
+      ],
+      "provenance": "res://content/monsters/models/POISON_SPIDER.md",
+      "preview": {
+        "target": [
+          0,
+          0.28,
+          0
+        ],
+        "distance": 3.55,
+        "pitch": 0.38,
+        "attack_label": "撲咬"
+      }
+    },
+    {
+      "id": "dream_wisp",
+      "display_name": "夢魘妖 · 月蛾",
+      "scene": "res://content/monsters/models/dream_wisp.tscn",
+      "glb": "res://content/monsters/models/dream_wisp.glb",
+      "definition": "res://content/monsters/dream_wisp.tres",
+      "locomotion": "hover",
+      "size_min": [
+        1.0,
+        0.85,
+        0.1
+      ],
+      "size_max": [
+        1.25,
+        1.05,
+        1.5
+      ],
+      "ground_tolerance": 0.01,
+      "required_bones": [
+        "root",
+        "head",
+        "wing_upper_L",
+        "wing_upper_R",
+        "wing_lower_L",
+        "wing_lower_R"
+      ],
+      "hover_bones": [
+        "foot_L",
+        "foot_R"
+      ],
+      "hover_min_y": 0.11,
+      "sources": [
+        "res://art_source/dream_wisp/production/dream_wisp_art.blend",
+        "res://art_source/dream_wisp/production/dream_wisp_rigged.blend",
+        "res://art_source/dream_wisp/production/dream_wisp_geometry.glb",
+        "res://art_source/dream_wisp/production/geometry_manifest.json",
+        "res://tools/build_dream_wisp.gd",
+        "res://tools/import_monster.gd"
+      ],
+      "provenance": "res://art_source/dream_wisp/production/TEXTURE_PROVENANCE.md",
+      "preview": {
+        "target": [
+          0,
+          0.56,
+          0
+        ],
+        "distance": 2.8,
+        "pitch": 0.1,
+        "attack_label": "催眠施法"
+      }
+    }
+  ]
+}

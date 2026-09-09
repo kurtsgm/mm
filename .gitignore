@@ -21,6 +21,9 @@ mono_crash.*.json
 # macOS
 .DS_Store
 
+# Offline Python tools and tests
+__pycache__/
+
 # Editor / IDE
 .vscode/
 .idea/

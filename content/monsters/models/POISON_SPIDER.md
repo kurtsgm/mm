@@ -38,7 +38,7 @@ godot --headless --path . --import
 
 拖曳旋轉、滾輪縮放；Space 撲咬、H 受擊、W 行走、R 環繞、B 骨架、T 綁定姿勢；1／2／3 正面／側面／背面。與第一隻模型共用可參數化預覽程式。
 
-`poison_spider.glb.import` 必須保留：內嵌圖片模式 3（無損內嵌）、LOD、動畫完整軌、`tools/import_poison_spider.gd`。後者明確啟用 COLOR_0 材質顏色，避免 Godot 4.7 匯入後斑紋消失；使用官方 [EditorScenePostImport](https://docs.godotengine.org/en/stable/classes/class_editorscenepostimport.html) 匯入鉤子。
+`poison_spider.glb.import` 必須保留：內嵌圖片模式 3（無損內嵌）、LOD、動畫完整軌、`tools/import_monster.gd`。後者明確啟用 COLOR_0 材質顏色，避免 Godot 4.7 匯入後斑紋消失；使用官方 [EditorScenePostImport](https://docs.godotengine.org/en/stable/classes/class_editorscenepostimport.html) 匯入鉤子。
 
 可重現的文件畫面：
 

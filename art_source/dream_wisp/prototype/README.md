@@ -51,7 +51,7 @@ godot --headless --path . --import
 python tools/sculpt_fairy_head.py
 ```
 
-`dream_wisp.glb.import` 保留無損內嵌圖片、LOD、完整動畫軌與 `tools/import_dream_wisp.gd`，後者明確啟用頂點彩繪色，讓蛾翼眼斑匯入後仍可見。GLB 內嵌所有遊戲所需貼圖，不依賴使用者目錄中的生圖檔案。
+`dream_wisp.glb.import` 保留無損內嵌圖片、LOD、完整動畫軌與 `tools/import_monster.gd`，後者明確啟用頂點彩繪色並設定動畫循環，讓蛾翼眼斑匯入後仍可見。GLB 內嵌所有遊戲所需貼圖，不依賴使用者目錄中的生圖檔案。
 
 ## 驗證與文件圖片
 
