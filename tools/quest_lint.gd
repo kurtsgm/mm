@@ -61,6 +61,9 @@ static func _check_stages(quests: Dictionary, uids: Dictionary, errors: Array) -
 		for i in d.stage_count():
 			var st: Dictionary = d.stage(i)
 			match String(st.get("type", "")):
+				"flag":
+					if not _flag_has_writer(String(st["flag"])):
+						errors.append("[quest] %s 階段%d flag '%s' 找不到寫入來源" % [qid, i, st["flag"]])
 				"kill":
 					var targets = st.get("targets", [])
 					if typeof(targets) != TYPE_ARRAY or targets.is_empty():
@@ -77,6 +80,26 @@ static func _check_stages(quests: Dictionary, uids: Dictionary, errors: Array) -
 		for it in d.rewards.get("items", []):
 			if not ItemCatalog.has_item(String(it)):
 				errors.append("[quest] %s reward item '%s' 不在 ItemCatalog" % [qid, it])
+
+static func _flag_has_writer(flag: String) -> bool:
+	for kind in ["dialogues", "cutscenes"]:
+		for id in ContentRegistry.ids(kind):
+			if _writes_flag(ContentRegistry.json_entry(kind, id), flag):
+				return true
+	return false
+
+static func _writes_flag(raw, flag: String) -> bool:
+	if raw is Dictionary:
+		if raw.get("op") == "set_flag" and raw.get("flag") == flag:
+			return true
+		for value in raw.values():
+			if _writes_flag(value, flag):
+				return true
+	elif raw is Array:
+		for value in raw:
+			if _writes_flag(value, flag):
+				return true
+	return false
 
 static func _check_reach(qid: String, i: int, st: Dictionary, errors: Array) -> void:
 	var map_id := String(st.get("map", ""))

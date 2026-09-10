@@ -1,0 +1,313 @@
+{
+  "id": "oak_ruins",
+  "title": "枯石谷淺層遺跡",
+  "brief": "docs/regions/oak-ruins.md",
+  "status": "blockout",
+  "content": {
+    "maps": [
+      "wild_sw",
+      "oak_ruin_vestibule",
+      "oak_ruin_gallery",
+      "int_oak_smithy"
+    ],
+    "quests": [
+      "oak_stone_echo"
+    ],
+    "dialogues": [
+      "qg_dorn",
+      "oak_ruin_echo"
+    ],
+    "cutscenes": [
+      "oak_ruin_echo"
+    ]
+  },
+  "external_flags": [
+    "nav_echo_seen",
+    "oak_omen_seen"
+  ],
+  "routes": [
+    {
+      "from": {
+        "map": "wild_sw",
+        "entry": "from_ruin"
+      },
+      "to": {
+        "map": "oak_ruin_gallery",
+        "entry": "echo_review"
+      },
+      "return_required": true
+    }
+  ],
+  "scenarios": {
+    "normal": {
+      "start": {
+        "map": "int_oak_smithy",
+        "entry": "from_town"
+      },
+      "steps": [
+        {
+          "op": "talk",
+          "map": "int_oak_smithy",
+          "pos": [
+            9,
+            6
+          ],
+          "choices": [
+            "ruin_job",
+            "ruin_accepted",
+            null
+          ]
+        },
+        {
+          "op": "expect",
+          "require": {
+            "quest_active": "oak_stone_echo"
+          }
+        },
+        {
+          "op": "scene",
+          "map": "oak_ruin_gallery",
+          "pos": [
+            12,
+            3
+          ],
+          "dialogues": [
+            [
+              "listen",
+              "silence",
+              null
+            ]
+          ]
+        },
+        {
+          "op": "expect",
+          "require": {
+            "flag": "oak_ruin_echo_seen",
+            "quest_stage": {
+              "id": "oak_stone_echo",
+              "eq": 1
+            }
+          }
+        },
+        {
+          "op": "reload"
+        },
+        {
+          "op": "scene",
+          "map": "oak_ruin_gallery",
+          "pos": [
+            12,
+            3
+          ],
+          "blocked": true
+        },
+        {
+          "op": "talk",
+          "map": "int_oak_smithy",
+          "pos": [
+            9,
+            6
+          ],
+          "choices": [
+            "ruin_report",
+            null
+          ]
+        },
+        {
+          "op": "expect",
+          "require": {
+            "quest_done": "oak_stone_echo"
+          },
+          "gold_delta": 25
+        },
+        {
+          "op": "talk",
+          "map": "int_oak_smithy",
+          "pos": [
+            9,
+            6
+          ],
+          "choices": [
+            "ruin_after",
+            null
+          ]
+        },
+        {
+          "op": "expect",
+          "gold_delta": 25
+        }
+      ]
+    },
+    "early_exploration": {
+      "start": {
+        "map": "wild_sw",
+        "entry": "from_ruin"
+      },
+      "steps": [
+        {
+          "op": "scene",
+          "map": "oak_ruin_gallery",
+          "pos": [
+            12,
+            3
+          ],
+          "dialogues": [
+            [
+              "withdraw",
+              "silence",
+              null
+            ]
+          ]
+        },
+        {
+          "op": "reload"
+        },
+        {
+          "op": "talk",
+          "map": "int_oak_smithy",
+          "pos": [
+            9,
+            6
+          ],
+          "choices": [
+            "ruin_job",
+            "ruin_accepted",
+            null
+          ]
+        },
+        {
+          "op": "expect",
+          "require": {
+            "quest_stage": {
+              "id": "oak_stone_echo",
+              "eq": 1
+            }
+          }
+        },
+        {
+          "op": "talk",
+          "map": "int_oak_smithy",
+          "pos": [
+            9,
+            6
+          ],
+          "choices": [
+            "ruin_report",
+            null
+          ]
+        },
+        {
+          "op": "expect",
+          "require": {
+            "quest_done": "oak_stone_echo"
+          },
+          "gold_delta": 25
+        }
+      ]
+    },
+    "interrupted_scene": {
+      "start": {
+        "map": "oak_ruin_gallery",
+        "entry": "echo_review"
+      },
+      "steps": [
+        {
+          "op": "scene",
+          "map": "oak_ruin_gallery",
+          "pos": [
+            12,
+            3
+          ],
+          "abort": true
+        },
+        {
+          "op": "expect",
+          "require": {
+            "flag": "oak_ruin_echo_seen",
+            "is": false
+          }
+        },
+        {
+          "op": "reload"
+        },
+        {
+          "op": "scene",
+          "map": "oak_ruin_gallery",
+          "pos": [
+            12,
+            3
+          ],
+          "dialogues": [
+            [
+              "listen",
+              "silence",
+              null
+            ]
+          ]
+        },
+        {
+          "op": "expect",
+          "require": {
+            "flag": "oak_ruin_echo_seen"
+          }
+        },
+        {
+          "op": "scene",
+          "map": "oak_ruin_gallery",
+          "pos": [
+            12,
+            3
+          ],
+          "blocked": true
+        }
+      ]
+    }
+  },
+  "previews": {
+    "entry": {
+      "start": {
+        "map": "wild_sw",
+        "entry": "ruin_review"
+      }
+    },
+    "echo_before": {
+      "start": {
+        "map": "oak_ruin_gallery",
+        "entry": "echo_review"
+      }
+    },
+    "echo_after": {
+      "scenario": "normal",
+      "after_steps": 5,
+      "start": {
+        "map": "oak_ruin_gallery",
+        "entry": "echo_review"
+      }
+    },
+    "returned": {
+      "scenario": "normal",
+      "after_steps": 10,
+      "start": {
+        "map": "int_oak_smithy",
+        "entry": "from_town"
+      }
+    },
+    "echo_playing": {
+      "start": {
+        "map": "oak_ruin_gallery",
+        "entry": "echo_review"
+      },
+      "walk_forward": true,
+      "expect_after": {
+        "flag": "oak_ruin_echo_seen"
+      }
+    }
+  },
+  "manual_checks": [
+    "實機從西南野入口走到殘響，再回多恩；確認路標與迷你地圖。",
+    "檢查探索、戰鬥、對話及最後淡入的控制權與聲音。",
+    "事件前後實際存檔、讀檔、重返，確認 once 與回報不重複。",
+    "記錄遊玩分鐘數；20–30 分鐘是設計假設，尚未驗收。",
+    "地城沿用 bricks、interior 暫用音樂、nav_echo_relic 圖卡，尚未達出貨美術／音訊品質。"
+  ]
+}

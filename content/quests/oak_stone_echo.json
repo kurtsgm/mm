@@ -1,0 +1,20 @@
+{
+  "id": "oak_stone_echo",
+  "title": "枯石谷的異樣",
+  "stages": [
+    {
+      "type": "flag",
+      "flag": "oak_ruin_echo_seen",
+      "desc": "沿枯石谷斷壁深入，調查石廊盡頭的異樣"
+    },
+    {
+      "type": "talk",
+      "desc": "把石廊中的見聞告訴橡鎮鐵匠多恩"
+    }
+  ],
+  "rewards": {
+    "gold": 25,
+    "xp": 60,
+    "items": []
+  }
+}

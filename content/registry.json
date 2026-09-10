@@ -153,6 +153,12 @@
     },
     "wild_sw": {
       "path": "res://content/maps/wild_sw.json"
+    },
+    "oak_ruin_vestibule": {
+      "path": "res://content/maps/oak_ruin_vestibule.json"
+    },
+    "oak_ruin_gallery": {
+      "path": "res://content/maps/oak_ruin_gallery.json"
     }
   },
   "quests": {
@@ -167,6 +173,9 @@
     },
     "wild_message": {
       "path": "res://content/quests/wild_message.json"
+    },
+    "oak_stone_echo": {
+      "path": "res://content/quests/oak_stone_echo.json"
     }
   },
   "dialogues": {
@@ -202,6 +211,9 @@
     },
     "qg_oak_taxman": {
       "path": "res://content/dialogues/qg_oak_taxman.json"
+    },
+    "oak_ruin_echo": {
+      "path": "res://content/dialogues/oak_ruin_echo.json"
     }
   },
   "vendors": {
@@ -227,6 +239,9 @@
   "cutscenes": {
     "nav_echo_nest": {
       "path": "res://content/cutscenes/nav_echo_nest.json"
+    },
+    "oak_ruin_echo": {
+      "path": "res://content/cutscenes/oak_ruin_echo.json"
     }
   },
   "world": {

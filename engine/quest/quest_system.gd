@@ -12,9 +12,11 @@ static func initial_state() -> Dictionary:
 static func is_complete(state) -> bool:
 	return String(state.get("status", "")) == "done"
 
-# 狀態式階段（kill/collect）是否已被持久狀態滿足。reach（事件式）與 talk（對話）不在此自動滿足。
+# 狀態式階段（kill/collect/flag）是否已被持久狀態滿足。reach（事件式）與 talk（對話）不在此自動滿足。
 static func is_stage_satisfied(stage: Dictionary, q) -> bool:
 	match String(stage.get("type", "")):
+		"flag":
+			return q.has_flag(String(stage["flag"]))
 		"kill":
 			for t in stage.get("targets", []):
 				if not q.is_defeated(String(t)):
@@ -25,7 +27,7 @@ static func is_stage_satisfied(stage: Dictionary, q) -> bool:
 		_:  # reach（事件式）/ talk（對話）：不自動滿足
 			return false
 
-# 狀態式階段（kill/collect）已滿足就連續進階；停在未滿足 / reach / talk / done。回新 state、不變更輸入。
+# 狀態式階段（kill/collect/flag）已滿足就連續進階；停在未滿足 / reach / talk / done。回新 state、不變更輸入。
 static func catch_up(def, state, q) -> Dictionary:
 	var ns: Dictionary = state.duplicate()
 	while String(ns.get("status", "")) == "active":

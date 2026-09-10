@@ -40,6 +40,10 @@ static func _parse_stage(rs) -> Dictionary:
 		return {}
 	var desc := String(rs.get("desc", ""))
 	match String(rs["type"]):
+		"flag":
+			if not rs.get("flag") is String or String(rs["flag"]).is_empty():
+				return {}
+			return {"type": "flag", "flag": String(rs["flag"]), "desc": desc}
 		"reach":
 			if not rs.has("map") or not rs.has("pos"):
 				return {}

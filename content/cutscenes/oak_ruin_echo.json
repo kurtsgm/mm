@@ -1,0 +1,38 @@
+{
+  "id": "oak_ruin_echo",
+  "steps": [
+    {
+      "type": "fade",
+      "to": "black",
+      "duration": 0.4
+    },
+    {
+      "type": "cg",
+      "image": "nav_echo_relic",
+      "hold": 1.0
+    },
+    {
+      "type": "audio",
+      "op": "sfx",
+      "id": "nav_echo_sting"
+    },
+    {
+      "type": "dialogue",
+      "dialogue": "oak_ruin_echo"
+    },
+    {
+      "type": "fade",
+      "to": "clear",
+      "duration": 0.4
+    },
+    {
+      "type": "effects",
+      "effects": [
+        {
+          "op": "set_flag",
+          "flag": "oak_ruin_echo_seen"
+        }
+      ]
+    }
+  ]
+}

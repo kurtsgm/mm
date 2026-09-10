@@ -1,0 +1,239 @@
+{
+  "id": "oak_antidote",
+  "title": "毒澤的解藥・複用驗證",
+  "brief": "docs/regions/oak-antidote.md",
+  "status": "existing-content",
+  "content": {
+    "maps": [
+      "town_oak",
+      "wild_se"
+    ],
+    "quests": [
+      "oak_antidote"
+    ],
+    "dialogues": [
+      "qg_margo"
+    ],
+    "cutscenes": []
+  },
+  "external_flags": [
+    "oak_omen_seen"
+  ],
+  "routes": [
+    {
+      "from": {
+        "map": "town_oak",
+        "entry": "gate"
+      },
+      "to": {
+        "map": "wild_se",
+        "entry": "camp"
+      },
+      "return_required": true
+    }
+  ],
+  "scenarios": {
+    "normal": {
+      "start": {
+        "map": "town_oak",
+        "entry": "gate"
+      },
+      "steps": [
+        {
+          "op": "talk",
+          "map": "town_oak",
+          "pos": [
+            8,
+            8
+          ],
+          "choices": [
+            "accepted",
+            null
+          ]
+        },
+        {
+          "op": "chest",
+          "map": "wild_se",
+          "pos": [
+            5,
+            5
+          ]
+        },
+        {
+          "op": "chest",
+          "map": "wild_se",
+          "pos": [
+            9,
+            5
+          ]
+        },
+        {
+          "op": "chest",
+          "map": "wild_se",
+          "pos": [
+            7,
+            11
+          ]
+        },
+        {
+          "op": "expect",
+          "require": {
+            "quest_stage": {
+              "id": "oak_antidote",
+              "eq": 1
+            }
+          }
+        },
+        {
+          "op": "reload"
+        },
+        {
+          "op": "talk",
+          "map": "town_oak",
+          "pos": [
+            8,
+            8
+          ],
+          "choices": [
+            "turned_in",
+            null
+          ]
+        },
+        {
+          "op": "expect",
+          "require": {
+            "quest_done": "oak_antidote"
+          },
+          "gold_delta": 30
+        },
+        {
+          "op": "talk",
+          "map": "town_oak",
+          "pos": [
+            8,
+            8
+          ],
+          "choices": [
+            "thanks",
+            null
+          ]
+        },
+        {
+          "op": "expect",
+          "gold_delta": 30
+        }
+      ]
+    },
+    "early_collection": {
+      "start": {
+        "map": "wild_se",
+        "entry": "camp"
+      },
+      "steps": [
+        {
+          "op": "chest",
+          "map": "wild_se",
+          "pos": [
+            5,
+            5
+          ]
+        },
+        {
+          "op": "chest",
+          "map": "wild_se",
+          "pos": [
+            9,
+            5
+          ]
+        },
+        {
+          "op": "chest",
+          "map": "wild_se",
+          "pos": [
+            7,
+            11
+          ]
+        },
+        {
+          "op": "reload"
+        },
+        {
+          "op": "talk",
+          "map": "town_oak",
+          "pos": [
+            8,
+            8
+          ],
+          "choices": [
+            "accepted",
+            null
+          ]
+        },
+        {
+          "op": "expect",
+          "require": {
+            "quest_stage": {
+              "id": "oak_antidote",
+              "eq": 1
+            }
+          }
+        },
+        {
+          "op": "talk",
+          "map": "town_oak",
+          "pos": [
+            8,
+            8
+          ],
+          "choices": [
+            "turned_in",
+            null
+          ]
+        },
+        {
+          "op": "expect",
+          "require": {
+            "quest_done": "oak_antidote"
+          },
+          "gold_delta": 30
+        },
+        {
+          "op": "chest",
+          "map": "wild_se",
+          "pos": [
+            5,
+            5
+          ]
+        },
+        {
+          "op": "expect",
+          "gold_delta": 30,
+          "items": {
+            "swamp_herb": 3
+          }
+        }
+      ]
+    }
+  },
+  "previews": {
+    "entry": {
+      "start": {
+        "map": "town_oak",
+        "entry": "gate"
+      }
+    },
+    "returned": {
+      "scenario": "normal",
+      "after_steps": 10,
+      "start": {
+        "map": "town_oak",
+        "entry": "gate"
+      }
+    }
+  },
+  "manual_checks": [
+    "實機確認採藥箱與回報對話。",
+    "重複開箱／回報不增加獎勵。",
+    "本案例沿用既有內容；只能量測納管成本，不能代表從零製作第二個新區域的產能。"
+  ]
+}

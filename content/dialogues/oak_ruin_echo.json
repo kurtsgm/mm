@@ -1,0 +1,50 @@
+{
+  "id": "oak_ruin_echo",
+  "start": "root",
+  "nodes": {
+    "root": {
+      "text": "苔蘚在這裡斷成一條筆直的線。你拂開灰土，石壁沒有鑿痕，也找不到砌合的縫。指尖貼近時，深處傳來一陣低顫；腳下的水紋卻沒有動。",
+      "image": "nav_echo_relic",
+      "choices": [
+        {
+          "text": "靠近，聽清那道聲音。",
+          "goto": "listen"
+        },
+        {
+          "text": "退後，留意同伴的反應。",
+          "goto": "withdraw"
+        }
+      ]
+    },
+    "listen": {
+      "text": "「……別敲。有人……還在睡。」\n聲音近了一瞬，又像沉進很厚的水裡。「你走過這裡……不，還沒有。把手收回來，冷。」",
+      "image": "nav_echo_relic",
+      "choices": [
+        {
+          "text": "收回手，記住那些斷句。",
+          "goto": "silence"
+        }
+      ]
+    },
+    "withdraw": {
+      "text": "你向後退了一步。那道聲音仍在念頭裡響起：「……冷。把手收回來。」同伴只聽見你鞋底蹭過砂土，沒有誰在說話。",
+      "image": "nav_echo_relic",
+      "choices": [
+        {
+          "text": "看向那面沒有接縫的石壁。",
+          "goto": "silence"
+        }
+      ]
+    },
+    "silence": {
+      "text": "低顫停了。石壁依然冰冷，谷口的風從身後吹來。你沒有找到門，也不知道誰在沉睡；只確定這不是多恩口中尋常的崩石。再往前已被坍塌堵死，該把見聞帶回去了。",
+      "image": "nav_echo_relic",
+      "choices": [
+        {
+          "text": "記下位置，循原路返回。",
+          "goto": null
+        }
+      ]
+    }
+  }
+}

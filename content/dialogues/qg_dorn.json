@@ -6,6 +6,37 @@
       "text": "熔爐的火映著一張黝黑沉默的臉。多恩沒停下手裡的錘，火星濺在皮圍裙上。「要打鐵，去櫃上。」他頭也不抬，「要說話——看你說什麼。」",
       "choices": [
         {
+          "text": "「枯石谷最近有什麼異樣？」",
+          "goto": "ruin_job",
+          "require": {
+            "quest_inactive": "oak_stone_echo"
+          }
+        },
+        {
+          "text": "「石廊裡有聲音，牆面連一道接縫都沒有。」",
+          "goto": "ruin_report",
+          "require": {
+            "quest_stage": {
+              "id": "oak_stone_echo",
+              "eq": 1
+            },
+            "flag": "oak_ruin_echo_seen"
+          },
+          "effects": [
+            {
+              "op": "advance_quest",
+              "quest": "oak_stone_echo"
+            }
+          ]
+        },
+        {
+          "text": "「關於枯石谷，你還有什麼想說的？」",
+          "goto": "ruin_after",
+          "require": {
+            "quest_done": "oak_stone_echo"
+          }
+        },
+        {
           "text": "「東北野的巢穴裡，有些……不像石頭的東西。」",
           "goto": "probe",
           "require": {
@@ -70,6 +101,59 @@
       "choices": [
         {
           "text": "「改天再聊。」",
+          "goto": null
+        }
+      ]
+    },
+    "ruin_job": {
+      "text": "多恩把一把缺口的鑿子放上砧臺。「西南野有道新露出來的斷壁，在谷口往南。採石的人說，那裡的石頭不吃鑿子，還有怪東西在附近轉。」他看你一眼。「替我看看路還能不能走。別硬撬，活著回來把看到的說清楚。」",
+      "image": "dorn_forge",
+      "choices": [
+        {
+          "text": "「我們去看看。」",
+          "goto": "ruin_accepted",
+          "require": {
+            "quest_inactive": "oak_stone_echo"
+          },
+          "effects": [
+            {
+              "op": "accept_quest",
+              "quest": "oak_stone_echo"
+            }
+          ]
+        },
+        {
+          "text": "「先不冒這個險。」",
+          "goto": null
+        }
+      ]
+    },
+    "ruin_accepted": {
+      "text": "「入口在枯石谷南側，舊火盆旁。先看退路，再看前路。」多恩把鑿子收回抽屜。「我只要消息，不要你扛一塊石頭回來。」",
+      "image": "dorn_forge",
+      "choices": [
+        {
+          "text": "記住路線，離開。",
+          "goto": null
+        }
+      ]
+    },
+    "ruin_report": {
+      "text": "多恩用拇指蹭過鑿口，沉默了一會兒。「不見鑿痕，也不見接縫……」他把工錢推來。「路上的事，你們說到這裡就好。尤其那個聲音，別在酒館裡講。」\n你問他是否見過。錘子重新落下。「我見過好奇的人。有些沒回來。」",
+      "image": "dorn_forge",
+      "choices": [
+        {
+          "text": "收下工錢，不再追問。",
+          "goto": null
+        }
+      ]
+    },
+    "ruin_after": {
+      "text": "「那把鑿子我收起來了。」多恩沒有看你。「谷裡的路還在；哪天再去，帶夠燈油。至於聽見的話……先記著，別急著替它找個名字。」",
+      "image": "dorn_forge",
+      "choices": [
+        {
+          "text": "「我們會小心。」",
           "goto": null
         }
       ]

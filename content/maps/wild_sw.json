@@ -21,9 +21,61 @@
     "................",
     "................"
   ],
-  "neighbors": {"east": "wild_se", "north": "wild_nw"},
+  "neighbors": {
+    "east": "wild_se",
+    "north": "wild_nw"
+  },
   "entities": [
-    {"type": "monster", "pos": [5, 5], "encounter": "dw", "id": "019f09c6-6aa8-71f2-a346-48d9689f7698"},
-    {"type": "monster", "pos": [11, 10], "encounter": "o", "id": "01a08733-fc7d-71bb-ba64-c5086d880e2c"}
-  ]
+    {
+      "type": "monster",
+      "pos": [
+        5,
+        5
+      ],
+      "encounter": "dw",
+      "id": "019f09c6-6aa8-71f2-a346-48d9689f7698"
+    },
+    {
+      "type": "monster",
+      "pos": [
+        11,
+        10
+      ],
+      "encounter": "o",
+      "id": "01a08733-fc7d-71bb-ba64-c5086d880e2c"
+    },
+    {
+      "type": "portal",
+      "pos": [
+        3,
+        11
+      ],
+      "to": "oak_ruin_vestibule",
+      "entry": "from_wild"
+    },
+    {
+      "type": "decoration",
+      "pos": [
+        3,
+        11
+      ],
+      "model": "prop_brazier"
+    }
+  ],
+  "entries": {
+    "from_ruin": {
+      "pos": [
+        3,
+        10
+      ],
+      "facing": "N"
+    },
+    "ruin_review": {
+      "pos": [
+        3,
+        10
+      ],
+      "facing": "S"
+    }
+  }
 }

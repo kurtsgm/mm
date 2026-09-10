@@ -16,6 +16,8 @@ static func simulate(gs, def, qid: String) -> Dictionary:
 
 static func _drive(gs, def, qid: String, st: Dictionary) -> void:
 	match String(st.get("type", "")):
+		"flag":
+			StoryEffects.apply([{"op": "set_flag", "flag": st["flag"]}], gs)
 		"kill":
 			for t in st.get("targets", []):
 				gs.notify_encounter_defeated(String(t))
