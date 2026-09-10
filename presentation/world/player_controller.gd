@@ -113,7 +113,7 @@ func _attempt_move(move: int) -> bool:
 	var target := _pos + GridDirection.to_vector(move_dir)
 	if not _world_grid.is_walkable(target):
 		bumped.emit(target)
-		return false   # 牆/實心 NPC（含外緣無鄰）→ 不動；main 端決定 bump 是否觸發互動
+		return false   # 牆/實心 NPC（含外緣無鄰）→ 不動；交談另由空白鍵觸發
 	if can_enter_cell.is_valid() and not can_enter_cell.call(target):
 		return false
 	_pos = target

@@ -32,6 +32,83 @@ func _key(code: int) -> InputEventKey:
 	event.pressed = true
 	return event
 
+func _place_near_margo(pos := Vector2i(8, 9), facing := GridDirection.Dir.NORTH) -> void:
+	MapManager.enter_map("town_oak")
+	GameState.current_map_id = "town_oak"
+	GameState.player_pos = pos
+	GameState.player_facing = facing
+	game._on_loaded()
+
+func _move_forward() -> void:
+	var event := InputEventAction.new()
+	event.action = "move_forward"
+	event.pressed = true
+	game._player._unhandled_input(event)
+	await game._player.settle()
+
+func test_npc_pass_through_does_not_open_dialogue():
+	_place_near_margo()
+	await _move_forward()
+	assert_eq(game._player._pos, Vector2i(8, 8))
+	assert_false(game._dialogue_overlay.is_open())
+	await _move_forward()
+	assert_eq(game._player._pos, Vector2i(8, 7))
+	assert_false(game._dialogue_overlay.is_open())
+	assert_true(game._flow.can_explore())
+
+func test_space_opens_facing_npc_without_moving_and_does_not_restart_dialogue():
+	_place_near_margo()
+	game._unhandled_input(_key(KEY_SPACE))
+	assert_true(game._dialogue_overlay.is_open())
+	assert_eq(game._player._pos, Vector2i(8, 9))
+	assert_false(game._player._enabled)
+	game._dialogue_overlay._unhandled_input(_key(KEY_1))
+	game._unhandled_input(_key(KEY_SPACE))
+	game._dialogue_overlay._unhandled_input(_key(KEY_1))
+	assert_true(GameState.quests.has("oak_antidote"))
+	assert_false(game._dialogue_overlay.is_open(), "空白鍵不能重開正在進行的對話")
+	assert_true(game._player._enabled)
+
+func test_space_requires_nearby_facing_npc_and_fresh_key_press():
+	for pose in [[Vector2i(8, 10), 0], [Vector2i(8, 9), 2], [Vector2i(8, 9), 1], [Vector2i(8, 8), 0]]:
+		_place_near_margo(pose[0], pose[1])
+		game._unhandled_input(_key(KEY_SPACE))
+		assert_false(game._dialogue_overlay.is_open(), "只與正前方一格交談")
+	_place_near_margo()
+	var repeated := _key(KEY_SPACE)
+	repeated.echo = true
+	game._unhandled_input(repeated)
+	var released := _key(KEY_SPACE)
+	released.pressed = false
+	game._unhandled_input(released)
+	assert_false(game._dialogue_overlay.is_open(), "放開與按住重複事件不觸發")
+
+func test_space_during_turn_or_menu_does_not_open_npc():
+	_place_near_margo(Vector2i(8, 9), GridDirection.Dir.EAST)
+	game._player._attempt_turn(GridDirection.Dir.NORTH)
+	game._unhandled_input(_key(KEY_SPACE))
+	assert_false(game._dialogue_overlay.is_open(), "轉向動畫期間不交談")
+	await game._player.settle()
+	game._toggle_menu(game._save_menu)
+	game._unhandled_input(_key(KEY_SPACE))
+	assert_false(game._dialogue_overlay.is_open(), "選單不可被交談搶走")
+	game._save_menu.close()
+	game._unhandled_input(_key(KEY_SPACE))
+	assert_true(game._dialogue_overlay.is_open())
+
+func test_blocking_npc_bump_does_not_talk_but_space_does():
+	_place_near_margo()
+	for q in MapManager.current_map.quest_givers:
+		if q["sprite"] == "margo":
+			q["blocks"] = true
+	game._rebuild_world()
+	game._player.setup(game._world_grid, Vector2i(8, 9), GridDirection.Dir.NORTH)
+	await _move_forward()
+	assert_eq(game._player._pos, Vector2i(8, 9))
+	assert_false(game._dialogue_overlay.is_open())
+	game._unhandled_input(_key(KEY_SPACE))
+	assert_true(game._dialogue_overlay.is_open())
+
 func _assert_movement_blocked():
 	var before := game._player._pos
 	var event := InputEventAction.new()

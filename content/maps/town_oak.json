@@ -30,7 +30,7 @@
     {"type": "building", "id": "oak_well", "rect": [7, 7, 1, 1], "model": "oak_well"},
     {"type": "portal", "pos": [7, 11], "to": "wild_nw", "entry": "from_town"},
     {"type": "questgiver", "pos": [6, 10], "dialogue": "qg_oak_guard", "sprite": "oak_guard"},
-    {"type": "questgiver", "pos": [8, 8], "dialogue": "qg_margo", "sprite": "margo"},
+    {"type": "questgiver", "pos": [8, 8], "dialogue": "qg_margo", "sprite": "margo", "blocks": false},
     {"type": "questgiver", "pos": [7, 6], "dialogue": "qg_oak_lord", "sprite": "oak_lord"},
     {"type": "questgiver", "pos": [9, 6], "dialogue": "qg_oak_taxman", "sprite": "oak_taxman"},
     {"type": "scene", "pos": [7, 9], "dialogue": "oak_inquisitor_omen", "require": {"quest_done": "oak_levy"}, "once": true},

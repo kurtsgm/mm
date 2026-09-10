@@ -67,7 +67,6 @@ func _ready() -> void:
 	_hud.setup(GameState, _player)            # 先連上 facing_changed
 	_player.entered_cell.connect(_on_entered_cell)
 	_player.facing_changed.connect(_on_facing_changed)
-	_player.bumped.connect(_on_player_bumped)
 	_player.can_enter_cell = _can_enter_cell
 
 	_mini_map = MiniMap.new()
@@ -162,6 +161,8 @@ func _setup_environment() -> void:
 
 func _sync_input_control() -> void:
 	_player.set_enabled(_flow.can_explore())
+	if _npc_layer != null:
+		_npc_layer.interaction_enabled = _flow.can_explore()
 
 func _on_entered_cell(global: Vector2i) -> void:
 	if not _flow.can_explore():
@@ -193,8 +194,6 @@ func _on_entered_cell(global: Vector2i) -> void:
 		return
 	if _has_unopened_chest(local):
 		_prompt_chest(local)
-		return
-	if _try_questgiver(global):
 		return
 	if _try_scene(local):
 		return
@@ -468,22 +467,13 @@ func _play_narrative_cutscene(run: NarrativeScene) -> void:
 	_flow.finish(&"cutscene")
 	_hud.refresh()
 
-func _on_player_bumped(cell: Vector2i) -> void:
-	if not _flow.can_explore():
-		return
-	var occ := _world_grid.occupant_at(cell)
-	if String(occ.get("kind", "")) != "questgiver":
-		return
-	var data := DialogueCatalog.load_dialogue(String(occ["dialogue"]))
-	if data == null:
-		GameState.message_log.push("（對話 %s 遺失）" % occ["dialogue"])
-		return
-	if not _flow.enter(GameFlow.Mode.DIALOGUE, &"dialogue"):
-		return
-	_active_scene = null
-	_dialogue_overlay.open(DialogueRunner.new(data, GameState))
+# 空白鍵只和正前方一格的 NPC 交談；移動、轉向與介面鎖定期間不啟動。
+func _interact_with_facing_npc() -> bool:
+	if not _flow.can_explore() or _player._is_busy or _world_grid == null:
+		return false
+	var target := _player._pos + GridDirection.to_vector(_player._facing)
+	return _try_questgiver(target)
 
-# 踩進可穿越 NPC 格 → 開對話（擋路 NPC 走 _on_player_bumped 的 bump 分支）。
 func _try_questgiver(global: Vector2i) -> bool:
 	var occ := _world_grid.occupant_at(global)
 	if String(occ.get("kind", "")) != "questgiver":
@@ -609,7 +599,10 @@ func _show_game_over() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not (event is InputEventKey and event.pressed and not event.echo):
 		return
-	if event.keycode == KEY_TAB:
+	if event.keycode == KEY_SPACE:
+		if not _interact_with_facing_npc():
+			return
+	elif event.keycode == KEY_TAB:
 		_toggle_menu(_save_menu)
 	elif event.keycode == KEY_C:
 		_character_tab_key(CharacterPanel.Tab.STATUS)

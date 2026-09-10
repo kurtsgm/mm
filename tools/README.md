@@ -10,6 +10,7 @@ godot --headless --path . --script res://tools/<name>.gd
 
 | 工具 | 用途 |
 | --- | --- |
+| `npc_preview.gd` | 直接在正式地圖面向指定 NPC，支援截圖與空白鍵交談／穿越驗證；預設療者瑪歌。見 [`docs/npcs/margo-sample.md`](../docs/npcs/margo-sample.md)。 |
 | `region_pipeline.py` | 地圖＋故事共用入口：`check`／`review`／`preview`／`capture`；格子路線檢查、真實敘事狀態重播、指定進度預覽與地圖審查圖。見 [`docs/region-production.md`](../docs/region-production.md)。 |
 | `map_lint.gd` / `region_flow.gd` / `region_review_cli.gd` | 區域工具的地圖連通檢查、故事案例重播與 Godot 驗證／渲染 worker。由 `region_pipeline.py` 呼叫。 |
 | `monster_pipeline.py` | 怪物製作共用入口：`review`／`validate`／`capture`／`benchmark`／`preview`，讀取資產 manifest，產出 Markdown＋JSON＋WebP。見 [`docs/monster-production.md`](../docs/monster-production.md)。 |

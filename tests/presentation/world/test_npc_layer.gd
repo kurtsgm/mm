@@ -24,7 +24,7 @@ func test_build_clears_previous():
 func test_sprite_uses_billboard():
 	var l := _layer()
 	l.build([_qg(Vector2i(0, 0))])
-	assert_eq(l._sprites[0]["node"].billboard, BaseMaterial3D.BILLBOARD_ENABLED)
+	assert_eq(l._sprites[0]["node"].billboard, BaseMaterial3D.BILLBOARD_FIXED_Y)
 
 func test_feet_on_floor_and_centered_on_cell():
 	var l := _layer()
@@ -33,8 +33,46 @@ func test_feet_on_floor_and_centered_on_cell():
 	var s: Sprite3D = l._sprites[0]["node"]
 	var w := GridGeometry.cell_to_world(cell)
 	assert_almost_eq(s.position.y, CombatStage.DISPLAY_HEIGHT / 2.0, 0.0001, "腳貼地")
-	assert_almost_eq(s.position.x, w.x, 0.0001)
-	assert_almost_eq(s.position.z, w.z, 0.0001)
+	assert_almost_eq(s.global_position.x, w.x, 0.0001)
+	assert_almost_eq(s.global_position.z, w.z, 0.0001)
+
+func test_margo_breath_keeps_calibrated_feet_on_ground():
+	var l := _layer()
+	l.build([_qg(Vector2i(1, 2), "margo")])
+	var member: Dictionary = l._sprites[0]
+	var s: Sprite3D = member["node"]
+	for t in [0.0, 1.05, 2.1, 3.15]:
+		l._update_member(member, t)
+		var feet := s.position.y + (0.5 - float(member["foot"])) * float(member["height"]) * s.scale.y
+		assert_almost_eq(feet, 0.0, 0.0001)
+		assert_almost_eq(s.offset.x, 0.0, 0.0001, "正式 NPC 不左右滑動")
+	assert_eq(member["root"].get_child_count(), 3, "立繪、陰影、提示")
+
+func test_focus_requires_nearby_npc_directly_ahead():
+	var origin := Vector3(0, 1.2, 0)
+	assert_true(NpcLayer.is_in_focus(origin, Vector3.FORWARD, Vector3(0, 0, -2)))
+	assert_false(NpcLayer.is_in_focus(origin, Vector3.FORWARD, Vector3(0, 0, -4)))
+	assert_false(NpcLayer.is_in_focus(origin, Vector3.FORWARD, Vector3(2, 0, 0)))
+	assert_false(NpcLayer.is_in_focus(origin, Vector3.FORWARD, Vector3(0, 0, 2)))
+	assert_false(NpcLayer.is_in_focus(origin, Vector3.FORWARD, Vector3.ZERO))
+
+func test_label_hides_while_interaction_disabled_and_after_turning_away():
+	var l := _layer()
+	l.build([_qg(Vector2i(0, -1), "margo")])
+	var camera := Camera3D.new()
+	add_child_autofree(camera)
+	camera.position = Vector3(0, 1.2, 0)
+	camera.make_current()
+	var member: Dictionary = l._sprites[0]
+	l._update_label(member)
+	assert_true(member["label"].visible)
+	l.interaction_enabled = false
+	l._update_label(member)
+	assert_false(member["label"].visible, "對話與選單開啟時隱藏")
+	l.interaction_enabled = true
+	camera.rotation.y = PI
+	l._update_label(member)
+	assert_false(member["label"].visible, "轉身後隱藏")
 
 func test_unregistered_sprite_uses_non_null_placeholder():
 	var l := _layer()
